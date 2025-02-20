@@ -6,7 +6,7 @@ Use these management and productivity strategies at your own discretion.
 # Time Management Guide for IT Managers
 
 ## Overview
-As an IT manager leading a team of 5 to 8 people, managing time effectively is crucial for both personal productivity and team efficiency. This guide provides **20 actionable strategies** to improve time management, reduce inefficiencies, and create a more structured workflow.
+As an IT manager leading a team, managing time effectively is crucial for both personal productivity and team efficiency. This guide provides **20 actionable strategies** to improve time management, reduce inefficiencies, and create a more structured workflow.
 
 ## 1. Plan Your Week in Advance
 - **Why?** Helps prioritize tasks and avoid last-minute chaos.
