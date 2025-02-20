@@ -5,7 +5,7 @@ Use these management and productivity strategies at your own discretion.
 
 # 📌 IT Manager Guide: 20 Essential Tips for Success
 
-As an IT manager leading a team of 5 to 8 people, your role is to balance technical leadership, project management, and people management. Here are 20 detailed tips to help you succeed.
+As an IT manager leading a team, your role is to balance technical leadership, project management, and people management. Here are 20 detailed tips to help you succeed.
 
 ## 🔹 1. Set Clear Expectations
 - Define team goals, individual roles, and responsibilities.
