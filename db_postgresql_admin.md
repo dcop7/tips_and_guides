@@ -107,7 +107,24 @@ To pinpoint blocking scenarios, you can join pg\_locks with pg\_stat\_activity t
 
 SQL
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   SELECT      blocking_locks.pid AS blocking_pid,      blocking_activity.query AS blocking_query,      blocked_locks.pid AS blocked_pid,      blocked_activity.query AS blocked_query,      blocked_locks.locktype,      blocked_locks.mode,      blocked_locks.relation::regclass AS relation_name  FROM pg_locks blocked_locks  JOIN pg_stat_activity blocked_activity ON blocked_locks.pid = blocked_activity.pid  JOIN pg_locks blocking_locks ON blocked_locks.locktype = blocked_locks.locktype      AND blocked_locks.relation = blocking_locks.relation      AND blocking_locks.GRANTED = true      AND blocked_locks.pid != blocked_locks.pid  JOIN pg_stat_activity blocking_activity ON blocking_locks.pid = blocking_activity.pid  WHERE NOT blocked_locks.GRANTED;   `
+```sql
+SELECT
+blocking_locks.pid AS blocking_pid,
+blocking_activity.query AS blocking_query,
+blocked_locks.pid AS blocked_pid,
+blocked_activity.query AS blocked_query,
+blocked_locks.locktype,
+blocked_locks.mode,
+blocked_locks.relation::regclass AS relation_name
+FROM pg_locks blocked_locks
+JOIN pg_stat_activity blocked_activity ON blocked_locks.pid = blocked_activity.pid
+JOIN pg_locks blocking_locks ON blocking_locks.locktype = blocked_locks.locktype
+AND blocked_locks.relation = blocking_locks.relation
+AND blocking_locks.GRANTED = true
+AND blocked_locks.pid != blocked_locks.pid
+JOIN pg_stat_activity blocking_activity ON blocking_locks.pid = blocking_activity.pid
+WHERE NOT blocked_locks.GRANTED;
+```
 
 This query identifies sessions that are blocked (blocked\_locks) and the sessions that are holding the locks causing the blocking (blocking\_locks). It displays the PIDs and queries of both blocking and blocked sessions, along with lock details.
 
@@ -124,7 +141,10 @@ Once you identify blocking locks, you can resolve them by:
 
 SQL
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   -- Terminate the blocking session (replace  with the actual PID)  SELECT pg_terminate_backend();   `
+```sql
+-- Terminate the blocking session (replace &lt;blocking_pid> with the actual PID)
+SELECT pg_terminate_backend(&lt;blocking_pid>);
+```
 
 2\. Identifying Slow Queries
 ----------------------------
@@ -139,13 +159,32 @@ The pg\_stat\_statements extension is an invaluable tool for tracking query exec
 
 SQL
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   CREATE EXTENSION pg_stat_statements;   `
+```sql
+CREATE EXTENSION pg_stat_statements;
+```
 
 **Querying pg\_stat\_statements:**
 
 SQL
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   SELECT      queryid,      query,      calls,      total_time,      mean_time,      rows,      shared_blks_hit,      shared_blks_read,      local_blks_hit,      local_blks_read,      temp_blks_read,      temp_blks_written  FROM pg_stat_statements  ORDER BY mean_time DESC  LIMIT 10; -- Show top 10 slowest queries by average execution time   `
+```sql
+SELECT
+queryid,
+query,
+calls,
+total_time,
+mean_time,
+rows,
+shared_blks_hit,
+shared_blks_read,
+local_blks_hit,
+local_blks_read,
+temp_blks_read,
+temp_blks_written
+FROM pg_stat_statements
+ORDER BY mean_time DESC
+LIMIT 10; -- Show top 10 slowest queries by average execution time
+```
 
 **Explanation of Key Columns:**
 
@@ -195,7 +234,11 @@ PostgreSQL can be configured to log slow queries automatically. This is useful f
 
 **Enabling Slow Query Logging (in postgresql.conf):**
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   log_min_duration_statement = 250ms  -- Log statements that take 250ms or longer  log_destination = 'stderr'          -- Log to the server's standard error output (or 'csvlog', 'syslog')  logging_collector = on              -- Enable the logging collector process   `
+```
+log_min_duration_statement = 250ms  -- Log statements that take 250ms or longer
+log_destination = 'stderr'          -- Log to the server's standard error output (or 'csvlog', 'syslog')
+logging_collector = on              -- Enable the logging collector process
+```
 
 After configuring, restart PostgreSQL for the changes to take effect. Slow query logs will be written to the configured destination. You can then analyze these logs using tools like grep, awk, or dedicated log analysis software to identify patterns and frequent slow queries.
 
@@ -212,7 +255,21 @@ The pg\_stat\_activity view is also crucial for detecting long-running queries. 
 
 SQL
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   SELECT      pid,      usename,      datname,      client_addr,      query_start,      state,      query  FROM pg_stat_activity  WHERE state != 'idle'              -- Exclude idle sessions    AND query NOT LIKE '%pg_stat_activity%' -- Exclude monitoring queries  ORDER BY query_start  LIMIT 10; -- Show top 10 oldest active queries   `
+```sql
+SELECT
+pid,
+usename,
+datname,
+client_addr,
+query_start,
+state,
+query
+FROM pg_stat_activity
+WHERE state != 'idle'              -- Exclude idle sessions
+AND query NOT LIKE '%pg_stat_activity%' -- Exclude monitoring queries
+ORDER BY query_start
+LIMIT 10; -- Show top 10 oldest active queries
+```
 
 **Explanation of Additional Columns:**
 
@@ -268,7 +325,12 @@ PostgreSQL provides functions to monitor transaction age and identify databases 
 
 SQL
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   SELECT datname, age(datfrozenxid) AS xid_age  FROM pg_database  WHERE datistemplate = false  ORDER BY xid_age DESC;   `
+```sql
+SELECT datname, age(datfrozenxid) AS xid_age
+FROM pg_database
+WHERE datistemplate = false
+ORDER BY xid_age DESC;
+```
 
 **Explanation:**
 
@@ -281,7 +343,18 @@ Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQL
 
 SQL
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   SELECT      schemaname,      relname,      age(relfrozenxid) AS xid_age  FROM pg_class  JOIN pg_namespace ON pg_class.relnamespace = pg_namespace.oid  WHERE relkind IN ('r', 't') -- Regular tables and partitioned tables    AND NOT pg_is_other_temp_schema(relnamespace)  ORDER BY xid_age DESC  LIMIT 10; -- Show top 10 tables with highest XID age   `
+```sql
+SELECT
+schemaname,
+relname,
+age(relfrozenxid) AS xid_age
+FROM pg_class
+JOIN pg_namespace ON pg_class.relnamespace = pg_namespace.oid
+WHERE relkind IN ('r', 't') -- Regular tables and partitioned tables
+AND NOT pg_is_other_temp_schema(relnamespace)
+ORDER BY xid_age DESC
+LIMIT 10; -- Show top 10 tables with highest XID age
+```
 
 **Explanation:**
 
@@ -323,7 +396,17 @@ pg\_stat\_activity is also used to monitor active connections.
 
 SQL
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   SELECT      datname,      usename,      client_addr,      state,      count(*) AS connection_count  FROM pg_stat_activity  GROUP BY datname, usename, client_addr, state  ORDER BY connection_count DESC;   `
+```sql
+SELECT
+datname,
+usename,
+client_addr,
+state,
+count(*) AS connection_count
+FROM pg_stat_activity
+GROUP BY datname, usename, client_addr, state
+ORDER BY connection_count DESC;
+```
 
 **Explanation:**
 
@@ -361,7 +444,12 @@ The pg\_database\_size() function returns the disk space consumed by a database.
 
 SQL
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   SELECT datname, pg_database_size(datname) / 1024 / 1024 AS db_size_mb  FROM pg_database  WHERE datistemplate = false  ORDER BY db_size_mb DESC;   `
+```sql
+SELECT datname, pg_database_size(datname) / 1024 / 1024 AS db_size_mb
+FROM pg_database
+WHERE datistemplate = false
+ORDER BY db_size_mb DESC;
+```
 
 **Explanation:**
 
@@ -378,7 +466,18 @@ The pg\_relation\_size() function returns the disk space used by a specific tabl
 
 SQL
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   SELECT      schemaname,      relname,      pg_relation_size(oid) / 1024 / 1024 AS table_size_mb  FROM pg_class  JOIN pg_namespace ON pg_class.relnamespace = pg_namespace.oid  WHERE relkind IN ('r', 't') -- Regular tables and partitioned tables    AND NOT pg_is_other_temp_schema(relnamespace)  ORDER BY table_size_mb DESC  LIMIT 10; -- Show top 10 largest tables   `
+```sql
+SELECT
+schemaname,
+relname,
+pg_relation_size(oid) / 1024 / 1024 AS table_size_mb
+FROM pg_class
+JOIN pg_namespace ON pg_class.relnamespace = pg_namespace.oid
+WHERE relkind IN ('r', 't') -- Regular tables and partitioned tables
+AND NOT pg_is_other_temp_schema(relnamespace)
+ORDER BY table_size_mb DESC
+LIMIT 10; -- Show top 10 largest tables
+```
 
 **Explanation:**
 
@@ -427,7 +526,17 @@ PostgreSQL logs are a valuable source of information for troubleshooting errors,
 
 Bash
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   # Search for error messages in the log file  grep ERROR postgresql.log  # Show slow queries (assuming log_min_duration_statement is set)  grep "duration=" postgresql.log | grep "slow query"  # Real-time monitoring of new log entries (tail -f)  tail -f postgresql.log   `
+```bash
+
+Search for error messages in the log file
+grep ERROR postgresql.log
+
+Show slow queries (assuming log_min_duration_statement is set)
+grep "duration=" postgresql.log | grep "slow query"
+
+Real-time monitoring of new log entries (tail -f)
+tail -f postgresql.log
+```
 
 8\. Conclusion
 --------------
