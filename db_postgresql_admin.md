@@ -42,7 +42,19 @@ The pg\_locks system view provides real-time information about active locks with
 
 SQL
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   SELECT      pid,                                  -- Process ID holding the lock      locktype,                             -- Type of lock held      mode,                                 -- Lock mode      GRANTED,                              -- Is the lock granted? (t/f)      relation::regclass,                   -- Relation (table) being locked (if applicable)      transactionid,                        -- Transaction ID holding the lock (if applicable)      virtualtransaction,                   -- Virtual transaction ID (if applicable)      fastpath                             -- Is it a fast-path lock? (t/f)  FROM pg_locks  WHERE NOT GRANTED;                        -- Filter for ungranted (blocking) locks   `
+```sql
+SELECT
+pid,                                  -- Process ID holding the lock
+locktype,                             -- Type of lock held
+mode,                                 -- Lock mode
+GRANTED,                              -- Is the lock granted? (t/f)
+relation::regclass,                   -- Relation (table) being locked (if applicable)
+transactionid,                        -- Transaction ID holding the lock (if applicable)
+virtualtransaction,                   -- Virtual transaction ID (if applicable)
+fastpath                             -- Is it a fast-path lock? (t/f)
+FROM pg_locks
+WHERE NOT GRANTED;                        -- Filter for ungranted (blocking) locks
+```
 
 **Explanation of Columns:**
 
