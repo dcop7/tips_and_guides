@@ -301,43 +301,7 @@ Clear documentation and communication are vital for maintaining a well-managed a
 *   **Communicate Role Changes:**  Communicate any changes to roles, privileges, or authentication methods to relevant users and applications in advance, especially if changes might affect their access.
 *   **Maintain Up-to-Date Documentation:** Keep documentation current and accessible to administrators and authorized personnel.
 
-## 9. Design Considerations (Tables and Diagrams)
-
-**Table: Role Definitions**
-
-| Column Name       | Data Type    | Description                                                                  | Example                               |
-| :---------------- | :----------- | :--------------------------------------------------------------------------- | :------------------------------------ |
-| `role_name`       | `VARCHAR(63)` | Unique name of the role                                                      | `webapp_role`, `report_reader`, `db_admin` |
-| `role_type`       | `ENUM('USER', 'GROUP')` | Type of role (USER for login roles, GROUP for grouping roles)                     | `USER`, `GROUP`                       |
-| `description`     | `TEXT`       | Detailed description of the role's purpose and responsibilities              | "Role for web application access", "Read-only role for reporting users" |
-| `login_enabled`   | `BOOLEAN`    | Indicates if the role has login capability (`true` for users, `false` for groups) | `true`, `false`                       |
-| `created_at`      | `TIMESTAMP WITH TIME ZONE` | Timestamp when the role was created                                         | `2025-03-05 10:00:00+00`               |
-| `updated_at`      | `TIMESTAMP WITH TIME ZONE` | Timestamp when the role was last updated                                       | `2025-03-05 10:30:00+00`               |
-
-**Diagram: Example Role Hierarchy (Conceptual - can be visualized using diagram tools)**
-
-                             +-----------------+
-                             |   base_role     |
-                             +-----------------+
-                                  /       \
-                                 /         \
-             +-----------------------+     +-----------------------+
-             |      read_role        |     |      write_role       |
-             +-----------------------+     +-----------------------+
-                  /        |        \           /        |        \
-                 /         |         \         /         |         \
-    +-----------------+ +-----------------+ +-----------------+ +-----------------+
-    |  report_reader  | |  analyst_role   | |   app_rw_role   | |   admin_role    |
-    +-----------------+ +-----------------+ +-----------------+ +-----------------+
-
-
-**Explanation of Diagram:**
-
-*   `base_role` is a foundational role, not directly assigned privileges but used for grouping.
-*   `read_role` and `write_role` inherit from `base_role` (conceptually, not enforced in PostgreSQL directly through inheritance from `base_role` in this example, but could be implemented). They represent core read and write capabilities.
-*   Specialized roles like `report_reader`, `analyst_role`, `app_rw_role`, and `admin_role` inherit from `read_role` or `write_role` (or both in the case of `analyst_role` and `admin_role` conceptually) and are granted more specific privileges based on their functions.
-
-## 10. Regular Review and Adaptation
+## 9. Regular Review and Adaptation
 
 User and role management is not a one-time setup. It requires ongoing review and adaptation to remain effective.
 
