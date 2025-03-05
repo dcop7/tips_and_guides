@@ -9,72 +9,72 @@ This repository contains information collected from various online sources and/o
 
 [TOC]
 
-  * [1. Introduction](https://www.google.com/url?sa=E&source=gmail&q=#1-introduction)
-  * [2. Memory Settings](https://www.google.com/url?sa=E&source=gmail&q=#2-memory-settings)
-      * [2.1. `shared_buffers`]([https://www.google.com/url?sa=E&source=gmail&q=#21-shared_buffers](https://www.google.com/url?sa=E&source=gmail&q=#21-shared_buffers))
-      * [2.2. `effective_cache_size`]([https://www.google.com/url?sa=E&source=gmail&q=#22-effective_cache_size](https://www.google.com/url?sa=E&source=gmail&q=#22-effective_cache_size))
-      * [2.3. `work_mem`]([https://www.google.com/url?sa=E&source=gmail&q=#23-work_mem](https://www.google.com/url?sa=E&source=gmail&q=#23-work_mem))
-      * [2.4. `maintenance_work_mem`]([https://www.google.com/url?sa=E&source=gmail&q=#24-maintenance_work_mem](https://www.google.com/url?sa=E&source=gmail&q=#24-maintenance_work_mem))
-      * [2.5. `temp_buffers`]([https://www.google.com/url?sa=E&source=gmail&q=#25-temp_buffers](https://www.google.com/url?sa=E&source=gmail&q=#25-temp_buffers))
-  * [3. CPU Settings](https://www.google.com/url?sa=E&source=gmail&q=#3-cpu-settings)
-      * [3.1. `max_connections`]([https://www.google.com/url?sa=E&source=gmail&q=#31-max_connections](https://www.google.com/url?sa=E&source=gmail&q=#31-max_connections))
-      * [3.2. `max_worker_processes`]([https://www.google.com/url?sa=E&source=gmail&q=#32-max_worker_processes](https://www.google.com/url?sa=E&source=gmail&q=#32-max_worker_processes))
-      * [3.3. `max_parallel_workers`]([https://www.google.com/url?sa=E&source=gmail&q=#33-max_parallel_workers](https://www.google.com/url?sa=E&source=gmail&q=#33-max_parallel_workers))
-      * [3.4. `max_parallel_maintenance_workers`]([https://www.google.com/url?sa=E&source=gmail&q=#34-max_parallel_maintenance_workers](https://www.google.com/url?sa=E&source=gmail&q=#34-max_parallel_maintenance_workers))
-      * [3.5. `max_parallel_workers_per_gather`]([https://www.google.com/url?sa=E&source=gmail&q=#35-max_parallel_workers_per_gather](https://www.google.com/url?sa=E&source=gmail&q=#35-max_parallel_workers_per_gather))
-  * [4. Disk I/O Settings](https://www.google.com/url?sa=E&source=gmail&q=#4-disk-io-settings)
-      * [4.1. `wal_buffers`]([https://www.google.com/url?sa=E&source=gmail&q=#41-wal_buffers](https://www.google.com/url?sa=E&source=gmail&q=#41-wal_buffers))
-      * [4.2. `checkpoint_completion_target`]([https://www.google.com/url?sa=E&source=gmail&q=#42-checkpoint_completion_target](https://www.google.com/url?sa=E&source=gmail&q=#42-checkpoint_completion_target))
-      * [4.3. `checkpoint_timeout`]([https://www.google.com/url?sa=E&source=gmail&q=#43-checkpoint_timeout](https://www.google.com/url?sa=E&source=gmail&q=#43-checkpoint_timeout))
-      * [4.4. `checkpoint_warning`]([https://www.google.com/url?sa=E&source=gmail&q=#44-checkpoint_warning](https://www.google.com/url?sa=E&source=gmail&q=#44-checkpoint_warning))
-      * [4.5. `commit_delay` & `commit_siblings`]([https://www.google.com/url?sa=E&source=gmail&q=#45-commit_delay--commit_siblings](https://www.google.com/url?sa=E&source=gmail&q=#45-commit_delay--commit_siblings))
-      * [4.6. `synchronous_commit`]([https://www.google.com/url?sa=E&source=gmail&q=#46-synchronous_commit](https://www.google.com/url?sa=E&source=gmail&q=#46-synchronous_commit))
-      * [4.7. Storage Subsystem Considerations](https://www.google.com/url?sa=E&source=gmail&q=#47-storage-subsystem-considerations)
-  * [5. Query Optimization Settings](https://www.google.com/url?sa=E&source=gmail&q=#5-query-optimization-settings)
-      * [5.1. `default_statistics_target`]([https://www.google.com/url?sa=E&source=gmail&q=#51-default_statistics_target](https://www.google.com/url?sa=E&source=gmail&q=#51-default_statistics_target))
-      * [5.2. `random_page_cost`]([https://www.google.com/url?sa=E&source=gmail&q=#52-random_page_cost](https://www.google.com/url?sa=E&source=gmail&q=#52-random_page_cost))
-      * [5.3. `seq_page_cost`]([https://www.google.com/url?sa=E&source=gmail&q=#53-seq_page_cost](https://www.google.com/url?sa=E&source=gmail&q=#53-seq_page_cost))
-      * [5.4. `cpu_tuple_cost`, `cpu_index_tuple_cost`, `cpu_operator_cost`]([https://www.google.com/url?sa=E&source=gmail&q=#54-cpu_tuple_cost-cpu_index_tuple_cost-cpu_operator_cost](https://www.google.com/url?sa=E&source=gmail&q=#54-cpu_tuple_cost-cpu_index_tuple_cost-cpu_operator_cost))
-      * [5.5. `effective_io_concurrency`]([https://www.google.com/url?sa=E&source=gmail&q=#55-effective_io_concurrency](https://www.google.com/url?sa=E&source=gmail&q=#55-effective_io_concurrency))
-      * [5.6. `jit`]([https://www.google.com/url?sa=E&source=gmail&q=#56-jit](https://www.google.com/url?sa=E&source=gmail&q=#56-jit))
-  * [6. Connection and Security Settings](https://www.google.com/url?sa=E&source=gmail&q=#6-connection-and-security-settings)
-      * [6.1. `listen_addresses`]([https://www.google.com/url?sa=E&source=gmail&q=#61-listen_addresses](https://www.google.com/url?sa=E&source=gmail&q=#61-listen_addresses))
-      * [6.2. `port`]([https://www.google.com/url?sa=E&source=gmail&q=#62-port](https://www.google.com/url?sa=E&source=gmail&q=#62-port))
-      * [6.3. `authentication methods (pg_hba.conf)`]([https://www.google.com/url?sa=E&source=gmail&q=#63-authentication-methods-pghbaconf](https://www.google.com/url?sa=E&source=gmail&q=#63-authentication-methods-pghbaconf))
-      * [6.4. `ssl` settings]([https://www.google.com/url?sa=E&source=gmail&q=#64-ssl-settings](https://www.google.com/url?sa=E&source=gmail&q=#64-ssl-settings))
-      * [6.5. `tcp_keepalives_idle`, `tcp_keepalives_interval`, `tcp_keepalives_count`]([https://www.google.com/url?sa=E&source=gmail&q=#65-tcp_keepalives_idle-tcp_keepalives_interval-tcp_keepalives_count](https://www.google.com/url?sa=E&source=gmail&q=#65-tcp_keepalives_idle-tcp_keepalives_interval-tcp_keepalives_count))
-  * [7. Logging and Monitoring](https://www.google.com/url?sa=E&source=gmail&q=#7-logging-and-monitoring)
-      * [7.1. `logging_collector`]([https://www.google.com/url?sa=E&source=gmail&q=#71-logging_collector](https://www.google.com/url?sa=E&source=gmail&q=#71-logging_collector))
-      * [7.2. `log_directory`, `log_filename`, `log_rotation_age`, `log_rotation_size`]([https://www.google.com/url?sa=E&source=gmail&q=#72-log_directory-log_filename-log_rotation_age-log_rotation_size](https://www.google.com/url?sa=E&source=gmail&q=#72-log_directory-log_filename-log_rotation_age-log_rotation_size))
-      * [7.3. `log_statement`]([https://www.google.com/url?sa=E&source=gmail&q=#73-log_statement](https://www.google.com/url?sa=E&source=gmail&q=#73-log_statement))
-      * [7.4. `log_min_duration_statement`]([https://www.google.com/url?sa=E&source=gmail&q=#74-log_min_duration_statement](https://www.google.com/url?sa=E&source=gmail&q=#74-log_min_duration_statement))
-      * [7.5. Monitoring Tools](https://www.google.com/url?sa=E&source=gmail&q=#75-monitoring-tools)
-  * [8. Autovacuum Settings](https://www.google.com/url?sa=E&source=gmail&q=#8-autovacuum-settings)
-      * [8.1. `autovacuum`]([https://www.google.com/url?sa=E&source=gmail&q=#81-autovacuum](https://www.google.com/url?sa=E&source=gmail&q=#81-autovacuum))
-      * [8.2. `autovacuum_max_workers`]([https://www.google.com/url?sa=E&source=gmail&q=#82-autovacuum_max_workers](https://www.google.com/url?sa=E&source=gmail&q=#82-autovacuum_max_workers))
-      * [8.3. `autovacuum_naptime`]([https://www.google.com/url?sa=E&source=gmail&q=#83-autovacuum_naptime](https://www.google.com/url?sa=E&source=gmail&q=#83-autovacuum_naptime))
-      * [8.4. `autovacuum_vacuum_scale_factor`, `autovacuum_analyze_scale_factor`]([https://www.google.com/url?sa=E&source=gmail&q=#84-autovacuum_vacuum_scale_factor-autovacuum_analyze_scale_factor](https://www.google.com/url?sa=E&source=gmail&q=#84-autovacuum_vacuum_scale_factor-autovacuum_analyze_scale_factor))
-      * [8.5. `autovacuum_vacuum_threshold`, `autovacuum_analyze_threshold`]([https://www.google.com/url?sa=E&source=gmail&q=#85-autovacuum_vacuum_threshold-autovacuum_analyze_threshold](https://www.google.com/url?sa=E&source=gmail&q=#85-autovacuum_vacuum_threshold-autovacuum_analyze_threshold))
-      * [8.6. Per-Table Autovacuum Settings](https://www.google.com/url?sa=E&source=gmail&q=#86-per-table-autovacuum-settings)
-  * [9. Write-Ahead Logging (WAL) Settings](https://www.google.com/url?sa=E&source=gmail&q=#9-write-ahead-logging-wal-settings)
-      * [9.1. `wal_level`]([https://www.google.com/url?sa=E&source=gmail&q=#91-wal_level](https://www.google.com/url?sa=E&source=gmail&q=#91-wal_level))
-      * [9.2. `wal_compression`]([https://www.google.com/url?sa=E&source=gmail&q=#92-wal_compression](https://www.google.com/url?sa=E&source=gmail&q=#92-wal_compression))
-      * [9.3. `wal_log_hints`]([https://www.google.com/url?sa=E&source=gmail&q=#93-wal_log_hints](https://www.google.com/url?sa=E&source=gmail&q=#93-wal_log_hints))
-      * [9.4. `max_wal_size`, `min_wal_size`]([https://www.google.com/url?sa=E&source=gmail&q=#94-max_wal_size-min_wal_size](https://www.google.com/url?sa=E&source=gmail&q=#94-max_wal_size-min_wal_size))
-      * [9.5. `wal_keep_size`]([https://www.google.com/url?sa=E&source=gmail&q=#95-wal_keep_size](https://www.google.com/url?sa=E&source=gmail&q=#95-wal_keep_size))
-  * [10. Example Configurations](https://www.google.com/url?sa=E&source=gmail&q=#10-example-configurations)
-      * [10.1. Small OLTP Database](https://www.google.com/url?sa=E&source=gmail&q=#101-small-oltp-database)
-      * [10.2. Large Data Warehouse](https://www.google.com/url?sa=E&source=gmail&q=#102-large-data-warehouse)
-      * [10.3. Mixed Workload Server](https://www.google.com/url?sa=E&source=gmail&q=#103-mixed-workload-server)
-  * [11. Hardware Considerations](https://www.google.com/url?sa=E&source=gmail&q=#11-hardware-considerations)
-      * [11.1. CPU](https://www.google.com/url?sa=E&source=gmail&q=#111-cpu)
-      * [11.2. Memory (RAM)](https://www.google.com/url?sa=E&source=gmail&q=#112-memory-ram)
-      * [11.3. Storage (Disk I/O)](https://www.google.com/url?sa=E&source=gmail&q=#113-storage-disk-io)
-  * [12. Database Design and Query Impact](https://www.google.com/url?sa=E&source=gmail&q=#12-database-design-and-query-impact)
-      * [12.1. Data Types](https://www.google.com/url?sa=E&source=gmail&q=#121-data-types)
-      * [12.2. Indexing](https://www.google.com/url?sa=E&source=gmail&q=#122-indexing)
-      * [12.3. Query Structure](https://www.google.com/url?sa=E&source=gmail&q=#123-query-structure)
-  * [13. Conclusion](https://www.google.com/url?sa=E&source=gmail&q=#13-conclusion)
+  * 1. Introduction
+  * 2. Memory Settings
+      * 2.1. `shared_buffers`
+      * 2.2. `effective_cache_size`
+      * 2.3. `work_mem`
+      * 2.4. `maintenance_work_mem`
+      * 2.5. `temp_buffers`
+  * 3. CPU Settings
+      * 3.1. `max_connections`
+      * 3.2. `max_worker_processes`
+      * 3.3. `max_parallel_workers`
+      * 3.4. `max_parallel_maintenance_workers`
+      * 3.5. `max_parallel_workers_per_gather`
+  * 4. Disk I/O Settings
+      * 4.1. `wal_buffers`
+      * 4.2. `checkpoint_completion_target`
+      * 4.3. `checkpoint_timeout`
+      * 4.4. `checkpoint_warning`
+      * 4.5. `commit_delay` & `commit_siblings`
+      * 4.6. `synchronous_commit`
+      * 4.7. Storage Subsystem Considerations
+  * 5. Query Optimization Settings
+      * 5.1. `default_statistics_target`
+      * 5.2. `random_page_cost`
+      * 5.3. `seq_page_cost`
+      * 5.4. `cpu_tuple_cost`, `cpu_index_tuple_cost`, `cpu_operator_cost`
+      * 5.5. `effective_io_concurrency`
+      * 5.6. `jit`
+  * 6. Connection and Security Settings
+      * 6.1. `listen_addresses`
+      * 6.2. `port`
+      * 6.3. `authentication methods (pg_hba.conf)`
+      * 6.4. `ssl` settings
+      * 6.5. `tcp_keepalives_idle`, `tcp_keepalives_interval`, `tcp_keepalives_count`
+  * 7. Logging and Monitoring
+      * 7.1. `logging_collector`
+      * 7.2. `log_directory`, `log_filename`, `log_rotation_age`, `log_rotation_size`
+      * 7.3. `log_statement`
+      * 7.4. `log_min_duration_statement`
+      * 7.5. Monitoring Tools
+  * 8. Autovacuum Settings
+      * 8.1. `autovacuum`
+      * 8.2. `autovacuum_max_workers`
+      * 8.3. `autovacuum_naptime`
+      * 8.4. `autovacuum_vacuum_scale_factor`, `autovacuum_analyze_scale_factor`
+      * 8.5. `autovacuum_vacuum_threshold`, `autovacuum_analyze_threshold`
+      * 8.6. Per-Table Autovacuum Settings
+  * 9. Write-Ahead Logging (WAL) Settings
+      * 9.1. `wal_level`
+      * 9.2. `wal_compression`
+      * 9.3. `wal_log_hints`
+      * 9.4. `max_wal_size`, `min_wal_size`
+      * 9.5. `wal_keep_size`
+  * 10. Example Configurations
+      * 10.1. Small OLTP Database
+      * 10.2. Large Data Warehouse
+      * 10.3. Mixed Workload Server
+  * 11. Hardware Considerations
+      * 11.1. CPU
+      * 11.2. Memory (RAM)
+      * 11.3. Storage (Disk I/O)
+  * 12. Database Design and Query Impact
+      * 12.1. Data Types
+      * 12.2. Indexing
+      * 12.3. Query Structure
+  * 13. Conclusion
 
 ## 1\. Introduction <a name="1-introduction"></a>
 
