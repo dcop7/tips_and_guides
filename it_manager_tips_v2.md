@@ -60,7 +60,7 @@ This repository contains information collected from various online sources and/o
 
 ## Detailed Tips and Guides for IT Managers
 
-### 1\. Master Technical Fundamentals (Critical Importance)
+### 1\. Master Technical Fundamentals *(Critical Importance)*
 
 **Description:**
 A strong understanding of the technical aspects of IT is paramount.  While you don't need to be the best coder or systems administrator on the team, you must grasp the core technologies, methodologies, and challenges your team faces daily. This technical literacy allows you to make informed decisions, understand project complexities, and communicate effectively with your technical staff.  It earns respect and facilitates better strategic planning.
