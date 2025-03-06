@@ -10,7 +10,7 @@ Effective PostgreSQL administration relies heavily on understanding and utilizin
 Table of Contents
 -----------------
 
-1.  [Checking for Locks](#1.checking-for-locks)
+1.  [Checking for Locks](#1.-checking-for-locks)
     
 2.  [Identifying Slow Queries](#identifying-slow-queries)
     
