@@ -171,13 +171,13 @@ Below is a simplified architectural diagram illustrating how Terraform interacts
 
 ```mermaid
 graph LR
-    A[Terraform CLI] --> B[Configuration Files (HCL)]
-    B --> C[State File (terraform.tfstate)]
+    A[Terraform CLI] --> B[Configuration Files - HCL]
+    B --> C[State File - terraform.tfstate]
     C --> D[Execution Plan]
     D --> E[Cloud Providers / APIs]
     E --> F[Infrastructure Resources]
     B --> G[Modules]
-    C --> H[Remote State Backend (S3, Terraform Cloud)]
+    C --> H[Remote State Backend - S3, Terraform Cloud]
 ```
 
 This diagram shows the flow from writing configuration files to updating the real-world infrastructure, emphasizing the role of the state file and modules.
