@@ -5,7 +5,7 @@ This repository contains information collected from various online sources and/o
 
 ## Table of Contents
 
-  * [1. Master Technical Fundamentals](#1-master-technical-fundamentals) *(Critical Importance)*
+  * [1. Master Technical Fundamentals](#1-master-technical-fundamentals)
   * [2. Cultivate Excellent Communication](https://www.google.com/url?sa=E&source=gmail&q=#2-cultivate-excellent-communication) *(Critical Importance)*
   * [3. Practice Active Listening](https://www.google.com/url?sa=E&source=gmail&q=#3-practice-active-listening) *(Critical Importance)*
   * [4. Set Clear Expectations and Goals](https://www.google.com/url?sa=E&source=gmail&q=#4-set-clear-expectations-and-goals) *(Critical Importance)*
@@ -60,7 +60,7 @@ This repository contains information collected from various online sources and/o
 
 ## Detailed Tips and Guides for IT Managers
 
-### 1\. Master Technical Fundamentals *(Critical Importance)*
+### 1\. Master Technical Fundamentals
 
 **Description:**
 A strong understanding of the technical aspects of IT is paramount.  While you don't need to be the best coder or systems administrator on the team, you must grasp the core technologies, methodologies, and challenges your team faces daily. This technical literacy allows you to make informed decisions, understand project complexities, and communicate effectively with your technical staff.  It earns respect and facilitates better strategic planning.
