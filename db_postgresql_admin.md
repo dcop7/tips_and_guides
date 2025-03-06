@@ -10,21 +10,21 @@ Effective PostgreSQL administration relies heavily on understanding and utilizin
 Table of Contents
 -----------------
 
-1.  [Checking for Locks](https://www.google.com/url?sa=E&source=gmail&q=#checking-for-locks)
+1.  [Checking for Locks](#checking-for-locks)
     
-2.  [Identifying Slow Queries](https://www.google.com/url?sa=E&source=gmail&q=#identifying-slow-queries)
+2.  [Identifying Slow Queries](#identifying-slow-queries)
     
-3.  [Detecting Long-Running Queries](https://www.google.com/url?sa=E&source=gmail&q=#detecting-long-running-queries)
+3.  [Detecting Long-Running Queries](#detecting-long-running-queries)
     
-4.  [Transaction Wraparound Management](https://www.google.com/url?sa=E&source=gmail&q=#transaction-wraparound-management)
+4.  [Transaction Wraparound Management](#transaction-wraparound-management)
     
-5.  [Monitoring Connections](https://www.google.com/url?sa=E&source=gmail&q=#monitoring-connections)
+5.  [Monitoring Connections](#monitoring-connections)
     
-6.  [Analyzing Disk Space Usage](https://www.google.com/url?sa=E&source=gmail&q=#analyzing-disk-space-usage)
+6.  [Analyzing Disk Space Usage](#analyzing-disk-space-usage)
     
-7.  [Examining PostgreSQL Logs](https://www.google.com/url?sa=E&source=gmail&q=#examining-postgresql-logs)
+7.  [Examining PostgreSQL Logs](#examining-postgresql-logs)
     
-8.  [Conclusion](https://www.google.com/url?sa=E&source=gmail&q=#conclusion)
+8.  [Conclusion](#conclusion)
     
 
 1\. Checking for Locks
