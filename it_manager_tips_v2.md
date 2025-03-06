@@ -5,7 +5,7 @@ This repository contains information collected from various online sources and/o
 
 ## Table of Contents
 
-  * [1. Master Technical Fundamentals](#1-master-technical-fundamentals-*(Critical-Importance)*)
+  * [1. Master Technical Fundamentals](#1-master-technical-fundamentals-(Critical-Importance))
   * [2. Cultivate Excellent Communication](https://www.google.com/url?sa=E&source=gmail&q=#2-cultivate-excellent-communication) *(Critical Importance)*
   * [3. Practice Active Listening](https://www.google.com/url?sa=E&source=gmail&q=#3-practice-active-listening) *(Critical Importance)*
   * [4. Set Clear Expectations and Goals](https://www.google.com/url?sa=E&source=gmail&q=#4-set-clear-expectations-and-goals) *(Critical Importance)*
