@@ -6,55 +6,55 @@ This repository contains information collected from various online sources and/o
 ## Table of Contents
 
   * [1. Master Technical Fundamentals](#1-master-technical-fundamentals-Critical-Importance)
-  * [2. Cultivate Excellent Communication](https://www.google.com/url?sa=E&source=gmail&q=#2-cultivate-excellent-communication) *(Critical Importance)*
-  * [3. Practice Active Listening](https://www.google.com/url?sa=E&source=gmail&q=#3-practice-active-listening) *(Critical Importance)*
-  * [4. Set Clear Expectations and Goals](https://www.google.com/url?sa=E&source=gmail&q=#4-set-clear-expectations-and-goals) *(Critical Importance)*
-  * [5. Delegate Effectively](https://www.google.com/url?sa=E&source=gmail&q=#5-delegate-effectively) *(Critical Importance)*
-  * [6. Provide Regular and Constructive Feedback](https://www.google.com/url?sa=E&source=gmail&q=#6-provide-regular-and-constructive-feedback) *(Critical Importance)*
-  * [7. Recognize and Reward Achievements](https://www.google.com/url?sa=E&source=gmail&q=#7-recognize-and-reward-achievements) *(High Importance)*
-  * [8. Foster a Positive and Inclusive Team Environment](https://www.google.com/url?sa=E&source=gmail&q=#8-foster-a-positive-and-inclusive-team-environment) *(High Importance)*
-  * [9. Encourage Professional Development](https://www.google.com/url?sa=E&source=gmail&q=#9-encourage-professional-development) *(High Importance)*
-  * [10. Embrace Continuous Learning](https://www.google.com/url?sa=E&source=gmail&q=#10-embrace-continuous-learning) *(High Importance)*
-  * [11. Be Decisive and Accountable](https://www.google.com/url?sa=E&source=gmail&q=#11-be-decisive-and-accountable) *(High Importance)*
-  * [12. Manage Time Efficiently](https://www.google.com/url?sa=E&source=gmail&q=#12-manage-time-efficiently) *(High Importance)*
-  * [13. Prioritize Tasks Strategically](https://www.google.com/url?sa=E&source=gmail&q=#13-prioritize-tasks-strategically) *(High Importance)*
-  * [14. Develop Problem-Solving Skills](https://www.google.com/url?sa=E&source=gmail&q=#14-develop-problem-solving-skills) *(High Importance)*
-  * [15. Learn Conflict Resolution Techniques](https://www.google.com/url?sa=E&source=gmail&q=#15-learn-conflict-resolution-techniques) *(High Importance)*
-  * [16. Build Trust and Transparency](https://www.google.com/url?sa=E&source=gmail&q=#16-build-trust-and-transparency) *(High Importance)*
-  * [17. Show Empathy and Understanding](https://www.google.com/url?sa=E&source=gmail&q=#17-show-empathy-and-understanding) *(High Importance)*
-  * [18. Adapt to Change and Innovation](https://www.google.com/url?sa=E&source=gmail&q=#18-adapt-to-change-and-innovation) *(Medium-High Importance)*
-  * [19. Promote Collaboration and Teamwork](https://www.google.com/url?sa=E&source=gmail&q=#19-promote-collaboration-and-teamwork) *(Medium-High Importance)*
-  * [20. Empower Your Team Members](https://www.google.com/url?sa=E&source=gmail&q=#20-empower-your-team-members) *(Medium-High Importance)*
-  * [21. Protect Team Focus Time](https://www.google.com/url?sa=E&source=gmail&q=#21-protect-team-focus-time) *(Medium-High Importance)*
-  * [22. Champion Work-Life Balance](https://www.google.com/url?sa=E&source=gmail&q=#22-champion-work-life-balance) *(Medium-High Importance)*
-  * [23. Understand Individual Motivations](https://www.google.com/url?sa=E&source=gmail&q=#23-understand-individual-motivations) *(Medium-High Importance)*
-  * [24. Conduct Effective Meetings](https://www.google.com/url?sa=E&source=gmail&q=#24-conduct-effective-meetings) *(Medium Importance)*
-  * [25. Master Performance Management](https://www.google.com/url?sa=E&source=gmail&q=#25-master-performance-management) *(Medium Importance)*
-  * [26. Develop Mentoring Skills](https://www.google.com/url?sa=E&source=gmail&q=#26-develop-mentoring-skills) *(Medium Importance)*
-  * [27. Advocate for Your Team](https://www.google.com/url?sa=E&source=gmail&q=#27-advocate-for-your-team) *(Medium Importance)*
-  * [28. Manage Resources Wisely](https://www.google.com/url?sa=E&source=gmail&q=#28-manage-resources-wisely) *(Medium Importance)*
-  * [29. Understand Project Management Basics](https://www.google.com/url?sa=E&source=gmail&q=#29-understand-project-management-basics) *(Medium Importance)*
-  * [30. Learn to Say No](https://www.google.com/url?sa=E&source=gmail&q=#30-learn-to-say-no) *(Medium Importance)*
-  * [31. Stay Organized](https://www.google.com/url?sa=E&source=gmail&q=#31-stay-organized) *(Medium Importance)*
-  * [32. Be Approachable and Available](https://www.google.com/url?sa=E&source=gmail&q=#32-be-approachable-and-available) *(Medium Importance)*
-  * [33. Lead by Example](https://www.google.com/url?sa=E&source=gmail&q=#33-lead-by-example) *(Medium Importance)*
-  * [34. Develop Your Emotional Intelligence](https://www.google.com/url?sa=E&source=gmail&q=#34-develop-your-emotional-intelligence) *(Medium Importance)*
-  * [35. Embrace Data-Driven Decision Making](https://www.google.com/url?sa=E&source=gmail&q=#35-embrace-data-driven-decision-making) *(Medium Importance)*
-  * [36. Learn Negotiation Skills](https://www.google.com/url?sa=E&source=gmail&q=#36-learn-negotiation-skills) *(Medium Importance)*
-  * [37. Network and Build Relationships](https://www.google.com/url?sa=E&source=gmail&q=#37-network-and-build-relationships) *(Medium Importance)*
-  * [38. Understand Business Strategy](https://www.google.com/url?sa=E&source=gmail&q=#38-understand-business-strategy) *(Medium Importance)*
-  * [39. Manage Upwards Effectively](https://www.google.com/url?sa=E&source=gmail&q=#39-manage-upwards-effectively) *(Medium Importance)*
-  * [40. Develop Presentation Skills](https://www.google.com/url?sa=E&source=gmail&q=#40-develop-presentation-skills) *(Medium Importance)*
-  * [41. Learn Basic Financial Management](https://www.google.com/url?sa=E&source=gmail&q=#41-learn-basic-financial-management) *(Low-Medium Importance)*
-  * [42. Understand Legal and Compliance Issues](https://www.google.com/url?sa=E&source=gmail&q=#42-understand-legal-and-compliance-issues) *(Low-Medium Importance)*
-  * [43. Use Technology to Your Advantage](https://www.google.com/url?sa=E&source=gmail&q=#43-use-technology-to-your-advantage) *(Low-Medium Importance)*
-  * [44. Seek Feedback on Your Own Performance](https://www.google.com/url?sa=E&source=gmail&q=#44-seek-feedback-on-your-own-performance) *(Low-Medium Importance)*
-  * [45. Document Processes and Procedures](https://www.google.com/url?sa=E&source=gmail&q=#45-document-processes-and-procedures) *(Low-Medium Importance)*
-  * [46. Celebrate Team Milestones](https://www.google.com/url?sa=E&source=gmail&q=#46-celebrate-team-milestones) *(Low-Medium Importance)*
-  * [47. Stay Calm Under Pressure](https://www.google.com/url?sa=E&source=gmail&q=#47-stay-calm-under-pressure) *(Low-Medium Importance)*
-  * [48. Be Punctual and Respectful of Time](https://www.google.com/url?sa=E&source=gmail&q=#48-be-punctual-and-respectful-of-time) *(Low Importance)*
-  * [49. Maintain a Positive Attitude](https://www.google.com/url?sa=E&source=gmail&q=#49-maintain-a-positive-attitude) *(Low Importance)*
-  * [50. Practice Self-Care](https://www.google.com/url?sa=E&source=gmail&q=#50-practice-self-care) *(Low Importance)*
+  * [2. Cultivate Excellent Communication](#2-cultivate-excellent-communication-Critical-Importance)
+  * [3. Practice Active Listening](#3-practice-active-listening-Critical-Importance)
+  * [4. Set Clear Expectations and Goals](#4-set-clear-expectations-and-goals-Critical-Importance)
+  * [5. Delegate Effectively](#5-delegate-effectively-Critical-Importance)
+  * [6. Provide Regular and Constructive Feedback](#6-provide-regular-and-constructive-feedback-Critical-Importance)
+  * [7. Recognize and Reward Achievements](#7-recognize-and-reward-achievements-High-Importance)
+  * [8. Foster a Positive and Inclusive Team Environment](#8-foster-a-positive-and-inclusive-team-environment-High-Importance)
+  * [9. Encourage Professional Development](#9-encourage-professional-development-High-Importance)
+  * [10. Embrace Continuous Learning](#10-embrace-continuous-learning-High-Importance)
+  * [11. Be Decisive and Accountable](#11-be-decisive-and-accountable-High-Importance)
+  * [12. Manage Time Efficiently](#12-manage-time-efficiently-High-Importance)
+  * [13. Prioritize Tasks Strategically](#13-prioritize-tasks-strategically-High-Importance)
+  * [14. Develop Problem-Solving Skills](#14-develop-problem-solving-skills-High-Importance)
+  * [15. Learn Conflict Resolution Techniques](#15-learn-conflict-resolution-techniques-High-Importance)
+  * [16. Build Trust and Transparency](#16-build-trust-and-transparency-High-Importance)
+  * [17. Show Empathy and Understanding](#17-show-empathy-and-understanding-High-Importance)
+  * [18. Adapt to Change and Innovation](#18-adapt-to-change-and-innovation-Medium-High-Importance)
+  * [19. Promote Collaboration and Teamwork](#19-promote-collaboration-and-teamwork-Medium-High-Importance)
+  * [20. Empower Your Team Members](#20-empower-your-team-members-Medium-High-Importance)
+  * [21. Protect Team Focus Time](#21-protect-team-focus-time-Medium-High-Importance)
+  * [22. Champion Work-Life Balance](#22-champion-work-life-balance-Medium-High-Importance)
+  * [23. Understand Individual Motivations](#23-understand-individual-motivations-Medium-High-Importance)
+  * [24. Conduct Effective Meetings](#24-conduct-effective-meetings-Medium-Importance)
+  * [25. Master Performance Management](#25-master-performance-management-Medium-Importance)
+  * [26. Develop Mentoring Skills](#26-develop-mentoring-skills-Medium-Importance)
+  * [27. Advocate for Your Team](#27-advocate-for-your-team-Medium-Importance)
+  * [28. Manage Resources Wisely](#28-manage-resources-wisely-Medium-Importance)
+  * [29. Understand Project Management Basics](#29-understand-project-management-basics-Medium-Importance)
+  * [30. Learn to Say No](#30-learn-to-say-no-Medium-Importance)
+  * [31. Stay Organized](#31-stay-organized-Medium-Importance)
+  * [32. Be Approachable and Available](#32-be-approachable-and-available-Medium-Importance)
+  * [33. Lead by Example](#33-lead-by-example-Medium-Importance)
+  * [34. Develop Your Emotional Intelligence](#34-develop-your-emotional-intelligence-Medium-Importance)
+  * [35. Embrace Data-Driven Decision Making](#35-embrace-data-driven-decision-making-Medium-Importance)
+  * [36. Learn Negotiation Skills](#36-learn-negotiation-skills-Medium-Importance)
+  * [37. Network and Build Relationships](#37-network-and-build-relationships-Medium-Importance)
+  * [38. Understand Business Strategy](#38-understand-business-strategy-Medium-Importance)
+  * [39. Manage Upwards Effectively](#39-manage-upwards-effectively-Medium-Importance)
+  * [40. Develop Presentation Skills](#40-develop-presentation-skills-Medium-Importance)
+  * [41. Learn Basic Financial Management](#41-learn-basic-financial-management-Low-Medium-Importance)
+  * [42. Understand Legal and Compliance Issues](#42-understand-legal-and-compliance-issues-Low-Medium-Importance)
+  * [43. Use Technology to Your Advantage](#43-use-technology-to-your-advantage-Low-Medium-Importance)
+  * [44. Seek Feedback on Your Own Performance](#44-seek-feedback-on-your-own-performance-Low-Medium-Importance)
+  * [45. Document Processes and Procedures](#45-document-processes-and-procedures-Low-Medium-Importance)
+  * [46. Celebrate Team Milestones](#46-celebrate-team-milestones-Low-Medium-Importance)
+  * [47. Stay Calm Under Pressure](#47-stay-calm-under-pressure-Low-Medium-Importance)
+  * [48. Be Punctual and Respectful of Time](#48-be-punctual-and-respectful-of-time-Low-Importance)
+  * [49. Maintain a Positive Attitude](#49-maintain-a-positive-attitude-Low-Importance)
+  * [50. Practice Self-Care](#50-practice-self-care-Low-Importance)
 
 -----
 
