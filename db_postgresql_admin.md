@@ -12,19 +12,19 @@ Table of Contents
 
 1.  [Checking for Locks](#1-checking-for-locks)
     
-2.  [Identifying Slow Queries](#identifying-slow-queries)
+2.  [Identifying Slow Queries](#2-identifying-slow-queries)
     
-3.  [Detecting Long-Running Queries](#detecting-long-running-queries)
+3.  [Detecting Long-Running Queries](#3-detecting-long-running-queries)
     
-4.  [Transaction Wraparound Management](#transaction-wraparound-management)
+4.  [Transaction Wraparound Management](#4-transaction-wraparound-management)
     
-5.  [Monitoring Connections](#monitoring-connections)
+5.  [Monitoring Connections](#5-monitoring-connections)
     
-6.  [Analyzing Disk Space Usage](#analyzing-disk-space-usage)
+6.  [Analyzing Disk Space Usage](#6-analyzing-disk-space-usage)
     
-7.  [Examining PostgreSQL Logs](#examining-postgresql-logs)
+7.  [Examining PostgreSQL Logs](#7-examining-postgresql-logs)
     
-8.  [Conclusion](#conclusion)
+8.  [Conclusion](#8-conclusion)
     
 
 1\. Checking for Locks
