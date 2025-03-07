@@ -5,8 +5,8 @@ This repository contains information collected from various online sources and/o
 
 Oracle Cloud Infrastructure (OCI) is designed to provide high performance, high security, and high availability for enterprise workloads. In this document, we provide a detailed examination of OCI’s architectural components, best practices for administration, and key considerations for database administrators (DBAs). We include diagrams, tables, and design examples to illustrate various concepts. This guide is structured as follows:
 
-- [1. Introduction](#introduction)
-- [2. OCI Core Architecture Overview](#oci-core-architecture-overview)
+- [1. Introduction](#1-introduction)
+- [2. OCI Core Architecture Overview](#2-oci-core-architecture-overview)
 - [3. OCI Regions, Availability Domains, and Fault Domains](#oci-regions-availability-domains-and-fault-domains)
 - [4. Compute Services](#compute-services)
 - [5. Networking Architecture](#networking-architecture)
