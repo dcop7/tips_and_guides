@@ -455,8 +455,8 @@ flowchart TD
     C --> D[Application Server Cluster]
     
     %% Database Tier (Private Subnet with High Availability)
-    D --> E[Primary Database (AD1)]
-    D --> F[Standby Database (AD2)]
+    D --> E[Primary Database - AD1]
+    D --> F[Standby Database - AD2]
     
     %% Supporting Components
     G[Object Storage: Backups & Logs] --- E
