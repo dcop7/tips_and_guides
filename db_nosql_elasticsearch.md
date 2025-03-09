@@ -8,56 +8,56 @@ This repository contains information collected from various online sources and/o
 > **Table of Contents**
 > 
 > 1. [Introduction](#1-introduction)
-> 2. [What is Elasticsearch?](#what-is-elasticsearch)
-> 3. [Core Architecture and Concepts](#core-architecture-and-concepts)
+> 2. [What is Elasticsearch?](#2-what-is-elasticsearch)
+> 3. [Core Architecture and Concepts](#3-core-architecture-and-concepts)
 >    - 3.1. Cluster and Node Architecture
 >    - 3.2. Indexing and Sharding
 >    - 3.3. Replication and High Availability
-> 4. [Installation and Initial Setup](#installation-and-initial-setup)
+> 4. [Installation and Initial Setup](#4-installation-and-initial-setup)
 >    - 4.1. System Requirements
 >    - 4.2. Installation Methods
 >    - 4.3. Configuration Files and Directories
-> 5. [Cluster Administration](#cluster-administration)
+> 5. [Cluster Administration](#5-cluster-administration)
 >    - 5.1. Cluster Health and State
 >    - 5.2. Node Roles and Responsibilities
 >    - 5.3. Cluster Coordination and Election
-> 6. [Index Administration and Data Modeling](#index-administration-and-data-modeling)
+> 6. [Index Administration and Data Modeling](#6-index-administration-and-data-modeling)
 >    - 6.1. Creating and Managing Indexes
 >    - 6.2. Index Templates and Mappings
 >    - 6.3. Analyzers and Tokenizers
-> 7. [Performance Tuning and Monitoring](#performance-tuning-and-monitoring)
+> 7. [Performance Tuning and Monitoring](#7-performance-tuning-and-monitoring)
 >    - 7.1. Monitoring Tools and Metrics
 >    - 7.2. Query Performance and Caching
 >    - 7.3. Resource Allocation and JVM Tuning
-> 8. [Security Administration](#security-administration)
+> 8. [Security Administration](#8-security-administration)
 >    - 8.1. User Authentication and Authorization
 >    - 8.2. Securing Communications
 >    - 8.3. Audit Logging and Compliance
-> 9. [Backup, Restore, and Disaster Recovery](#backup-restore-and-disaster-recovery)
+> 9. [Backup, Restore, and Disaster Recovery](#9-backup-restore-and-disaster-recovery)
 >    - 9.1. Snapshot and Restore Procedures
 >    - 9.2. Cluster Backups Strategies
 >    - 9.3. Disaster Recovery Planning
-> 10. [Troubleshooting and Maintenance](#troubleshooting-and-maintenance)
+> 10. [Troubleshooting and Maintenance](#10-troubleshooting-and-maintenance)
 >     - 10.1. Log Analysis and Debugging
 >     - 10.2. Common Pitfalls and How to Avoid Them
 >     - 10.3. Maintenance Best Practices
-> 11. [Upgrades and Scalability](#upgrades-and-scalability)
+> 11. [Upgrades and Scalability](#11-upgrades-and-scalability)
 >     - 11.1. Rolling Upgrades
 >     - 11.2. Scaling Out the Cluster
 >     - 11.3. Elastic vs. In-House Solutions
-> 12. [Integrations and Ecosystem](#integrations-and-ecosystem)
+> 12. [Integrations and Ecosystem](#12-integrations-and-ecosystem)
 >     - 12.1. Integration with Logstash and Kibana
 >     - 12.2. Beats and Ingestion Pipelines
 >     - 12.3. Third-Party Tools and Plugins
-> 13. [Best Practices and Operational Considerations](#best-practices-and-operational-considerations)
+> 13. [Best Practices and Operational Considerations](#13-best-practices-and-operational-considerations)
 >     - 13.1. Security and Compliance Best Practices
 >     - 13.2. Performance and Resource Optimization
 >     - 13.3. Future-Proofing Your Deployment
-> 14. [Appendices](#appendices)
+> 14. [Appendices](#14-appendices)
 >     - 14.1. Glossary
 >     - 14.2. Useful Commands and Scripts
 >     - 14.3. Additional Resources
-> 15. [Conclusion](#conclusion)
+> 15. [Conclusion](#15-conclusion)
 
 ---
 
