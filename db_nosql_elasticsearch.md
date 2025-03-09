@@ -7,7 +7,7 @@ This repository contains information collected from various online sources and/o
 
 > **Table of Contents**
 > 
-> 1. [Introduction](#1.-introduction)
+> 1. [Introduction](#1-introduction)
 > 2. [What is Elasticsearch?](#what-is-elasticsearch)
 > 3. [Core Architecture and Concepts](#core-architecture-and-concepts)
 >    - 3.1. Cluster and Node Architecture
