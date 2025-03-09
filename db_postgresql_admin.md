@@ -23,7 +23,7 @@ This repository contains information collected from various online sources and/o
    - [Logical vs. Physical Backups](#logical-vs-physical-backups)  
    - [Point-in-Time Recovery (PITR)](#point-in-time-recovery-pitr)  
    - [Automating Backup Processes](#automating-backup-processes)  
-8. [Logging, Auditing, and Troubleshooting](#logging,-auditing,-and,-troubleshooting)  
+8. [Logging, Auditing, and Troubleshooting](#logging-auditing-and-troubleshooting)  
    - [Configuring PostgreSQL Logs](#configuring-postgresql-logs)  
    - [Log Analysis Tools and Techniques](#log-analysis-tools-and-techniques)  
 9. [Hardware-Based System Configuration Tuning](#hardware-based-system-configuration-tuning)  
