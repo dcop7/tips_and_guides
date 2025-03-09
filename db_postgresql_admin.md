@@ -4,10 +4,10 @@ This repository contains information collected from various online sources and/o
 # PostgreSQL Administration: A Comprehensive Guide
 
 **Table of Contents**  
-1. [Introduction](#1-introduction)  
-2. [Understanding PostgreSQL: Architecture & Core Concepts](#2-understanding-postgresql-architecture--core-concepts)  
-3. [Installation and Initial Configuration](#3-installation-and-initial-configuration)  
-4. [Best Practices for PostgreSQL Administration](#4-best-practices-for-postgresql-administration)  
+1. [Introduction](#introduction)  
+2. [Understanding PostgreSQL: Architecture & Core Concepts](#understanding-postgresql-architecture--core-concepts)  
+3. [Installation and Initial Configuration](#installation-and-initial-configuration)  
+4. [Best Practices for PostgreSQL Administration](#best-practices-for-postgresql-administration)  
    - [Security Best Practices](#security-best-practices)  
    - [Maintenance and Routine Tasks](#maintenance-and-routine-tasks)  
    - [Monitoring and Alerting](#monitoring-and-alerting)  
