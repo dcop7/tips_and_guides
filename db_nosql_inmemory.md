@@ -7,9 +7,9 @@ This document provides a very detailed description of in‑memory databases (IMD
 
 **Table of Contents**
 
-1. [Introduction](#introduction)
-2. [Overview of In‑Memory Databases](#overview-of-in-memory-databases)
-   - 2.1 [Definition and History](#definition-and-history)
+1. [Introduction](#1-introduction)
+2. [Overview of In‑Memory Databases](#2-overview-of-in-memory-databases)
+   - 2.1 [Definition and History](#2-1-definition-and-history)
    - 2.2 [Key Characteristics](#key-characteristics)
 3. [Core Architecture and Design Principles](#core-architecture-and-design-principles)
    - 3.1 [Memory-Centric Data Structures](#memory-centric-data-structures)
