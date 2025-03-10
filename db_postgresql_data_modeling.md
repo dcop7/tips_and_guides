@@ -117,7 +117,7 @@ Imagine a retail system that manages customers, orders, products, and payments. 
 - **Product:** Lists available products.
 - **Payment:** Tracks payment transactions.
 
-Below is a corrected Mermaid diagram illustrating a normalized ER model for this retail system:
+Mermaid diagram illustrating a normalized ER model for this retail system:
 
 ```mermaid
 erDiagram
@@ -265,7 +265,7 @@ Normalization structures a relational database into normal forms to reduce redun
 
 ### Mermaid Diagram for a Normalized Schema
 
-Below is a corrected Mermaid diagram representing a normalized order management system:
+Mermaid diagram representing a normalized order management system:
 
 ```mermaid
 erDiagram
@@ -328,7 +328,7 @@ Denormalization introduces redundancy intentionally to improve read performance.
 
 ### Mermaid Diagram for a Denormalized Schema
 
-Below is a corrected Mermaid diagram illustrating a denormalized order summary table:
+Mermaid diagram illustrating a denormalized order summary table:
 
 ```mermaid
 erDiagram
