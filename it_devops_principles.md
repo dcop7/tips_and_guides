@@ -4,7 +4,7 @@ This repository contains information collected from various online sources and/o
 # Table of contents
 
 ## The Paramount Importance of a DevOps Culture in a Company
-1. [Accelerated Time to Market and Innovation](#1--accelerated-time-to-market-and-innovation)
+1. [Accelerated Time to Market and Innovation](#1.--accelerated-time-to-market-and-innovation)
 2. [Improved Reliability and Stability](#improved-reliability-and-stability)
 3. [Higher Quality Software](#higher-quality-software)
 4. [Enhanced Collaboration and Communication](#enhanced-collaboration-and-communication)
