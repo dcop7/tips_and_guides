@@ -33,7 +33,7 @@ In essence, a lack of DevOps culture perpetuates inefficiency, instability, conf
 # Table of contents
 
 ## DevOps Key Principles
-1. [Collaboration and Communication](#1---collaboration-and-communication)
+1. [1. Collaboration and Communication](#1-collaboration-and-communication)
 2. [Blameless Culture](#blameless-culture)
 3. [Automation](#automation)
 4. [Continuous Integration (CI)](#continuous-integration-ci)
