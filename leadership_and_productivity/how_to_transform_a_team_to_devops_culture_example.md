@@ -7,7 +7,7 @@ Okay, ATeam, let's outline a concrete plan to transform your current workflow an
 
 We'll assume you are starting with a traditional or partially agile workflow, with some separation between development, QA, and operations tasks.
 
-Here is your detailed plan:
+Here is your detailed plan.
 
 ## Table of Contents
 
