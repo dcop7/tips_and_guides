@@ -7,7 +7,7 @@ Effective delegation is a critical skill for IT leaders and managers. It not onl
 
 ## Table of Contents
 
-  * [Why Delegate in IT?](why-delegate-in-it)
+  * [Why Delegate in IT?](#why-delegate-in-it)
       * [Improves Efficiency](improves-efficiency)
       * [Develops Your Team](develops-your-team)
       * [Inspires Creativity](inspires-creativity)
