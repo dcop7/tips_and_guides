@@ -5,450 +5,108 @@ This repository contains information collected from various online sources and/o
 
 # PostgreSQL Developer Guide: The Essential Reference
 
-This guide covers everything a developer needs to work effectively with PostgreSQL — from writing your first SELECT to mastering advanced concurrency, MVCC internals, and performance tuning through query design. It is intentionally **not** an administration guide. The focus is on data modelling, querying, data integrity, and understanding how PostgreSQL behaves under the hood from an application perspective.
+This guide teaches PostgreSQL from the ground up, organised as a training curriculum. It progresses naturally from the first time you touch a database to the internals that make you dangerous in production. Each concept builds on the previous one.
 
-Each topic is covered at three levels: **Beginner**, **Intermediate**, and **Advanced**, each followed by a dedicated **Common Errors** sub-section with real-world scenarios and root-cause explanations.
+**How to read this guide:**
+- Work through sections in order if you are learning
+- Jump to any section as a reference if you already know the basics
+- Every section includes a **Common Errors** sub-section — read these even if you think you know the topic
 
 ---
 
 ## Table of Contents
 
-- [Core Concepts: ACID & MVCC](#core-concepts-acid--mvcc)
-- [Tables & Columns](#tables--columns)
-- [Primary Keys](#primary-keys)
-- [Foreign Keys](#foreign-keys)
-- [SELECT: Querying Data](#select-querying-data)
-- [Filtering: WHERE, BETWEEN, IN, LIKE, IS NULL](#filtering-where-between-in-like-is-null)
-- [Sorting: ORDER BY](#sorting-order-by)
-- [Aggregation: GROUP BY, HAVING, aggregate functions](#aggregation-group-by-having-aggregate-functions)
-- [JOINs: INNER, LEFT, RIGHT, FULL, CROSS, SELF](#joins-inner-left-right-full-cross-self)
-- [Subqueries & CTEs](#subqueries--ctes)
-- [INSERT](#insert)
-- [UPDATE](#update)
-- [DELETE & TRUNCATE](#delete--truncate)
-- [Transactions](#transactions)
-- [Locks](#locks)
-- [Functions & Stored Procedures](#functions--stored-procedures)
-- [Triggers](#triggers)
-- [Indexes](#indexes)
-- [VACUUM & Bloat](#vacuum--bloat)
-- [Window Functions](#window-functions)
-- [EXPLAIN & Query Planning](#explain--query-planning)
+### 🟢 Part I — Beginner
+1. [Tables & Columns](#1-tables--columns)
+2. [Primary Keys](#2-primary-keys)
+3. [SELECT — Querying Data](#3-select--querying-data)
+4. [Filtering — WHERE, BETWEEN, IN, LIKE, IS NULL](#4-filtering--where-between-in-like-is-null)
+5. [Sorting — ORDER BY](#5-sorting--order-by)
+6. [INSERT — Adding Data](#6-insert--adding-data)
+7. [UPDATE — Modifying Data](#7-update--modifying-data)
+8. [DELETE & TRUNCATE — Removing Data](#8-delete--truncate--removing-data)
+9. [Foreign Keys](#9-foreign-keys)
+10. [JOINs — Combining Tables](#10-joins--combining-tables)
+11. [Aggregation — GROUP BY, HAVING & Aggregate Functions](#11-aggregation--group-by-having--aggregate-functions)
+
+### 🟡 Part II — Intermediate
+12. [Subqueries & CTEs](#12-subqueries--ctes)
+13. [Indexes](#13-indexes)
+14. [Transactions](#14-transactions)
+15. [Locks](#15-locks)
+16. [Functions & Stored Procedures](#16-functions--stored-procedures)
+17. [Triggers](#17-triggers)
+18. [VACUUM & Bloat](#18-vacuum--bloat)
+
+### 🔴 Part III — Advanced
+19. [Window Functions](#19-window-functions)
+20. [EXPLAIN & Query Planning](#20-explain--query-planning)
+21. [ACID & Transactions — Deep Dive](#21-acid--transactions--deep-dive)
+22. [MVCC — Multi-Version Concurrency Control](#22-mvcc--multi-version-concurrency-control)
+23. [Table Partitioning](#23-table-partitioning)
+24. [Advanced Locking & Concurrency Patterns](#24-advanced-locking--concurrency-patterns)
+25. [Advanced Functions & Extensibility](#25-advanced-functions--extensibility)
+
+### 📋 Quick Reference Card
 
 ---
 
-## Core Concepts: ACID & MVCC
+# 🟢 Part I — Beginner
 
-Understanding ACID and MVCC is foundational. They determine *why* PostgreSQL behaves the way it does when multiple users access and modify data concurrently.
+This part assumes you have never written a SQL query. By the end you will be able to create tables, insert data, query it in various ways, and understand how tables relate to each other.
 
 ---
+
+## 1. Tables & Columns
+
+A **database** organises data into **tables**. A table is like a spreadsheet: it has named **columns** (the fields) and **rows** (the data). Every column has a **data type** that defines what kind of value it stores.
 
 ### Beginner
 
-#### ACID
-
-ACID is an acronym that describes the four guarantees every transaction in PostgreSQL honours:
-
-| Property | Meaning |
-|---|---|
-| **Atomicity** | A transaction is all-or-nothing. If any part fails, the entire transaction is rolled back. |
-| **Consistency** | A transaction takes the database from one valid state to another. Constraints, rules, and triggers are always enforced. |
-| **Isolation** | Concurrent transactions behave as if they run serially. One transaction does not see the uncommitted work of another. |
-| **Durability** | Once a transaction is committed, it survives crashes — it is written to durable storage via the Write-Ahead Log (WAL). |
-
-**Example — Atomicity in practice:**
-
-```sql
-BEGIN;
-
-UPDATE accounts SET balance = balance - 500 WHERE id = 1;
-UPDATE accounts SET balance = balance + 500 WHERE id = 2;
-
-COMMIT;
-```
-
-If the second UPDATE fails (e.g. account 2 does not exist), neither change takes effect. The money is not lost.
-
-```sql
-BEGIN;
-
-UPDATE accounts SET balance = balance - 500 WHERE id = 1;
--- Simulating an application crash here: connection drops
--- Result: transaction is automatically ROLLED BACK
--- account 1 balance is unchanged
-```
-
-#### MVCC (Multi-Version Concurrency Control)
-
-PostgreSQL does **not** use simple read/write locks to handle concurrency. Instead, it uses MVCC: when a row is updated or deleted, PostgreSQL creates a **new version** of that row rather than overwriting the old one.
-
-- Readers never block writers.
-- Writers never block readers.
-- Each transaction sees a **snapshot** of the data as it existed when the transaction (or statement) began.
-
-**Conceptual example:**
-
-```
-Time 0: Row exists → (id=1, name='Alice', xmin=100, xmax=null)
-
-Transaction A (xid=200) starts: SELECT * FROM users WHERE id=1
-  → sees 'Alice'  (xmax is null = row is visible)
-
-Transaction B (xid=201) runs: UPDATE users SET name='Bob' WHERE id=1
-  → marks old row: xmax=201
-  → inserts new row: (id=1, name='Bob', xmin=201, xmax=null)
-
-Transaction A (still running): SELECT * FROM users WHERE id=1
-  → STILL sees 'Alice'  (snapshot taken at xid=200, B not yet committed)
-```
-
-This is the default **Read Committed** isolation level — each statement sees committed data at its start. At higher isolation levels (Repeatable Read, Serializable) the snapshot is taken once per transaction.
-
----
-
-### ⚠️ Beginner — Common Errors
-
-#### Error 1: Assuming a failed statement rolls back the entire transaction
-
-```sql
-BEGIN;
-INSERT INTO orders (id, product) VALUES (1, 'Widget');
-INSERT INTO orders (id, product) VALUES (1, 'Gadget'); -- duplicate key, FAILS
--- Developer assumes transaction is still alive
-INSERT INTO orders (id, product) VALUES (2, 'Gizmo');
-COMMIT;
-```
-
-**What actually happens:** After the second INSERT fails, the transaction enters an **error state**. The third INSERT and the COMMIT are both silently ignored (you get `ERROR: current transaction is aborted`). The entire transaction rolls back.
-
-**Fix:** Check for errors after each statement, or use `SAVEPOINT`:
-
-```sql
-BEGIN;
-INSERT INTO orders (id, product) VALUES (1, 'Widget');
-
-SAVEPOINT sp1;
-INSERT INTO orders (id, product) VALUES (1, 'Gadget'); -- fails
-ROLLBACK TO SAVEPOINT sp1;  -- undo only this step
-
-INSERT INTO orders (id, product) VALUES (2, 'Gizmo'); -- succeeds
-COMMIT;
-```
-
-#### Error 2: Believing READ COMMITTED prevents all anomalies
-
-```sql
--- Session A
-BEGIN;
-SELECT count(*) FROM invoices WHERE status = 'pending'; -- returns 5
-
--- Session B (commits between A's two statements)
-UPDATE invoices SET status = 'paid' WHERE id = 99;
-COMMIT;
-
--- Session A (same transaction, second statement)
-SELECT count(*) FROM invoices WHERE status = 'pending'; -- returns 4 !!
-```
-
-**Cause:** Under `READ COMMITTED`, each statement gets a fresh snapshot. This is a **non-repeatable read**. If you need consistency across statements within a transaction, use `REPEATABLE READ` or `SERIALIZABLE`.
-
-#### Error 3: Not understanding that MVCC causes table bloat
-
-Developers often run mass updates and then wonder why table size exploded.
-
-```sql
--- This creates 1,000,000 dead tuples
-UPDATE large_table SET last_seen = NOW(); -- updates every row
-```
-
-**Cause:** Every updated row leaves a dead tuple behind. VACUUM must reclaim this space. Without regular vacuuming, the table grows unboundedly. See the [VACUUM & Bloat](#vacuum--bloat) section.
-
----
-
-### Intermediate
-
-#### Isolation Levels
-
-PostgreSQL supports four standard isolation levels. The higher the level, the more anomalies are prevented, but the higher the chance of serialization failures.
-
-| Isolation Level | Dirty Read | Non-Repeatable Read | Phantom Read | Serialization Anomaly |
-|---|---|---|---|---|
-| READ UNCOMMITTED | Not possible* | Possible | Possible | Possible |
-| READ COMMITTED (default) | Not possible | Possible | Possible | Possible |
-| REPEATABLE READ | Not possible | Not possible | Not possible* | Possible |
-| SERIALIZABLE | Not possible | Not possible | Not possible | Not possible |
-
-*PostgreSQL's implementation prevents dirty reads even at READ UNCOMMITTED.
-*PostgreSQL's REPEATABLE READ also prevents phantoms, which is stronger than the SQL standard requires.
-
-```sql
--- Set isolation level for a transaction
-BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-
-SELECT sum(amount) FROM payments WHERE account_id = 42;
--- do some application logic...
-SELECT sum(amount) FROM payments WHERE account_id = 42; -- guaranteed same result
-COMMIT;
-```
-
-#### MVCC and xmin/xmax internals
-
-You can directly inspect the hidden MVCC columns on any table:
-
-```sql
-SELECT xmin, xmax, id, name FROM users;
-```
-
-```
- xmin | xmax | id | name
-------+------+----+------
-  100 |    0 |  1 | Alice
-  201 |    0 |  2 | Bob
-```
-
-- `xmin`: the transaction ID that **created** this row version
-- `xmax`: the transaction ID that **deleted or updated** this row version (0 = still live)
-
-```sql
--- Find rows that are dead (updated but not yet vacuumed)
--- These exist as old versions kept for MVCC consistency
-SELECT xmin, xmax, id FROM users WHERE xmax <> 0;
-```
-
-#### Transaction ID Wraparound Risk
-
-Transaction IDs are 32-bit integers. After ~2.1 billion transactions, they wrap around. PostgreSQL uses **freeze** mechanisms (via VACUUM FREEZE) to mark old tuples as "always visible" (xmin = FrozenXID) before wraparound occurs. Applications that hold very long transactions block this process.
-
-```sql
--- Check transaction age (admin view useful for developers to understand urgency)
-SELECT datname, age(datfrozenxid), datfrozenxid
-FROM pg_database
-ORDER BY age(datfrozenxid) DESC;
-```
-
-If `age()` approaches 2,000,000,000, the database will start refusing writes to protect itself.
-
----
-
-### ⚠️ Intermediate — Common Errors
-
-#### Error 1: Using SERIALIZABLE without handling retry logic
-
-```python
-# Application code
-try:
-    conn.execute("BEGIN ISOLATION LEVEL SERIALIZABLE")
-    conn.execute("UPDATE seats SET reserved = true WHERE id = 5")
-    conn.execute("COMMIT")
-except Exception as e:
-    # Developer logs and gives up
-    log(e)
-```
-
-**Cause:** Serializable transactions can fail with `ERROR: could not serialize access due to concurrent update`. This is **expected behaviour**, not a bug. The application must retry.
-
-```python
-for attempt in range(3):
-    try:
-        conn.execute("BEGIN ISOLATION LEVEL SERIALIZABLE")
-        conn.execute("UPDATE seats SET reserved = true WHERE id = 5")
-        conn.execute("COMMIT")
-        break
-    except SerializationFailure:
-        conn.execute("ROLLBACK")
-        time.sleep(0.1 * attempt)
-```
-
-#### Error 2: Long-running transactions blocking VACUUM
-
-```sql
--- Session A opens a transaction and forgets to close it
-BEGIN;
-SELECT * FROM reports WHERE year = 2020;
--- Application does slow processing for 2 hours... never commits
-
--- Meanwhile, VACUUM cannot clean up dead tuples older than Session A's snapshot
--- Table bloat accumulates
-```
-
-**Detection:**
-```sql
-SELECT pid, now() - pg_stat_activity.query_start AS duration, query, state
-FROM pg_stat_activity
-WHERE (now() - pg_stat_activity.query_start) > interval '5 minutes'
-  AND state != 'idle';
-```
-
-**Fix:** Set `idle_in_transaction_session_timeout` in your application or `postgresql.conf`:
-```sql
-SET idle_in_transaction_session_timeout = '5min';
-```
-
-#### Error 3: Assuming two SELECTs in the same READ COMMITTED transaction are consistent
-
-```sql
--- Checking inventory before reserving
-BEGIN;
-SELECT stock FROM products WHERE id = 1; -- returns 3
--- Application thinks it's safe to proceed
--- Another session reserves the last 3 units and commits HERE
-UPDATE products SET stock = stock - 3 WHERE id = 1; -- stock goes to -3 !!
-COMMIT;
-```
-
-**Fix:** Use `SELECT ... FOR UPDATE` to lock the row, or use `REPEATABLE READ` isolation level.
-
-```sql
-BEGIN;
-SELECT stock FROM products WHERE id = 1 FOR UPDATE; -- acquires row lock
--- No other transaction can modify this row until we commit
-UPDATE products SET stock = stock - 3 WHERE id = 1 WHERE stock >= 3;
-COMMIT;
-```
-
----
-
-### Advanced
-
-#### Predicate Locking (Serializable Snapshot Isolation)
-
-PostgreSQL's SERIALIZABLE isolation level is implemented via **Serializable Snapshot Isolation (SSI)**, not traditional locking. SSI tracks read/write dependencies between transactions and aborts one if a dangerous cycle is detected.
-
-```sql
--- Classic write skew example: two doctors both go off-call
--- Table: on_call (doctor_id, on_duty BOOLEAN)
--- Invariant: at least one doctor must be on duty
-
--- Session A
-BEGIN ISOLATION LEVEL SERIALIZABLE;
-SELECT count(*) FROM on_call WHERE on_duty = true; -- sees 2
-UPDATE on_call SET on_duty = false WHERE doctor_id = 1;
-COMMIT; -- may succeed or fail with serialization error
-
--- Session B (concurrent)
-BEGIN ISOLATION LEVEL SERIALIZABLE;
-SELECT count(*) FROM on_call WHERE on_duty = true; -- also sees 2
-UPDATE on_call SET on_duty = false WHERE doctor_id = 2;
-COMMIT; -- one of these two will get: ERROR: could not serialize access
-```
-
-This anomaly **cannot** be caught by REPEATABLE READ. Only SERIALIZABLE prevents it correctly.
-
-#### MVCC and Visibility Rules — Deep Dive
-
-Row visibility is determined by these rules (simplified):
-1. A row is visible if `xmin` is committed AND (`xmax` is 0 OR `xmax` is not committed in my snapshot)
-2. A row is invisible if `xmin` is not committed in my snapshot
-3. A row is invisible if `xmax` is committed in my snapshot
-
-You can observe this directly:
-
-```sql
--- See all row versions (including dead ones) using pageinspect extension
-CREATE EXTENSION pageinspect;
-
-SELECT t_xmin, t_xmax, t_infomask, t_data
-FROM heap_page_items(get_raw_page('users', 0));
-```
-
-#### Deferrable Constraints and MVCC
-
-PostgreSQL allows constraints to be checked at the end of a transaction rather than per-statement:
-
-```sql
--- Create a deferred foreign key
-ALTER TABLE order_items
-  ADD CONSTRAINT fk_order
-  FOREIGN KEY (order_id) REFERENCES orders(id)
-  DEFERRABLE INITIALLY DEFERRED;
-
--- Now you can insert order_items before the parent order within one transaction
-BEGIN;
-INSERT INTO order_items (id, order_id, product) VALUES (1, 999, 'Widget');
-INSERT INTO orders (id, total) VALUES (999, 49.99);
-COMMIT; -- constraint checked HERE, both rows exist, passes
-```
-
----
-
-### ⚠️ Advanced — Common Errors
-
-#### Error 1: Misunderstanding SSI abort granularity
-
-```sql
--- Developer assumes only the "losing" transaction is aborted
--- In SSI, PostgreSQL may abort EITHER transaction in a dangerous cycle
--- You cannot predict which one will be rolled back
-```
-
-**Fix:** Always wrap serializable transactions in retry loops. Never assume a specific transaction will be the one to fail.
-
-#### Error 2: Relying on application-level MVCC without understanding snapshot timing
-
-```sql
--- Developer runs this in READ COMMITTED:
-BEGIN;
-SELECT id INTO TEMP tmp_ids FROM orders WHERE status = 'new';
--- large set of IDs captured
-
-UPDATE orders SET status = 'processing'
-WHERE id IN (SELECT id FROM tmp_ids);
--- This UPDATE gets a NEW snapshot — new 'processing' orders committed
--- between the SELECT and UPDATE are NOT in tmp_ids
--- but the UPDATE may still process rows committed after the SELECT
-COMMIT;
-```
-
-**Cause:** Under READ COMMITTED, the UPDATE's WHERE clause is evaluated with a fresh snapshot, not the snapshot from the initial SELECT. Use `REPEATABLE READ` or capture IDs with `FOR UPDATE`.
-
-#### Error 3: Believing TRUNCATE is transactional — it is, but with a caveat
-
-```sql
-BEGIN;
-TRUNCATE large_table;
--- developer reconsiders
-ROLLBACK;
--- Table rows are restored — TRUNCATE IS transactional in PostgreSQL
-```
-
-This is correct and works. However, TRUNCATE acquires an `ACCESS EXCLUSIVE` lock, which blocks **all** other access including SELECTs for the duration. In a large system, this can cause cascading timeouts.
-
----
-
-## Tables & Columns
-
-### Beginner
-
-A **table** is the fundamental unit of data storage in PostgreSQL. A **column** defines a named, typed attribute of each row.
-
-#### Creating a Table
+#### Creating Your First Table
 
 ```sql
 CREATE TABLE customers (
-    id          SERIAL PRIMARY KEY,
-    name        VARCHAR(100) NOT NULL,
-    email       VARCHAR(255) NOT NULL UNIQUE,
-    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    is_active   BOOLEAN      NOT NULL DEFAULT TRUE
+    id         SERIAL PRIMARY KEY,
+    name       VARCHAR(100) NOT NULL,
+    email      VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    is_active  BOOLEAN      NOT NULL DEFAULT TRUE
 );
 ```
 
+Each line defines one column: `column_name  data_type  constraints`.
+
 #### Common Data Types
 
-| Type | Use Case | Example |
+| Type | Use For | Example Value |
 |---|---|---|
-| `SERIAL` / `BIGSERIAL` | Auto-incrementing integer IDs | `id SERIAL` |
-| `INTEGER` / `BIGINT` | Whole numbers | `quantity INTEGER` |
-| `NUMERIC(p,s)` | Exact decimal (money, prices) | `price NUMERIC(10,2)` |
-| `FLOAT8` / `REAL` | Approximate floating point | `latitude FLOAT8` |
-| `VARCHAR(n)` | Variable-length string with limit | `name VARCHAR(100)` |
-| `TEXT` | Unlimited string | `description TEXT` |
-| `BOOLEAN` | True/false | `is_active BOOLEAN` |
-| `DATE` | Calendar date | `birth_date DATE` |
-| `TIMESTAMPTZ` | Timestamp with timezone | `created_at TIMESTAMPTZ` |
-| `UUID` | Universally unique identifier | `id UUID` |
-| `JSONB` | Binary JSON (indexed, preferred) | `metadata JSONB` |
-| `ARRAY` | Array of any type | `tags TEXT[]` |
+| `SERIAL` / `BIGSERIAL` | Auto-incrementing integer IDs | `1`, `2`, `3` |
+| `INTEGER` / `BIGINT` | Whole numbers | `42`, `-7` |
+| `NUMERIC(p,s)` | Exact decimals — money, prices | `19.99`, `0.10` |
+| `FLOAT8` / `REAL` | Approximate floating point — coordinates | `51.5074` |
+| `VARCHAR(n)` | Text with a maximum length | `'Alice'` |
+| `TEXT` | Unlimited text | `'Any length string'` |
+| `BOOLEAN` | True or false | `TRUE`, `FALSE` |
+| `DATE` | Calendar date | `'2024-01-15'` |
+| `TIMESTAMPTZ` | Date + time + timezone | `'2024-01-15 14:30:00+01'` |
+| `UUID` | Universally unique identifier | `'550e8400-e29b...'` |
+| `JSONB` | Structured JSON data (binary, indexed) | `'{"colour": "red"}'` |
+
+#### Column Constraints
+
+Constraints enforce rules at the database level — they protect your data even if the application has a bug.
+
+```sql
+CREATE TABLE products (
+    id          SERIAL PRIMARY KEY,             -- unique, not null, auto-increment
+    sku         VARCHAR(50)  NOT NULL UNIQUE,   -- must exist, must be unique
+    name        VARCHAR(200) NOT NULL,          -- must exist
+    price       NUMERIC(10,2) NOT NULL CHECK (price >= 0),  -- must be zero or positive
+    stock       INTEGER NOT NULL DEFAULT 0,     -- defaults to 0 if not provided
+    description TEXT                            -- optional (nullable)
+);
+```
 
 #### Modifying Tables
 
@@ -456,10 +114,10 @@ CREATE TABLE customers (
 -- Add a column
 ALTER TABLE customers ADD COLUMN phone VARCHAR(20);
 
--- Add a column with a default (non-blocking on PostgreSQL 11+)
+-- Add a column with a default value
 ALTER TABLE customers ADD COLUMN loyalty_points INTEGER NOT NULL DEFAULT 0;
 
--- Change a column type
+-- Change a column's data type
 ALTER TABLE customers ALTER COLUMN phone TYPE TEXT;
 
 -- Rename a column
@@ -475,27 +133,14 @@ ALTER TABLE customers RENAME TO clients;
 #### Dropping Tables
 
 ```sql
--- Drop table (fails if other tables reference it via FK)
-DROP TABLE customers;
+-- Drop the table (fails if other tables reference it)
+DROP TABLE products;
 
--- Drop table and all dependent objects (FKs, views, etc.)
-DROP TABLE customers CASCADE;
+-- Drop the table and everything that depends on it (foreign keys, views, etc.)
+DROP TABLE products CASCADE;
 
--- Safe drop (no error if it doesn't exist)
-DROP TABLE IF EXISTS customers;
-```
-
-#### Column Constraints
-
-```sql
-CREATE TABLE products (
-    id          SERIAL PRIMARY KEY,
-    sku         VARCHAR(50)  NOT NULL UNIQUE,
-    name        VARCHAR(200) NOT NULL,
-    price       NUMERIC(10,2) NOT NULL CHECK (price >= 0),
-    stock       INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
-    category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL
-);
+-- Only drop if it exists (prevents error in scripts)
+DROP TABLE IF EXISTS products;
 ```
 
 ---
@@ -505,328 +150,125 @@ CREATE TABLE products (
 #### Error 1: Using FLOAT for monetary values
 
 ```sql
--- WRONG
-CREATE TABLE invoices (
-    amount FLOAT8  -- floating point, WILL accumulate rounding errors
-);
+-- WRONG — floating point arithmetic is imprecise
+CREATE TABLE invoices (amount FLOAT8);
 
 INSERT INTO invoices (amount) VALUES (0.1 + 0.2);
-SELECT amount FROM invoices; -- returns 0.30000000000000004
+SELECT amount FROM invoices;
+-- Returns: 0.30000000000000004  ← not what you want for money
 ```
 
-**Fix:** Always use `NUMERIC` for money:
+**Fix:** Always use `NUMERIC` for anything financial.
 
 ```sql
-CREATE TABLE invoices (
-    amount NUMERIC(12, 2) -- exact, no rounding errors
+CREATE TABLE invoices (amount NUMERIC(12, 2)); -- exact: 0.10 + 0.20 = 0.30
+```
+
+#### Error 2: Using VARCHAR(255) as a default habit
+
+```sql
+-- Common but misguided pattern
+CREATE TABLE articles (
+    title   VARCHAR(255),  -- why 255? arbitrary, adds no real rule
+    content VARCHAR(255)   -- articles are longer than 255 characters!
 );
 ```
 
-#### Error 2: Using VARCHAR(255) everywhere as a cargo cult
+In PostgreSQL, `VARCHAR(n)` and `TEXT` have identical performance and storage. Use `TEXT` for open-ended strings. Use `VARCHAR(n)` **only** when you have a genuine business rule — for example, a country code that must be exactly 2 characters: `code CHAR(2)`.
+
+#### Error 3: Adding a NOT NULL column without a default to a populated table
 
 ```sql
--- Common but unnecessary
-CREATE TABLE users (
-    username VARCHAR(255), -- why 255? Arbitrary. Adds no real constraint.
-    bio      VARCHAR(255)  -- bios can be long, this is too restrictive
-);
+-- This fails if the table already has rows — they have no value for the new column
+ALTER TABLE orders ADD COLUMN region TEXT NOT NULL;
+-- ERROR: column "region" contains null values
 ```
 
-**Issue:** In PostgreSQL, `VARCHAR(n)` and `TEXT` have identical storage and performance. Use `TEXT` for open-ended strings, and use `VARCHAR(n)` only when you have a genuine business rule enforcing a maximum length (e.g. `code CHAR(3)`).
-
-#### Error 3: Using SERIAL instead of IDENTITY (PostgreSQL 10+)
+**Fix:** Provide a default, or add nullable first then backfill:
 
 ```sql
--- Old style (still works, but SERIAL is syntactic sugar with side effects)
-CREATE TABLE events (id SERIAL PRIMARY KEY);
--- This implicitly creates a SEQUENCE and sets a DEFAULT — both are separate objects
--- Ownership can get confused, especially with pg_dump/restore
+-- Option A: add with a temporary default
+ALTER TABLE orders ADD COLUMN region TEXT NOT NULL DEFAULT 'unknown';
+
+-- Option B: add nullable, fill in, then add constraint
+ALTER TABLE orders ADD COLUMN region TEXT;
+UPDATE orders SET region = 'unknown' WHERE region IS NULL;
+ALTER TABLE orders ALTER COLUMN region SET NOT NULL;
 ```
 
-**Modern approach:**
-```sql
-CREATE TABLE events (
-    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-    -- or: GENERATED BY DEFAULT AS IDENTITY (allows explicit insert of id)
-);
-```
-
-#### Error 4: Adding NOT NULL column to a large table naively
+#### Error 4: Using reserved words as column names
 
 ```sql
--- This will lock the entire table and rewrite it on older PostgreSQL versions
-ALTER TABLE large_table ADD COLUMN new_col TEXT NOT NULL DEFAULT 'default_value';
-```
-
-On PostgreSQL 11+, adding a column with a constant default is instant (the default is stored in metadata). On older versions, this rewrites the entire table. Always check your version.
-
----
-
-### Intermediate
-
-#### Table Inheritance
-
-```sql
-CREATE TABLE vehicles (
-    id      SERIAL PRIMARY KEY,
-    make    TEXT NOT NULL,
-    model   TEXT NOT NULL,
-    year    INTEGER NOT NULL
+CREATE TABLE sessions (
+    user    INTEGER,   -- ERROR: "user" is a reserved keyword
+    order   INTEGER    -- ERROR: "order" is a reserved keyword
 );
 
-CREATE TABLE cars (
-    doors INTEGER NOT NULL
-) INHERITS (vehicles);
-
-CREATE TABLE trucks (
-    payload_tons NUMERIC(6,2) NOT NULL
-) INHERITS (vehicles);
-
--- Query all vehicles (includes cars and trucks)
-SELECT * FROM vehicles;
-
--- Query only cars
-SELECT * FROM ONLY vehicles; -- excludes child tables
-SELECT * FROM cars;
+-- Workaround: quote them (but avoid this pattern entirely)
+CREATE TABLE sessions ("user" INTEGER, "order" INTEGER);
+-- Now you must always quote: SELECT "user" FROM sessions;
 ```
 
-#### Generated Columns
+**Fix:** Choose names that do not collide with SQL keywords: `user_id`, `order_id`.
 
-```sql
-CREATE TABLE order_items (
-    id          SERIAL PRIMARY KEY,
-    quantity    INTEGER NOT NULL,
-    unit_price  NUMERIC(10,2) NOT NULL,
-    total_price NUMERIC(10,2) GENERATED ALWAYS AS (quantity * unit_price) STORED
-);
-
-INSERT INTO order_items (quantity, unit_price) VALUES (3, 9.99);
-SELECT total_price FROM order_items; -- returns 29.97, computed automatically
-```
-
-#### Partial Indexes via CHECK (Table Partitioning Preview)
-
-```sql
--- Table with a CHECK constraint to partition data logically
-CREATE TABLE logs_2024 (
-    CHECK (logged_at >= '2024-01-01' AND logged_at < '2025-01-01')
-) INHERITS (logs);
-```
-
-#### Column-level Permissions
-
-```sql
--- Grant SELECT on specific columns only
-GRANT SELECT (id, name, email) ON customers TO reporting_role;
--- reporting_role cannot see the password column
-```
-
----
-
-### ⚠️ Intermediate — Common Errors
-
-#### Error 1: Forgetting that CHECK constraints are not validated on existing data when added
-
-```sql
-ALTER TABLE products ADD CONSTRAINT chk_price CHECK (price > 0);
--- This WILL check existing rows and fail if any row has price <= 0
-```
-
-But:
-```sql
-ALTER TABLE products ADD CONSTRAINT chk_price CHECK (price > 0) NOT VALID;
--- Adds constraint without scanning existing rows (fast, non-blocking)
--- Existing rows are NOT validated
-
--- Later, validate existing data (can run concurrently):
-ALTER TABLE products VALIDATE CONSTRAINT chk_price;
-```
-
-#### Error 2: Dropping a column and expecting immediate space reclamation
+#### Error 5: Dropping a column expecting immediate space reclamation
 
 ```sql
 ALTER TABLE events DROP COLUMN old_payload;
--- The column is logically removed (invisible to queries)
--- But the data still physically exists on disk until VACUUM FULL or pg_repack
-```
-
-**Fix:** After dropping columns, run `VACUUM FULL table_name` or use `pg_repack` extension if you need to reclaim disk space without a full table lock.
-
-#### Error 3: Naming columns with reserved words
-
-```sql
--- This will fail or require quoting everywhere
-CREATE TABLE sessions (
-    user    INTEGER, -- "user" is a reserved word
-    order   INTEGER  -- "order" is a reserved word
-);
-
--- Workaround (but avoid reserved names entirely):
-CREATE TABLE sessions (
-    "user"  INTEGER,
-    "order" INTEGER
-);
--- Now you must always quote these in queries: SELECT "user" FROM sessions;
+-- Column is now invisible to queries — but data still physically exists on disk
+-- Space is NOT returned to the OS until VACUUM FULL or pg_repack
 ```
 
 ---
 
-### Advanced
+## 2. Primary Keys
 
-#### Table Storage Parameters
-
-```sql
--- Optimise for append-only workloads (logs, events)
-CREATE TABLE event_log (
-    id         BIGSERIAL PRIMARY KEY,
-    event_type TEXT NOT NULL,
-    payload    JSONB,
-    logged_at  TIMESTAMPTZ DEFAULT NOW()
-)
-WITH (
-    fillfactor = 100,      -- pack pages fully (no space reserved for updates)
-    autovacuum_enabled = true,
-    autovacuum_vacuum_scale_factor = 0.01  -- vacuum when 1% of rows are dead
-);
-```
-
-```sql
--- For tables with heavy UPDATE workload, lower fillfactor so updates stay in-page
-CREATE TABLE sessions (
-    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id    INTEGER NOT NULL,
-    data       JSONB,
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-)
-WITH (fillfactor = 70); -- 30% of each page reserved for in-place HOT updates
-```
-
-#### TOAST (The Oversized-Attribute Storage Technique)
-
-When a column value exceeds ~2KB, PostgreSQL automatically stores it in a separate TOAST table. This is transparent to developers but has performance implications.
-
-```sql
--- Inspect TOAST table for a given table
-SELECT relname, reltoastrelid
-FROM pg_class
-WHERE relname = 'documents';
-
--- TOAST storage strategies per column
-ALTER TABLE documents ALTER COLUMN content SET STORAGE EXTENDED;
--- PLAIN:    no compression, no TOAST (only for small fixed types)
--- EXTENDED: compress first, then TOAST if needed (default for TEXT)
--- EXTERNAL: TOAST without compression (faster access, more disk)
--- MAIN:     compress, keep in-page if possible, TOAST as last resort
-```
-
-#### Declarative Table Partitioning
-
-```sql
--- Parent table (no data stored here)
-CREATE TABLE orders (
-    id          BIGSERIAL,
-    customer_id INTEGER NOT NULL,
-    total       NUMERIC(10,2) NOT NULL,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-) PARTITION BY RANGE (created_at);
-
--- Partitions
-CREATE TABLE orders_2023 PARTITION OF orders
-    FOR VALUES FROM ('2023-01-01') TO ('2024-01-01');
-
-CREATE TABLE orders_2024 PARTITION OF orders
-    FOR VALUES FROM ('2024-01-01') TO ('2025-01-01');
-
-CREATE TABLE orders_2025 PARTITION OF orders
-    FOR VALUES FROM ('2025-01-01') TO ('2026-01-01');
-
--- Default partition catches anything not matched
-CREATE TABLE orders_default PARTITION OF orders DEFAULT;
-
--- Query works transparently
-SELECT * FROM orders WHERE created_at >= '2024-06-01'; -- only scans orders_2024
-```
-
----
-
-### ⚠️ Advanced — Common Errors
-
-#### Error 1: Querying JSONB columns without indexes (performance disaster at scale)
-
-```sql
--- Without an index, this scans the entire table
-SELECT * FROM events WHERE payload->>'user_id' = '42';
-
--- Fix: create a GIN index on the entire JSONB column
-CREATE INDEX idx_events_payload ON events USING GIN (payload);
-
--- Or a more targeted expression index
-CREATE INDEX idx_events_user_id ON events ((payload->>'user_id'));
-```
-
-#### Error 2: Partition key not included in primary key
-
-```sql
--- This will fail on a partitioned table
-CREATE TABLE orders (
-    id         BIGSERIAL PRIMARY KEY, -- ERROR if partition key is not in PK
-    created_at TIMESTAMPTZ NOT NULL
-) PARTITION BY RANGE (created_at);
-
--- Fix: include the partition key in the primary key
-CREATE TABLE orders (
-    id         BIGSERIAL,
-    created_at TIMESTAMPTZ NOT NULL,
-    PRIMARY KEY (id, created_at)  -- created_at must be part of the PK
-) PARTITION BY RANGE (created_at);
-```
-
-#### Error 3: Using UNLOGGED tables for data you actually care about
-
-```sql
-CREATE UNLOGGED TABLE cache_data (
-    key   TEXT PRIMARY KEY,
-    value JSONB,
-    ttl   TIMESTAMPTZ
-);
--- Fast because writes skip WAL
--- BUT: ALL DATA IS LOST if PostgreSQL crashes or is uncleanly shut down
--- Suitable only for true ephemeral caches, never for session data you'd miss
-```
-
----
-
-## Primary Keys
+A **primary key** uniquely identifies each row in a table. It automatically enforces two rules: the value must be `NOT NULL` and must be `UNIQUE`. PostgreSQL creates a unique index to support it.
 
 ### Beginner
 
-A primary key uniquely identifies each row in a table. It enforces two constraints simultaneously: `UNIQUE` and `NOT NULL`. PostgreSQL automatically creates a unique index to support it.
-
 ```sql
 -- Integer surrogate key (most common)
-CREATE TABLE products (
-    id   SERIAL PRIMARY KEY,
-    name TEXT NOT NULL
+CREATE TABLE orders (
+    id          SERIAL PRIMARY KEY,
+    customer_id INTEGER NOT NULL,
+    total       NUMERIC(10,2) NOT NULL
 );
 
 -- UUID primary key (for distributed systems, avoids sequential guessability)
 CREATE TABLE sessions (
     id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id INTEGER NOT NULL
+    user_id INTEGER NOT NULL,
+    data    JSONB
 );
 
--- Natural key (when the business key is inherently unique)
+-- Natural key (the business value itself is unique and stable)
 CREATE TABLE currencies (
-    code TEXT PRIMARY KEY CHECK (length(code) = 3), -- 'USD', 'EUR', 'GBP'
+    code TEXT PRIMARY KEY CHECK (char_length(code) = 3), -- 'USD', 'EUR', 'GBP'
     name TEXT NOT NULL
 );
 
--- Composite primary key
+-- Composite primary key (when identity requires multiple columns)
 CREATE TABLE order_items (
-    order_id   INTEGER REFERENCES orders(id),
-    product_id INTEGER REFERENCES products(id),
+    order_id   INTEGER NOT NULL REFERENCES orders(id),
+    product_id INTEGER NOT NULL REFERENCES products(id),
     quantity   INTEGER NOT NULL,
-    PRIMARY KEY (order_id, product_id)
+    PRIMARY KEY (order_id, product_id)  -- combination must be unique
+);
+```
+
+#### SERIAL vs IDENTITY
+
+`SERIAL` is shorthand that PostgreSQL has supported for years. `IDENTITY` is the SQL-standard equivalent, available since PostgreSQL 10, and is cleaner:
+
+```sql
+-- Old style (SERIAL)
+CREATE TABLE events (id SERIAL PRIMARY KEY);
+
+-- Modern style (IDENTITY) — preferred
+CREATE TABLE events (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+    -- GENERATED BY DEFAULT allows explicit override (useful for imports)
 );
 ```
 
@@ -834,496 +276,91 @@ CREATE TABLE order_items (
 
 ### ⚠️ Beginner — Common Errors
 
-#### Error 1: Relying on SERIAL to be gap-free
+#### Error 1: Assuming primary key values are consecutive
 
 ```sql
 INSERT INTO products (name) VALUES ('Widget'); -- id = 1
 INSERT INTO products (name) VALUES ('Gadget'); -- id = 2
--- transaction rolls back
-INSERT INTO products (name) VALUES ('Thingamajig'); -- id = 3, NOT 2 again
+-- Transaction ROLLS BACK here
+INSERT INTO products (name) VALUES ('Thingamajig'); -- id = 3  ← NOT 2
 
-SELECT id FROM products; -- 1, 3  (gap at 2)
+SELECT id FROM products; -- returns: 1, 3  (gap at 2 — this is normal)
 ```
 
-**Cause:** Sequences increment even on rollback (they are non-transactional by design, to avoid bottlenecks). **Never** assume primary key values are consecutive.
+**Cause:** The underlying sequence increments even when a transaction rolls back. This is intentional — sequences are non-transactional to avoid becoming a bottleneck. **Never** assume IDs are consecutive or gap-free.
 
-#### Error 2: Using INT instead of BIGINT for high-volume tables
+#### Error 2: Using INTEGER instead of BIGINT on high-volume tables
 
 ```sql
-CREATE TABLE events (id SERIAL PRIMARY KEY); -- SERIAL = INTEGER, max ~2.1 billion
+CREATE TABLE events (id SERIAL PRIMARY KEY); -- SERIAL = INTEGER = max ~2.1 billion
 ```
 
-An application processing 1000 events/second exhausts a 32-bit serial in ~24 days. Always use `BIGSERIAL` for event logs, audit tables, and any table expected to grow large.
-
----
-
-### Intermediate
-
-#### Choosing Between SERIAL, IDENTITY, and UUID
-
-| Type | Pros | Cons |
-|---|---|---|
-| `SERIAL` / `BIGSERIAL` | Simple, fast, small (8 bytes for bigint) | Sequential = guessable, single point |
-| `IDENTITY` (PostgreSQL 10+) | SQL standard, cleaner ownership | Still sequential |
-| `UUID v4` | Non-guessable, distributed-safe | 16 bytes, random = index fragmentation |
-| `UUID v7` (PostgreSQL 17+ / extensions) | Non-guessable, time-ordered | Requires extension on older versions |
+An application processing 1,000 events per second fills a 32-bit integer in about 24 days. Use `BIGSERIAL` (max ~9.2 quintillion) for any table expected to grow large.
 
 ```sql
--- UUID v7 with pg_uuidv7 extension (time-ordered, index-friendly)
-CREATE EXTENSION IF NOT EXISTS pg_uuidv7;
-
-CREATE TABLE events (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
-    data JSONB
-);
+CREATE TABLE events (id BIGSERIAL PRIMARY KEY); -- safe for virtually any volume
 ```
 
-#### Adding / Replacing a Primary Key
-
-```sql
--- Remove old PK and add a new one
-ALTER TABLE legacy_table DROP CONSTRAINT legacy_table_pkey;
-ALTER TABLE legacy_table ADD PRIMARY KEY (new_id_column);
-
--- Add PK to a table that had none
-ALTER TABLE orphan_table ADD COLUMN id BIGINT GENERATED ALWAYS AS IDENTITY;
-ALTER TABLE orphan_table ADD PRIMARY KEY (id);
-```
-
----
-
-### ⚠️ Intermediate — Common Errors
-
-#### Error 1: Exposing sequential IDs in public URLs
+#### Error 3: Exposing sequential integer IDs in public-facing URLs
 
 ```
 GET /api/orders/1
-GET /api/orders/2
--- Attacker enumerates all orders trivially
+GET /api/orders/2  ← competitor enumerates all your orders trivially
 ```
 
-**Fix:** Use UUID primary keys, or add a separate public-facing UUID column while keeping integer PKs internally.
-
-#### Error 2: Composite PK with nullable columns
-
-```sql
-CREATE TABLE enrollments (
-    student_id  INTEGER,
-    course_id   INTEGER,
-    semester_id INTEGER,
-    PRIMARY KEY (student_id, course_id, semester_id)
-);
--- If semester_id is NULL, the PK constraint cannot enforce uniqueness
--- Two rows (1, 1, NULL) and (1, 1, NULL) would both be allowed
-```
-
-**Cause:** In SQL, `NULL != NULL`, so composite keys containing NULL values may permit duplicate "logical" rows. Make all PK columns `NOT NULL`.
+**Fix:** Use UUID primary keys, or keep integer PKs internally and add a separate UUID column for external references.
 
 ---
 
-### Advanced
+## 3. SELECT — Querying Data
 
-#### Index Fillfactor on Primary Key
-
-```sql
--- For tables with heavy updates, the PK index benefits from extra free space
--- to support HOT (Heap Only Tuple) updates
-CREATE TABLE users (
-    id         BIGSERIAL PRIMARY KEY,
-    last_login TIMESTAMPTZ
-);
-
--- Rebuild the PK index with lower fillfactor
-REINDEX TABLE users; -- default fillfactor 90 for B-tree
-
--- Or set at creation:
-CREATE UNIQUE INDEX users_pkey ON users(id) WITH (fillfactor = 80);
-ALTER TABLE users ADD CONSTRAINT users_pkey PRIMARY KEY USING INDEX users_pkey;
-```
-
-#### Deferred Primary Key Constraints
-
-```sql
--- Useful for bulk loads where intermediate states violate the PK
-CREATE TABLE staging (
-    id INTEGER,
-    data TEXT,
-    CONSTRAINT staging_pkey PRIMARY KEY (id) DEFERRABLE INITIALLY DEFERRED
-);
-
-BEGIN;
-INSERT INTO staging VALUES (1, 'a');
-INSERT INTO staging VALUES (1, 'b'); -- would normally violate PK immediately
-DELETE FROM staging WHERE data = 'a'; -- resolve the conflict before commit
-COMMIT; -- PK checked here, only id=1 with data='b' remains, passes
-```
-
----
-
-### ⚠️ Advanced — Common Errors
-
-#### Error 1: Not realising that the PK index supports all FK lookups from child tables
-
-Every `REFERENCES` pointing at a primary key relies on that PK index for performance. If the PK index becomes bloated, all FK-join queries slow down. Monitor PK index bloat with:
-
-```sql
-SELECT
-    schemaname, tablename, indexname,
-    pg_size_pretty(pg_relation_size(indexrelid)) AS index_size,
-    idx_scan, idx_tup_read, idx_tup_fetch
-FROM pg_stat_user_indexes
-WHERE indexname LIKE '%pkey%'
-ORDER BY pg_relation_size(indexrelid) DESC;
-```
-
----
-
-## Foreign Keys
+`SELECT` retrieves data from one or more tables. It is the most frequently used statement in SQL.
 
 ### Beginner
-
-A foreign key (FK) enforces **referential integrity**: a value in a child table must exist in the referenced parent table.
-
-```sql
-CREATE TABLE categories (
-    id   SERIAL PRIMARY KEY,
-    name TEXT NOT NULL
-);
-
-CREATE TABLE products (
-    id          SERIAL PRIMARY KEY,
-    name        TEXT NOT NULL,
-    category_id INTEGER NOT NULL REFERENCES categories(id)
-);
-
--- This will fail — category 999 does not exist
-INSERT INTO products (name, category_id) VALUES ('Widget', 999);
--- ERROR: insert or update on table "products" violates foreign key constraint
-```
-
-#### ON DELETE / ON UPDATE Actions
-
-```sql
-CREATE TABLE order_items (
-    id         SERIAL PRIMARY KEY,
-    order_id   INTEGER NOT NULL REFERENCES orders(id)
-        ON DELETE CASCADE    -- delete order_items when order is deleted
-        ON UPDATE CASCADE,   -- update FK value if parent PK changes (rare)
-    product_id INTEGER NOT NULL REFERENCES products(id)
-        ON DELETE RESTRICT,  -- prevent deleting a product that has order_items
-    quantity   INTEGER NOT NULL
-);
-```
-
-| Action | Behaviour |
-|---|---|
-| `RESTRICT` (default) | Prevent deletion/update of parent row if children exist |
-| `NO ACTION` | Like RESTRICT but checked at end of statement (or transaction if deferred) |
-| `CASCADE` | Automatically delete/update child rows |
-| `SET NULL` | Set FK column to NULL in child rows |
-| `SET DEFAULT` | Set FK column to its default value in child rows |
-
----
-
-### ⚠️ Beginner — Common Errors
-
-#### Error 1: Forgetting that FK checking locks the parent row
-
-```sql
--- Session A: deleting a category
-DELETE FROM categories WHERE id = 5; -- acquires ShareLock on referenced rows
-
--- Session B: inserting a product in that category simultaneously
-INSERT INTO products (name, category_id) VALUES ('New Product', 5);
--- Will wait or fail depending on timing
-```
-
-#### Error 2: Cascading deletes going further than expected
-
-```sql
--- Schema: customers → orders → order_items (all with CASCADE)
-DELETE FROM customers WHERE id = 1;
--- Deletes: the customer, ALL their orders, ALL order_items for those orders
--- Developer only intended to soft-delete the customer
-```
-
-**Fix:** Use `SET NULL` or a `deleted_at` soft-delete pattern instead of CASCADE on business-critical data.
-
-#### Error 3: Adding FK to a large table without CONCURRENT index creation
-
-```sql
--- This scans the entire table and holds an ACCESS SHARE lock during validation
-ALTER TABLE order_items ADD CONSTRAINT fk_order
-    FOREIGN KEY (order_id) REFERENCES orders(id);
-```
-
-**Fix for large tables:**
-```sql
--- Step 1: Add constraint as NOT VALID (no scan, instant)
-ALTER TABLE order_items ADD CONSTRAINT fk_order
-    FOREIGN KEY (order_id) REFERENCES orders(id) NOT VALID;
-
--- Step 2: Validate concurrently (shares lock, other reads/writes continue)
-ALTER TABLE order_items VALIDATE CONSTRAINT fk_order;
-```
-
----
-
-### Intermediate
-
-#### Indexing Foreign Keys (Critical for Performance)
-
-PostgreSQL automatically creates an index for the **referenced** column (the PK side) but does **NOT** automatically index the **referencing** column (the FK side). This causes full table scans on joins and catastrophic lock waits on cascades.
-
-```sql
--- Check for unindexed foreign keys
-SELECT
-    tc.table_name,
-    kcu.column_name,
-    ccu.table_name AS foreign_table,
-    ccu.column_name AS foreign_column
-FROM information_schema.table_constraints AS tc
-JOIN information_schema.key_column_usage AS kcu
-    ON tc.constraint_name = kcu.constraint_name
-JOIN information_schema.constraint_column_usage AS ccu
-    ON ccu.constraint_name = tc.constraint_name
-WHERE tc.constraint_type = 'FOREIGN KEY'
-  AND NOT EXISTS (
-    SELECT 1 FROM pg_index i
-    JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
-    WHERE i.indrelid = (tc.table_name)::regclass
-      AND a.attname = kcu.column_name
-  );
-```
-
-```sql
--- Always index FK columns
-CREATE INDEX idx_order_items_order_id    ON order_items(order_id);
-CREATE INDEX idx_order_items_product_id  ON order_items(product_id);
-```
-
-#### Self-Referential Foreign Keys
-
-```sql
--- Hierarchical data: employees with managers
-CREATE TABLE employees (
-    id         SERIAL PRIMARY KEY,
-    name       TEXT NOT NULL,
-    manager_id INTEGER REFERENCES employees(id) ON DELETE SET NULL
-);
-
-INSERT INTO employees (id, name, manager_id) VALUES
-    (1, 'Alice', NULL),    -- CEO
-    (2, 'Bob',   1),       -- reports to Alice
-    (3, 'Carol', 1),       -- reports to Alice
-    (4, 'Dave',  2);       -- reports to Bob
-
--- Recursive query to get full org chart
-WITH RECURSIVE org_chart AS (
-    SELECT id, name, manager_id, 0 AS depth
-    FROM employees WHERE manager_id IS NULL
-
-    UNION ALL
-
-    SELECT e.id, e.name, e.manager_id, oc.depth + 1
-    FROM employees e
-    JOIN org_chart oc ON e.manager_id = oc.id
-)
-SELECT depth, repeat('  ', depth) || name AS name FROM org_chart;
-```
-
----
-
-### ⚠️ Intermediate — Common Errors
-
-#### Error 1: Circular foreign key references
-
-```sql
-CREATE TABLE a (id SERIAL PRIMARY KEY, b_id INTEGER REFERENCES b(id));
-CREATE TABLE b (id SERIAL PRIMARY KEY, a_id INTEGER REFERENCES a(id));
--- ERROR: table "b" does not exist at the time of creating table "a"
-
--- Fix: use deferred constraints
-CREATE TABLE a (id SERIAL PRIMARY KEY, b_id INTEGER);
-CREATE TABLE b (id SERIAL PRIMARY KEY, a_id INTEGER);
-
-ALTER TABLE a ADD CONSTRAINT fk_a_b FOREIGN KEY (b_id) REFERENCES b(id) DEFERRABLE;
-ALTER TABLE b ADD CONSTRAINT fk_b_a FOREIGN KEY (a_id) REFERENCES a(id) DEFERRABLE;
-
-BEGIN;
-INSERT INTO a (id) VALUES (1);
-INSERT INTO b (id, a_id) VALUES (1, 1);
-UPDATE a SET b_id = 1 WHERE id = 1;
-COMMIT;
-```
-
-#### Error 2: ON DELETE CASCADE with soft-delete pattern — silent data loss
-
-```sql
--- Parent uses soft delete
-UPDATE customers SET deleted_at = NOW() WHERE id = 1;
--- Child table has CASCADE
-
--- Later, hard-purge script:
-DELETE FROM customers WHERE deleted_at < NOW() - INTERVAL '1 year';
--- This silently deletes ALL order_items for those customers via cascade
--- No error, no warning
-```
-
-**Fix:** Use `ON DELETE RESTRICT` and handle deletions explicitly in application code when the data is important.
-
----
-
-### Advanced
-
-#### Deferrable Foreign Keys for Bulk Operations
-
-```sql
--- Batch importing a graph of related objects
-ALTER TABLE order_items ALTER CONSTRAINT fk_order DEFERRABLE INITIALLY DEFERRED;
-
-BEGIN;
--- Insert items before their orders (unusual but sometimes needed in ETL)
-INSERT INTO order_items (order_id, product_id, quantity) VALUES (9001, 5, 2);
-INSERT INTO orders (id, customer_id, total) VALUES (9001, 42, 19.98);
-COMMIT; -- FK checked here, both rows now exist
-```
-
-#### Partial Foreign Keys with WHERE Clauses (workaround via trigger)
-
-PostgreSQL does not support partial foreign keys natively, but you can simulate them:
-
-```sql
--- Only enforce FK when status = 'assigned'
-CREATE OR REPLACE FUNCTION check_assignment_fk() RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.status = 'assigned' AND NEW.agent_id IS NOT NULL THEN
-        IF NOT EXISTS (SELECT 1 FROM agents WHERE id = NEW.agent_id) THEN
-            RAISE EXCEPTION 'agent_id % does not exist', NEW.agent_id;
-        END IF;
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_check_assignment_fk
-    BEFORE INSERT OR UPDATE ON tickets
-    FOR EACH ROW EXECUTE FUNCTION check_assignment_fk();
-```
-
----
-
-### ⚠️ Advanced — Common Errors
-
-#### Error 1: FK validation blocking production on large tables
-
-```sql
--- NEVER do this on a large table in production during peak hours
-ALTER TABLE billion_row_table ADD CONSTRAINT fk_ref
-    FOREIGN KEY (parent_id) REFERENCES parents(id);
--- This holds ShareRowExclusiveLock and scans the entire table
-```
-
-**Safe pattern:**
-```sql
--- Off-peak hours, step 1 (instant)
-ALTER TABLE billion_row_table ADD CONSTRAINT fk_ref
-    FOREIGN KEY (parent_id) REFERENCES parents(id) NOT VALID;
-
--- Any time, step 2 (concurrent, ShareUpdateExclusiveLock only)
-ALTER TABLE billion_row_table VALIDATE CONSTRAINT fk_ref;
-```
-
----
-
-## SELECT: Querying Data
-
-### Beginner
-
-`SELECT` retrieves data from one or more tables.
 
 ```sql
 -- All columns, all rows
 SELECT * FROM products;
 
--- Specific columns
+-- Specific columns only
 SELECT id, name, price FROM products;
 
--- With a computed expression
+-- Computed expression in a column
 SELECT name, price, price * 1.23 AS price_with_vat FROM products;
 
--- Distinct values
+-- Give columns friendlier names with aliases
+SELECT
+    id          AS product_id,
+    name        AS product_name,
+    price       AS unit_price
+FROM products;
+
+-- Remove duplicate rows
 SELECT DISTINCT category_id FROM products;
 
--- Limit rows returned
+-- Limit the number of rows returned
 SELECT * FROM products LIMIT 10;
 
--- Skip rows (pagination)
-SELECT * FROM products ORDER BY id LIMIT 10 OFFSET 20; -- page 3 of 10
+-- Skip rows (for pagination — page 3 at 10 rows per page)
+SELECT * FROM products ORDER BY id LIMIT 10 OFFSET 20;
 ```
 
-#### Column Aliases
+#### NULL Handling in SELECT
 
 ```sql
-SELECT
-    u.id                        AS user_id,
-    u.first_name || ' ' || u.last_name AS full_name,
-    count(o.id)                 AS order_count
-FROM users u
-LEFT JOIN orders o ON o.user_id = u.id
-GROUP BY u.id, u.first_name, u.last_name;
+-- Replace NULL with a fallback value
+SELECT id, COALESCE(nickname, first_name, 'Anonymous') AS display_name FROM users;
+
+-- Return NULL when two values are equal (avoids division by zero)
+SELECT revenue / NULLIF(visits, 0) AS revenue_per_visit FROM stats;
 ```
-
----
-
-### ⚠️ Beginner — Common Errors
-
-#### Error 1: Using SELECT * in production queries
-
-```sql
-SELECT * FROM orders; -- returns all columns including large JSONB, BYTEA blobs
-```
-
-**Problems:** transfers unnecessary data over the network, prevents index-only scans, breaks when columns are added/removed. Always name your columns explicitly in application queries.
-
-#### Error 2: Forgetting that string comparison is case-sensitive
-
-```sql
-SELECT * FROM users WHERE email = 'Alice@example.com';
--- Returns nothing if stored as 'alice@example.com'
-```
-
-**Fix:**
-```sql
-SELECT * FROM users WHERE lower(email) = lower('Alice@example.com');
--- Or store emails normalised (always lowercase) at insert time
--- Or use the citext extension: CREATE EXTENSION citext;
-```
-
-#### Error 3: OFFSET pagination is slow on large tables
-
-```sql
-SELECT * FROM events ORDER BY id LIMIT 20 OFFSET 100000;
--- PostgreSQL must scan and discard 100,000 rows to reach offset
-```
-
-**Fix: Keyset (cursor) pagination:**
-```sql
--- First page
-SELECT * FROM events ORDER BY id LIMIT 20;
--- Next page (pass last seen id from previous result)
-SELECT * FROM events WHERE id > 12345 ORDER BY id LIMIT 20;
-```
-
----
-
-### Intermediate
 
 #### CASE Expressions
 
 ```sql
+-- Derived column based on conditions
 SELECT
-    order_id,
+    id,
     total,
     CASE
         WHEN total >= 1000 THEN 'premium'
@@ -1332,7 +369,7 @@ SELECT
     END AS order_tier
 FROM orders;
 
--- Simple CASE
+-- Simple CASE (match on a single value)
 SELECT
     status,
     CASE status
@@ -1344,187 +381,79 @@ SELECT
 FROM orders;
 ```
 
-#### COALESCE and NULLIF
-
-```sql
--- COALESCE: return first non-null value
-SELECT COALESCE(nickname, first_name, 'Anonymous') AS display_name FROM users;
-
--- NULLIF: return NULL if two values are equal (useful to avoid division by zero)
-SELECT total_sales / NULLIF(num_transactions, 0) AS avg_transaction FROM stats;
-```
-
-#### DISTINCT ON (PostgreSQL extension)
-
-```sql
--- Get the most recent order per customer
-SELECT DISTINCT ON (customer_id)
-    customer_id, id AS order_id, created_at, total
-FROM orders
-ORDER BY customer_id, created_at DESC;
--- For each customer_id, returns the row with the latest created_at
-```
-
 ---
 
-### ⚠️ Intermediate — Common Errors
+### ⚠️ Beginner — Common Errors
 
-#### Error 1: Misunderstanding DISTINCT vs DISTINCT ON
+#### Error 1: Using SELECT * in application queries
 
 ```sql
--- DISTINCT: eliminates rows where ALL selected columns are identical
-SELECT DISTINCT customer_id, status FROM orders;
--- Returns all unique (customer_id, status) combinations
-
--- DISTINCT ON: for each group defined by ON columns, keeps one row
-SELECT DISTINCT ON (customer_id) customer_id, status, created_at
-FROM orders ORDER BY customer_id, created_at DESC;
--- Returns one row per customer: the most recent order
+SELECT * FROM orders; -- returns ALL columns: blobs, JSON, internal flags, everything
 ```
 
-#### Error 2: Using NOT IN with a subquery that can return NULL
+**Problems:**
+- Transfers unnecessary data across the network
+- Prevents index-only scans (the engine must visit the heap for every row)
+- Breaks silently when columns are added, removed, or reordered
+
+**Fix:** Always name the columns you actually need.
 
 ```sql
-SELECT * FROM products
-WHERE category_id NOT IN (SELECT id FROM categories WHERE is_active = false);
--- If ANY row in categories has id = NULL, the entire NOT IN returns empty set!
--- Because: x NOT IN (1, 2, NULL) = x <> 1 AND x <> 2 AND x <> NULL
--- x <> NULL is always NULL (unknown), so the whole expression is NULL = false
+SELECT id, customer_id, total, status, created_at FROM orders;
 ```
 
-**Fix:** Use `NOT EXISTS`:
+#### Error 2: String comparisons are case-sensitive by default
+
 ```sql
-SELECT * FROM products p
-WHERE NOT EXISTS (
-    SELECT 1 FROM categories c
-    WHERE c.id = p.category_id AND c.is_active = false
-);
+SELECT * FROM users WHERE email = 'Alice@Example.com';
+-- Returns nothing if stored as 'alice@example.com'
 ```
 
-#### Error 3: Assuming ORDER BY in subquery is preserved
+**Fix:** Normalise on insert, or use `lower()`:
 
 ```sql
--- WRONG assumption: the outer query will receive rows in order
+SELECT * FROM users WHERE lower(email) = lower('Alice@Example.com');
+-- Or store emails always in lowercase at insert time
+```
+
+#### Error 3: OFFSET pagination is slow on large tables
+
+```sql
+SELECT * FROM events ORDER BY id LIMIT 20 OFFSET 100000;
+-- PostgreSQL scans and discards 100,000 rows to reach offset 100,000
+-- Gets progressively slower on each page
+```
+
+**Fix:** Use keyset (cursor) pagination — remember the last seen value:
+
+```sql
+-- First page
+SELECT * FROM events ORDER BY id LIMIT 20;
+
+-- Next page (pass the last id returned by the previous page)
+SELECT * FROM events WHERE id > 12345 ORDER BY id LIMIT 20;
+-- Instant — uses the primary key index regardless of how far you paginate
+```
+
+#### Error 4: Assuming ORDER BY inside a subquery is preserved
+
+```sql
+-- WRONG: the outer query may receive rows in any order
 SELECT * FROM (
     SELECT * FROM events ORDER BY created_at DESC
 ) sub
 LIMIT 10;
--- The ORDER BY inside the subquery may be ignored by the planner
 ```
 
-**Fix:** Apply ORDER BY in the outermost query:
+**Fix:** Apply `ORDER BY` in the outermost query:
+
 ```sql
 SELECT * FROM events ORDER BY created_at DESC LIMIT 10;
 ```
 
 ---
 
-### Advanced
-
-#### Lateral Joins
-
-```sql
--- Get last 3 orders per customer (impossible with standard JOIN)
-SELECT c.id, c.name, recent.order_id, recent.total
-FROM customers c
-CROSS JOIN LATERAL (
-    SELECT id AS order_id, total
-    FROM orders
-    WHERE customer_id = c.id
-    ORDER BY created_at DESC
-    LIMIT 3
-) AS recent;
-```
-
-#### Recursive CTEs
-
-```sql
--- Find all subordinates of employee 1 (any depth)
-WITH RECURSIVE subordinates AS (
-    -- Base case
-    SELECT id, name, manager_id FROM employees WHERE id = 1
-
-    UNION ALL
-
-    -- Recursive case
-    SELECT e.id, e.name, e.manager_id
-    FROM employees e
-    INNER JOIN subordinates s ON e.manager_id = s.id
-)
-SELECT * FROM subordinates;
-```
-
-#### Index-Only Scans
-
-```sql
--- Create a covering index to enable index-only scans
-CREATE INDEX idx_orders_customer_total
-    ON orders (customer_id) INCLUDE (total, created_at);
-
--- This query can be answered from the index alone (no heap access)
-SELECT customer_id, total, created_at
-FROM orders
-WHERE customer_id = 42;
-```
-
----
-
-### ⚠️ Advanced — Common Errors
-
-#### Error 1: Recursive CTE without a termination condition
-
-```sql
--- DANGER: no cycle detection
-WITH RECURSIVE path AS (
-    SELECT id, parent_id FROM categories WHERE id = 1
-    UNION ALL
-    SELECT c.id, c.parent_id FROM categories c
-    JOIN path p ON c.id = p.parent_id
-)
-SELECT * FROM path;
--- If there is a cycle in the data (parent points to a child), this runs forever
-```
-
-**Fix:**
-```sql
-WITH RECURSIVE path AS (
-    SELECT id, parent_id, ARRAY[id] AS visited
-    FROM categories WHERE id = 1
-
-    UNION ALL
-
-    SELECT c.id, c.parent_id, visited || c.id
-    FROM categories c
-    JOIN path p ON c.id = p.parent_id
-    WHERE NOT c.id = ANY(visited) -- cycle detection
-)
-SELECT * FROM path;
-```
-
-#### Error 2: LATERAL with a correlated subquery causing N+1 in disguise
-
-```sql
--- This looks like a single query but executes the subquery once per outer row
-SELECT c.id, (
-    SELECT sum(total) FROM orders WHERE customer_id = c.id
-) AS lifetime_value
-FROM customers c;
--- For 100,000 customers = 100,000 subquery executions
-```
-
-**Fix:** Use a proper JOIN or GROUP BY:
-```sql
-SELECT c.id, COALESCE(o.lifetime_value, 0)
-FROM customers c
-LEFT JOIN (
-    SELECT customer_id, sum(total) AS lifetime_value
-    FROM orders GROUP BY customer_id
-) o ON o.customer_id = c.id;
-```
-
----
-
-## Filtering: WHERE, BETWEEN, IN, LIKE, IS NULL
+## 4. Filtering — WHERE, BETWEEN, IN, LIKE, IS NULL
 
 ### Beginner
 
@@ -1533,29 +462,33 @@ LEFT JOIN (
 SELECT * FROM products WHERE price > 10;
 SELECT * FROM products WHERE price >= 10 AND price <= 100;
 SELECT * FROM products WHERE category_id = 3 OR category_id = 7;
+SELECT * FROM products WHERE NOT is_active;
 
 -- BETWEEN (inclusive on both ends)
 SELECT * FROM products WHERE price BETWEEN 10 AND 100;
-SELECT * FROM orders WHERE created_at BETWEEN '2024-01-01' AND '2024-12-31';
+SELECT * FROM orders  WHERE created_at BETWEEN '2024-01-01' AND '2024-12-31';
 
--- IN (equivalent to multiple OR conditions)
+-- IN (equivalent to multiple OR conditions, cleaner)
 SELECT * FROM products WHERE category_id IN (3, 7, 12);
-SELECT * FROM users WHERE status IN ('active', 'trial');
+SELECT * FROM users    WHERE status IN ('active', 'trial');
 
 -- NOT IN
 SELECT * FROM products WHERE category_id NOT IN (99, 100);
 
 -- LIKE (case-sensitive pattern matching)
+-- % matches any sequence of characters
+-- _ matches exactly one character
 SELECT * FROM products WHERE name LIKE 'Widget%';    -- starts with Widget
-SELECT * FROM products WHERE name LIKE '%blue%';     -- contains blue
-SELECT * FROM products WHERE code LIKE 'A__3';       -- A + any 2 chars + 3
+SELECT * FROM products WHERE name LIKE '%Pro';        -- ends with Pro
+SELECT * FROM products WHERE name LIKE '%blue%';      -- contains blue
+SELECT * FROM products WHERE code LIKE 'A__3';        -- A + any 2 chars + 3
 
--- ILIKE (case-insensitive)
+-- ILIKE (case-insensitive — PostgreSQL extension)
 SELECT * FROM products WHERE name ILIKE '%widget%';
 
 -- IS NULL / IS NOT NULL
-SELECT * FROM users WHERE deleted_at IS NULL;
-SELECT * FROM orders WHERE shipped_at IS NOT NULL;
+SELECT * FROM users  WHERE deleted_at IS NULL;        -- active users
+SELECT * FROM orders WHERE shipped_at IS NOT NULL;    -- shipped orders
 ```
 
 ---
@@ -1565,150 +498,96 @@ SELECT * FROM orders WHERE shipped_at IS NOT NULL;
 #### Error 1: Comparing to NULL with = instead of IS NULL
 
 ```sql
--- WRONG — always returns 0 rows
+-- WRONG — always returns 0 rows, silently
 SELECT * FROM users WHERE deleted_at = NULL;
 
 -- CORRECT
 SELECT * FROM users WHERE deleted_at IS NULL;
 ```
 
-**Cause:** `NULL` is not a value; comparisons with `NULL` always yield `NULL` (unknown), never `TRUE`.
+**Cause:** `NULL` is not a value — it represents the absence of a value. Any comparison with `NULL` produces `NULL` (unknown), which is never `TRUE`. Only `IS NULL` and `IS NOT NULL` correctly test for null-ness.
 
-#### Error 2: LIKE with leading wildcard disables index
+#### Error 2: LIKE with a leading wildcard disables the index
 
 ```sql
 SELECT * FROM products WHERE name LIKE '%widget%';
--- Cannot use a standard B-tree index on name — requires full table scan
+-- Cannot use a standard B-tree index — forces a full table scan on every query
 ```
 
 **Fix options:**
-```sql
--- Option 1: Full-text search
-SELECT * FROM products WHERE to_tsvector('english', name) @@ to_tsquery('widget');
 
--- Option 2: pg_trgm extension (trigram index)
+```sql
+-- Option A: pg_trgm extension (trigram index — best for arbitrary LIKE/ILIKE)
 CREATE EXTENSION pg_trgm;
 CREATE INDEX idx_products_name_trgm ON products USING GIN (name gin_trgm_ops);
--- Now LIKE '%widget%' and ILIKE '%widget%' can use this index
+-- Now LIKE '%widget%' and ILIKE '%widget%' use the index
+
+-- Option B: full-text search (for natural language queries on large text)
+SELECT * FROM products
+WHERE to_tsvector('english', name) @@ to_tsquery('widget');
 ```
 
-#### Error 3: BETWEEN with timestamps missing end-of-day records
+#### Error 3: BETWEEN on timestamps misses end-of-day records
 
 ```sql
--- Returns orders up to midnight only — misses orders placed on 2024-12-31
+-- Misses everything on 2024-12-31 after midnight
 SELECT * FROM orders WHERE created_at BETWEEN '2024-01-01' AND '2024-12-31';
-
--- Fix: use exclusive upper bound
-SELECT * FROM orders WHERE created_at >= '2024-01-01' AND created_at < '2025-01-01';
+-- '2024-12-31' is interpreted as '2024-12-31 00:00:00' — only midnight exactly
 ```
 
----
-
-### Intermediate
+**Fix:** Use an exclusive upper bound:
 
 ```sql
--- ANY and ALL (array comparisons)
-SELECT * FROM products WHERE id = ANY(ARRAY[1, 2, 3]);
-SELECT * FROM products WHERE price > ALL(SELECT price FROM products WHERE category_id = 5);
-
--- EXISTS (efficient semi-join)
-SELECT * FROM customers c
-WHERE EXISTS (
-    SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.status = 'pending'
-);
-
--- Regular expressions
-SELECT * FROM products WHERE name ~ '^Widget';         -- case-sensitive regex
-SELECT * FROM products WHERE name ~* '^widget';        -- case-insensitive
-SELECT * FROM products WHERE name !~ 'discontinued';   -- does NOT match
-```
-
-#### Composite Filter Performance
-
-```sql
--- Filter selectivity matters for index usage
--- High selectivity first (indexed column), low selectivity second
 SELECT * FROM orders
-WHERE customer_id = 42          -- high selectivity, uses index
-  AND status = 'pending';       -- low selectivity, applied as filter after index scan
+WHERE created_at >= '2024-01-01'
+  AND created_at <  '2025-01-01'; -- everything up to but not including the next year
+```
 
--- Multi-column index can help
-CREATE INDEX idx_orders_customer_status ON orders(customer_id, status);
+#### Error 4: NOT IN with a subquery that can return NULL
+
+```sql
+-- If ANY row in categories has a NULL id, the whole result is empty
+SELECT * FROM products
+WHERE category_id NOT IN (SELECT id FROM categories WHERE is_active = false);
+```
+
+**Cause:** `x NOT IN (1, 2, NULL)` expands to `x <> 1 AND x <> 2 AND x <> NULL`. Since `x <> NULL` is always `NULL` (unknown), the entire expression is `NULL` = false for every row.
+
+**Fix:** Use `NOT EXISTS`:
+
+```sql
+SELECT * FROM products p
+WHERE NOT EXISTS (
+    SELECT 1 FROM categories c
+    WHERE c.id = p.category_id AND c.is_active = false
+);
 ```
 
 ---
 
-### ⚠️ Intermediate — Common Errors
-
-#### Error 1: NOT IN vs NOT EXISTS with NULLs (the classic trap)
-
-```sql
--- If subquery returns any NULL, NOT IN returns empty set
-SELECT * FROM a WHERE id NOT IN (SELECT parent_id FROM b);
--- If ANY row in b has parent_id = NULL, result is always empty
-
--- Safe equivalent:
-SELECT * FROM a WHERE NOT EXISTS (SELECT 1 FROM b WHERE b.parent_id = a.id);
-```
-
-#### Error 2: Implicit type casting disabling index
-
-```sql
--- Column defined as INTEGER, but filtering with a string
-SELECT * FROM orders WHERE customer_id = '42'; -- implicit cast TEXT → INTEGER
--- In most cases PostgreSQL handles this, but:
-
-SELECT * FROM logs WHERE logged_at = '2024-01-15'; -- DATE vs TIMESTAMPTZ
--- May not use the index due to timezone cast ambiguity
-```
-
-**Fix:** Always match the literal type to the column type:
-```sql
-SELECT * FROM logs WHERE logged_at >= '2024-01-15 00:00:00+00'::TIMESTAMPTZ
-                     AND logged_at <  '2024-01-16 00:00:00+00'::TIMESTAMPTZ;
-```
-
----
-
-### Advanced
-
-#### Partial Indexes for Filtered Queries
-
-```sql
--- Only active products queried frequently
-CREATE INDEX idx_active_products_price ON products(price)
-WHERE is_active = TRUE;
-
--- Only open orders
-CREATE INDEX idx_open_orders_customer ON orders(customer_id)
-WHERE status IN ('new', 'processing');
-```
-
-These indexes are smaller and faster than full indexes when the filter matches a small subset.
-
----
-
-## Sorting: ORDER BY
+## 5. Sorting — ORDER BY
 
 ### Beginner
 
 ```sql
--- Ascending (default)
+-- Ascending order (A→Z, 0→9) — this is the default
 SELECT * FROM products ORDER BY price;
-SELECT * FROM products ORDER BY price ASC;
+SELECT * FROM products ORDER BY price ASC;  -- explicit, same result
 
--- Descending
+-- Descending order (Z→A, 9→0)
 SELECT * FROM products ORDER BY price DESC;
 
--- Multiple columns
+-- Sort by multiple columns
+-- Sorts by category first, then by price within each category
 SELECT * FROM products ORDER BY category_id ASC, price DESC;
 
--- NULL handling (NULLs sort last by default in ASC, first in DESC)
-SELECT * FROM users ORDER BY last_login DESC NULLS LAST;
-SELECT * FROM users ORDER BY last_login ASC  NULLS FIRST;
+-- Sort by a computed expression
+SELECT * FROM users ORDER BY lower(last_name), lower(first_name);
 
--- Order by expression
-SELECT * FROM products ORDER BY lower(name);
+-- Control where NULLs appear
+-- Default: NULLs last in ASC, NULLs first in DESC
+SELECT * FROM users ORDER BY last_login DESC NULLS LAST;   -- NULLs at the bottom
+SELECT * FROM users ORDER BY last_login ASC  NULLS FIRST;  -- NULLs at the top
 ```
 
 ---
@@ -1719,776 +598,129 @@ SELECT * FROM products ORDER BY lower(name);
 
 ```sql
 SELECT * FROM products;
--- PostgreSQL makes NO guarantee about the order of returned rows
--- The order may change after VACUUM, CLUSTER, or partition changes
+-- PostgreSQL makes NO guarantee about the order of rows without ORDER BY
+-- The order can change after VACUUM, bulk inserts, partition changes, or even nothing at all
 ```
 
-**Rule:** If order matters, always specify `ORDER BY`.
+**Rule:** If order matters to your application, always specify `ORDER BY`. Never rely on the implicit order.
 
-#### Error 2: ORDER BY column number is fragile
+#### Error 2: Ordering by column position instead of name
 
 ```sql
-SELECT name, price FROM products ORDER BY 2; -- order by 2nd column (price)
--- Works, but if columns are reordered or new columns added, this breaks silently
+SELECT name, price FROM products ORDER BY 2; -- ORDER BY 2nd column = price
+-- Works, but: if you later change the SELECT list, the sort silently changes too
 ```
 
 **Fix:** Always use column names.
 
----
-
-### Intermediate
-
 ```sql
--- ORDER BY expression not in SELECT list
-SELECT id, name FROM products ORDER BY created_at DESC; -- created_at not selected
-
--- ORDER BY in window functions (independent of query ORDER BY)
-SELECT id, name, price,
-       rank() OVER (PARTITION BY category_id ORDER BY price DESC) AS price_rank
-FROM products
-ORDER BY category_id, price_rank;
+SELECT name, price FROM products ORDER BY price;
 ```
 
+#### Error 3: Forgetting that ORDER BY without LIMIT is expensive on large tables
+
+```sql
+SELECT * FROM events ORDER BY created_at DESC;
+-- For a table with 100 million rows, PostgreSQL must sort ALL of them
+-- even if you only look at the first screen of results
+```
+
+**Fix:** Pair `ORDER BY` with `LIMIT` for large tables, or ensure an index exists on the sort column.
+
 ---
 
-## Aggregation: GROUP BY, HAVING, Aggregate Functions
+## 6. INSERT — Adding Data
 
 ### Beginner
 
 ```sql
--- Count all rows
-SELECT count(*) FROM orders;
-
--- Count non-null values in a column
-SELECT count(shipped_at) FROM orders; -- only counts non-null shipped_at
-
--- Sum, average, min, max
-SELECT
-    customer_id,
-    count(*)              AS order_count,
-    sum(total)            AS total_spent,
-    avg(total)            AS avg_order_value,
-    min(total)            AS smallest_order,
-    max(total)            AS largest_order
-FROM orders
-GROUP BY customer_id;
-
--- HAVING: filter groups (like WHERE but for aggregated results)
-SELECT customer_id, count(*) AS order_count
-FROM orders
-GROUP BY customer_id
-HAVING count(*) > 5; -- only customers with more than 5 orders
-```
-
-#### WHERE vs HAVING
-
-```sql
--- WHERE filters rows BEFORE grouping
--- HAVING filters groups AFTER aggregation
-SELECT customer_id, sum(total) AS total_spent
-FROM orders
-WHERE status = 'completed'      -- filter BEFORE grouping
-GROUP BY customer_id
-HAVING sum(total) > 1000;       -- filter AFTER grouping
-```
-
----
-
-### ⚠️ Beginner — Common Errors
-
-#### Error 1: Selecting non-aggregated columns not in GROUP BY
-
-```sql
--- ERROR: column "orders.total" must appear in GROUP BY or aggregate
-SELECT customer_id, total, count(*)
-FROM orders
-GROUP BY customer_id;
-```
-
-**Fix:** Decide whether `total` should be aggregated or grouped:
-```sql
--- Option A: aggregate it
-SELECT customer_id, sum(total), count(*) FROM orders GROUP BY customer_id;
-
--- Option B: use DISTINCT ON instead (if you just want one row per group)
-SELECT DISTINCT ON (customer_id) customer_id, total FROM orders;
-```
-
-#### Error 2: Using WHERE instead of HAVING for aggregate conditions
-
-```sql
--- ERROR
-SELECT customer_id, count(*) FROM orders
-WHERE count(*) > 5
-GROUP BY customer_id;
-
--- CORRECT
-SELECT customer_id, count(*) FROM orders
-GROUP BY customer_id
-HAVING count(*) > 5;
-```
-
-#### Error 3: COUNT(*) vs COUNT(column)
-
-```sql
-SELECT count(*) FROM orders;              -- counts ALL rows, including NULLs
-SELECT count(shipped_at) FROM orders;     -- counts only non-NULL shipped_at
-SELECT count(DISTINCT customer_id) FROM orders; -- counts distinct customer IDs
-```
-
----
-
-### Intermediate
-
-```sql
--- FILTER clause (aggregate only matching rows)
-SELECT
-    count(*) FILTER (WHERE status = 'completed') AS completed,
-    count(*) FILTER (WHERE status = 'cancelled') AS cancelled,
-    sum(total) FILTER (WHERE status = 'completed') AS completed_revenue
-FROM orders;
-
--- STRING_AGG: aggregate strings
-SELECT customer_id, string_agg(product_name, ', ' ORDER BY product_name) AS products
-FROM order_items
-GROUP BY customer_id;
-
--- ARRAY_AGG: aggregate into array
-SELECT customer_id, array_agg(order_id ORDER BY created_at) AS order_history
-FROM orders
-GROUP BY customer_id;
-
--- JSONB_AGG: aggregate into JSON
-SELECT category_id, jsonb_agg(jsonb_build_object('id', id, 'name', name)) AS products
-FROM products
-GROUP BY category_id;
-```
-
-#### ROLLUP, CUBE, GROUPING SETS
-
-```sql
--- ROLLUP: hierarchical subtotals
-SELECT
-    COALESCE(year::TEXT, 'TOTAL')    AS year,
-    COALESCE(quarter::TEXT, 'ALL')   AS quarter,
-    sum(revenue) AS total_revenue
-FROM sales
-GROUP BY ROLLUP (year, quarter)
-ORDER BY year NULLS LAST, quarter NULLS LAST;
-
--- CUBE: all possible combinations
-SELECT region, product, sum(sales)
-FROM fact_sales
-GROUP BY CUBE (region, product);
-
--- GROUPING SETS: explicit set of groupings
-SELECT region, product, sum(sales)
-FROM fact_sales
-GROUP BY GROUPING SETS (
-    (region, product),
-    (region),
-    (product),
-    ()
-);
-```
-
----
-
-### ⚠️ Intermediate — Common Errors
-
-#### Error 1: Misusing DISTINCT inside aggregate
-
-```sql
--- COUNT DISTINCT is often slow on large datasets
-SELECT count(DISTINCT customer_id) FROM orders;
--- Full sort or hash required — consider HyperLogLog for approximations at scale
-```
-
-#### Error 2: Not using FILTER for conditional aggregation
-
-```sql
--- Verbose, less efficient (uses CASE)
-SELECT
-    sum(CASE WHEN status = 'completed' THEN total ELSE 0 END) AS completed_rev,
-    sum(CASE WHEN status = 'refunded'  THEN total ELSE 0 END) AS refunded_rev
-FROM orders;
-
--- Better: FILTER
-SELECT
-    sum(total) FILTER (WHERE status = 'completed') AS completed_rev,
-    sum(total) FILTER (WHERE status = 'refunded')  AS refunded_rev
-FROM orders;
-```
-
----
-
-### Advanced
-
-```sql
--- Percentile functions
-SELECT
-    percentile_cont(0.5)  WITHIN GROUP (ORDER BY response_time) AS median_ms,
-    percentile_cont(0.95) WITHIN GROUP (ORDER BY response_time) AS p95_ms,
-    percentile_cont(0.99) WITHIN GROUP (ORDER BY response_time) AS p99_ms
-FROM api_logs
-WHERE endpoint = '/api/search';
-
--- Mode (most frequent value)
-SELECT mode() WITHIN GROUP (ORDER BY product_id) AS most_ordered_product
-FROM order_items;
-
--- Statistical aggregates
-SELECT
-    corr(price, sales_count)   AS price_sales_correlation,
-    regr_slope(sales_count, price) AS sales_per_price_unit
-FROM product_stats;
-```
-
----
-
-### ⚠️ Advanced — Common Errors
-
-#### Error 1: Using HAVING with window functions
-
-```sql
--- WRONG: window functions are computed AFTER GROUP BY, cannot be in HAVING
-SELECT customer_id, sum(total), rank() OVER (ORDER BY sum(total) DESC) AS rnk
-FROM orders
-GROUP BY customer_id
-HAVING rank() OVER (ORDER BY sum(total) DESC) <= 10; -- ERROR
-```
-
-**Fix:** Wrap in a CTE or subquery:
-```sql
-WITH ranked AS (
-    SELECT customer_id, sum(total) AS total_spent,
-           rank() OVER (ORDER BY sum(total) DESC) AS rnk
-    FROM orders
-    GROUP BY customer_id
-)
-SELECT * FROM ranked WHERE rnk <= 10;
-```
-
----
-
-## JOINs: INNER, LEFT, RIGHT, FULL, CROSS, SELF
-
-### Beginner
-
-```sql
--- INNER JOIN: returns rows with matching values in both tables
-SELECT o.id AS order_id, c.name AS customer_name, o.total
-FROM orders o
-INNER JOIN customers c ON c.id = o.customer_id;
-
--- LEFT JOIN: all rows from left table, matched rows from right (NULLs if no match)
-SELECT c.name, o.id AS order_id, o.total
-FROM customers c
-LEFT JOIN orders o ON o.customer_id = c.id;
--- Customers with no orders appear with NULL order_id
-
--- RIGHT JOIN: opposite of LEFT (rarely used — just swap table order and use LEFT)
-SELECT c.name, o.id
-FROM orders o
-RIGHT JOIN customers c ON c.id = o.customer_id; -- same result as LEFT JOIN above
-
--- FULL OUTER JOIN: all rows from both tables
-SELECT c.name, o.id
-FROM customers c
-FULL OUTER JOIN orders o ON c.id = o.customer_id;
--- Rows with no match in either side appear with NULLs
-
--- CROSS JOIN: cartesian product (all combinations)
-SELECT c.name AS colour, s.name AS size
-FROM colours c
-CROSS JOIN sizes s; -- 5 colours × 3 sizes = 15 rows
-
--- SELF JOIN: join a table to itself
-SELECT e.name AS employee, m.name AS manager
-FROM employees e
-LEFT JOIN employees m ON e.manager_id = m.id;
-```
-
----
-
-### ⚠️ Beginner — Common Errors
-
-#### Error 1: INNER JOIN silently hiding data
-
-```sql
--- Developer expects all orders, but INNER JOIN drops orders with no matching customer
-SELECT o.*, c.name
-FROM orders o
-INNER JOIN customers c ON c.id = o.customer_id;
--- If customer was deleted and FK was SET NULL, those orders disappear silently
-```
-
-**Fix:** Use LEFT JOIN and investigate NULLs:
-```sql
-SELECT o.*, c.name
-FROM orders o
-LEFT JOIN customers c ON c.id = o.customer_id;
--- Shows orders even when customer_id is NULL
-```
-
-#### Error 2: Missing JOIN condition creates accidental CROSS JOIN
-
-```sql
--- BUG: forgot the ON clause
-SELECT * FROM orders, customers;                      -- implicit CROSS JOIN!
-SELECT * FROM orders CROSS JOIN customers;            -- explicit (intentional)
-SELECT * FROM orders JOIN customers ON 1=1;           -- also a cross join
-
--- Always verify your joins produce the expected row count
-SELECT count(*) FROM orders;     -- 1000
-SELECT count(*) FROM customers;  -- 100
--- CROSS JOIN result: 100,000 rows — a common performance disaster
-```
-
-#### Error 3: Joining on non-indexed columns
-
-```sql
-SELECT o.*, c.name
-FROM orders o
-JOIN customers c ON c.email = o.customer_email; -- email not indexed!
--- Forces sequential scan of customers for every row in orders
-```
-
-**Fix:** Ensure join columns are indexed.
-
----
-
-### Intermediate
-
-```sql
--- Multiple JOINs
-SELECT
-    o.id         AS order_id,
-    c.name       AS customer,
-    p.name       AS product,
-    oi.quantity,
-    oi.unit_price
-FROM orders o
-JOIN customers c   ON c.id = o.customer_id
-JOIN order_items oi ON oi.order_id = o.id
-JOIN products p    ON p.id = oi.product_id
-WHERE o.status = 'completed';
-
--- Anti-join: find customers who have NEVER placed an order
-SELECT c.* FROM customers c
-LEFT JOIN orders o ON o.customer_id = c.id
-WHERE o.id IS NULL;
-
--- Semi-join using EXISTS (often more efficient than anti-join with LEFT JOIN)
-SELECT * FROM customers c
-WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id);
-```
-
-#### Join Strategies
-
-PostgreSQL chooses between three join strategies automatically:
-
-| Strategy | Best for |
-|---|---|
-| **Nested Loop** | Small outer table, indexed inner table |
-| **Hash Join** | Large unsorted tables with equality condition |
-| **Merge Join** | Both inputs already sorted on join key |
-
-```sql
--- Force a specific join strategy for testing
-SET enable_hashjoin = OFF;
-SET enable_nestloop = OFF;
--- Not recommended for production — used only for plan analysis
-```
-
----
-
-### ⚠️ Intermediate — Common Errors
-
-#### Error 1: Filtering in WHERE vs ON for LEFT JOINs
-
-```sql
--- WRONG: this effectively converts the LEFT JOIN to an INNER JOIN
-SELECT c.*, o.total
-FROM customers c
-LEFT JOIN orders o ON o.customer_id = c.id
-WHERE o.status = 'completed';  -- NULL rows eliminated by WHERE!
-
--- CORRECT: filter in ON clause to keep all customers
-SELECT c.*, o.total
-FROM customers c
-LEFT JOIN orders o ON o.customer_id = c.id AND o.status = 'completed';
--- Customers with no completed orders appear with NULL total
-```
-
-#### Error 2: Duplicate rows from one-to-many JOINs
-
-```sql
--- customers × orders × order_items: one customer appears once per item
-SELECT c.name, sum(oi.quantity)
-FROM customers c
-JOIN orders o ON o.customer_id = c.id
-JOIN order_items oi ON oi.order_id = o.id
-GROUP BY c.name;
-
--- If you accidentally omit GROUP BY:
-SELECT c.name, c.email, o.id, oi.product_id ...
--- c.name repeats for every order_item — developer adds DISTINCT "to fix it"
--- DISTINCT hides the problem rather than solving it
-```
-
-#### Error 3: Joining a table multiple times without aliasing
-
-```sql
--- Joining orders twice to get first and last order
-SELECT c.name,
-       first_o.created_at AS first_order,
-       last_o.created_at  AS last_order
-FROM customers c
-JOIN orders first_o ON first_o.customer_id = c.id
-JOIN orders last_o  ON last_o.customer_id = c.id  -- same table, different alias
--- Without proper filtering, this creates a cross join of all orders per customer
--- Must constrain:
--- AND first_o.id = (SELECT min(id) FROM orders WHERE customer_id = c.id)
--- AND last_o.id  = (SELECT max(id) FROM orders WHERE customer_id = c.id)
-```
-
----
-
-### Advanced
-
-```sql
--- Lateral join: correlated subquery in FROM clause
-SELECT c.id, c.name, top_order.total, top_order.created_at
-FROM customers c
-LEFT JOIN LATERAL (
-    SELECT total, created_at FROM orders
-    WHERE customer_id = c.id
-    ORDER BY total DESC
-    LIMIT 1
-) AS top_order ON true;
-
--- Join with USING (when columns have same name)
-SELECT o.id, o.total, c.name
-FROM orders o
-JOIN customers c USING (customer_id); -- requires matching column names
-
--- Natural Join (not recommended — fragile)
-SELECT * FROM orders NATURAL JOIN customers;
--- Automatically joins on all columns with matching names
--- Breaks silently when schema changes
-```
-
----
-
-### ⚠️ Advanced — Common Errors
-
-#### Error 1: Hash join spilling to disk due to low work_mem
-
-```sql
--- EXPLAIN ANALYZE output showing this problem:
--- Hash Batches: 8  (originally 1) -- means disk spill occurred
--- work_mem was too low
-
--- Fix for session:
-SET work_mem = '256MB';
--- Then re-run the query
-```
-
-#### Error 2: Merge join on unsorted data causing unexpected sort steps
-
-```sql
-EXPLAIN SELECT o.*, c.name
-FROM orders o
-JOIN customers c ON c.id = o.customer_id;
--- If planner chooses Merge Join, it will sort both sides first
--- Sorts can be expensive for large tables
--- Adding indexes on join columns allows index scan → merge join without sort
-```
-
----
-
-## Subqueries & CTEs
-
-### Beginner
-
-```sql
--- Scalar subquery (returns exactly one value)
-SELECT name, price,
-    (SELECT avg(price) FROM products) AS avg_price
-FROM products;
-
--- Subquery in WHERE
-SELECT * FROM products
-WHERE price > (SELECT avg(price) FROM products);
-
--- Subquery in FROM
-SELECT sub.category_id, sub.avg_price
-FROM (
-    SELECT category_id, avg(price) AS avg_price
-    FROM products
-    GROUP BY category_id
-) sub
-WHERE sub.avg_price > 50;
-```
-
-#### CTEs (Common Table Expressions)
-
-```sql
--- Basic CTE
-WITH expensive_products AS (
-    SELECT * FROM products WHERE price > 100
-)
-SELECT * FROM expensive_products WHERE is_active = true;
-
--- Multiple CTEs
-WITH
-active_customers AS (
-    SELECT id FROM customers WHERE is_active = true
-),
-recent_orders AS (
-    SELECT * FROM orders WHERE created_at > NOW() - INTERVAL '30 days'
-)
-SELECT ac.id, count(ro.id) AS recent_order_count
-FROM active_customers ac
-LEFT JOIN recent_orders ro ON ro.customer_id = ac.id
-GROUP BY ac.id;
-```
-
----
-
-### ⚠️ Beginner — Common Errors
-
-#### Error 1: Scalar subquery returning more than one row
-
-```sql
--- FAILS if multiple rows are returned
-SELECT name, (SELECT price FROM products WHERE category_id = p.category_id)
-FROM products p;
--- ERROR: more than one row returned by a subquery used as an expression
-```
-
-**Fix:** Add LIMIT 1, use MIN/MAX, or rethink with a JOIN.
-
-#### Error 2: Correlated subquery causing N+1
-
-```sql
--- Executes the subquery once per customer row
-SELECT id, (SELECT count(*) FROM orders WHERE customer_id = c.id)
-FROM customers c;
--- For 100,000 customers = 100,000 subquery executions
-
--- Fix: use LEFT JOIN + GROUP BY
-SELECT c.id, count(o.id) AS order_count
-FROM customers c
-LEFT JOIN orders o ON o.customer_id = c.id
-GROUP BY c.id;
-```
-
----
-
-### Intermediate
-
-```sql
--- Writable CTE (UPDATE/INSERT/DELETE within a CTE)
-WITH deleted AS (
-    DELETE FROM sessions WHERE expires_at < NOW()
-    RETURNING id, user_id
-)
-INSERT INTO session_audit (session_id, user_id, deleted_at)
-SELECT id, user_id, NOW() FROM deleted;
-
--- CTE with INSERT ... ON CONFLICT
-WITH new_customer AS (
-    INSERT INTO customers (email, name)
-    VALUES ('alice@example.com', 'Alice')
-    ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
-    RETURNING id
-)
-INSERT INTO orders (customer_id, total) VALUES ((SELECT id FROM new_customer), 99.99);
-```
-
----
-
-### ⚠️ Intermediate — Common Errors
-
-#### Error 1: Assuming CTEs are always materialised (pre-PostgreSQL 12 behaviour)
-
-```sql
--- Pre-PG12: CTEs were always materialised (executed once, result cached)
--- This could prevent the planner from pushing predicates INTO the CTE
-
--- PG12+: CTEs are inlined by default unless they have side effects or MATERIALIZED
-WITH recent AS (
-    SELECT * FROM orders WHERE created_at > NOW() - INTERVAL '30 days'
-)
-SELECT * FROM recent WHERE customer_id = 42;
--- PG12+: planner may push customer_id = 42 into the CTE scan (efficient)
--- Pre-PG12: would scan all recent orders first, then filter
-
--- Force materialisation (pre-PG12 behaviour) when needed:
-WITH recent AS MATERIALIZED (
-    SELECT * FROM orders WHERE created_at > NOW() - INTERVAL '30 days'
-)
-SELECT * FROM recent WHERE customer_id = 42;
-```
-
----
-
-### Advanced
-
-```sql
--- Recursive CTE with aggregation
-WITH RECURSIVE category_tree AS (
-    SELECT id, name, parent_id, 0 AS level, ARRAY[id] AS path
-    FROM categories WHERE parent_id IS NULL
-    UNION ALL
-    SELECT c.id, c.name, c.parent_id, ct.level + 1, ct.path || c.id
-    FROM categories c
-    JOIN category_tree ct ON c.parent_id = ct.id
-    WHERE NOT c.id = ANY(ct.path) -- cycle guard
-)
-SELECT level, repeat('→ ', level) || name AS category, path
-FROM category_tree
-ORDER BY path;
-
--- Data-modifying CTEs for complex upserts
-WITH
-upserted_product AS (
-    INSERT INTO products (sku, name, price)
-    VALUES ('SKU-001', 'Widget Pro', 29.99)
-    ON CONFLICT (sku) DO UPDATE
-        SET price = EXCLUDED.price,
-            updated_at = NOW()
-    RETURNING id, (xmax = 0) AS is_new  -- xmax = 0 means INSERT, not UPDATE
-),
-inventory_update AS (
-    INSERT INTO inventory (product_id, quantity)
-    SELECT id, 100 FROM upserted_product WHERE is_new
-    ON CONFLICT (product_id) DO NOTHING
-)
-SELECT * FROM upserted_product;
-```
-
----
-
-### ⚠️ Advanced — Common Errors
-
-#### Error 1: Writable CTEs are not atomic per CTE step — they are all one transaction
-
-```sql
-WITH
-step1 AS (DELETE FROM temp_orders RETURNING *),
-step2 AS (INSERT INTO orders SELECT * FROM step1 RETURNING *)
-SELECT count(*) FROM step2;
--- If the INSERT fails, the DELETE is also rolled back (whole statement is atomic)
--- This is correct, but developers sometimes assume step1 committed independently
-```
-
----
-
-## INSERT
-
-### Beginner
-
-```sql
--- Single row
+-- Insert a single row (specify column names explicitly)
 INSERT INTO products (name, price, category_id)
 VALUES ('Widget', 9.99, 3);
 
--- Multiple rows (more efficient than separate INSERTs)
+-- Insert multiple rows in one statement (more efficient than separate INSERTs)
 INSERT INTO products (name, price, category_id)
 VALUES
-    ('Widget', 9.99, 3),
-    ('Gadget', 24.99, 3),
-    ('Thingamajig', 4.99, 5);
+    ('Widget',        9.99,  3),
+    ('Gadget',       24.99,  3),
+    ('Thingamajig',   4.99,  5);
 
--- Insert with RETURNING (get generated values back)
+-- Get generated values back with RETURNING
 INSERT INTO products (name, price)
 VALUES ('New Product', 14.99)
 RETURNING id, created_at;
+-- Returns: id=42, created_at=2024-06-01 10:00:00+01
 
--- Insert from SELECT
+-- Insert from a query
 INSERT INTO archive_orders (id, customer_id, total, archived_at)
 SELECT id, customer_id, total, NOW()
 FROM orders
 WHERE created_at < '2023-01-01';
 ```
 
----
+#### ON CONFLICT — Upsert
 
-### ⚠️ Beginner — Common Errors
-
-#### Error 1: Not using RETURNING when you need the generated ID
+An **upsert** inserts a row if it does not exist, or updates it if it does. This is one of the most useful patterns in day-to-day development.
 
 ```sql
--- Forces a second round-trip to get the ID
-INSERT INTO users (email) VALUES ('alice@example.com');
-SELECT id FROM users WHERE email = 'alice@example.com'; -- extra query, race condition risk
-
--- Correct: one round-trip
-INSERT INTO users (email) VALUES ('alice@example.com') RETURNING id;
-```
-
-#### Error 2: Large multi-row INSERT holding a lock too long
-
-```sql
--- Inserting 5 million rows in one statement
-INSERT INTO events SELECT * FROM staging_events; -- long-running, large lock
-```
-
-**Fix:** Batch inserts in chunks:
-```sql
-INSERT INTO events SELECT * FROM staging_events LIMIT 10000 OFFSET 0;
-INSERT INTO events SELECT * FROM staging_events LIMIT 10000 OFFSET 10000;
--- Or use COPY for bulk loads (significantly faster)
-```
-
----
-
-### Intermediate
-
-```sql
--- ON CONFLICT: upsert
+-- Insert or update (upsert)
 INSERT INTO products (sku, name, price)
 VALUES ('SKU-001', 'Widget', 9.99)
 ON CONFLICT (sku) DO UPDATE
-    SET name  = EXCLUDED.name,
-        price = EXCLUDED.price,
+    SET name       = EXCLUDED.name,   -- EXCLUDED = the row that was attempted
+        price      = EXCLUDED.price,
         updated_at = NOW();
 
--- ON CONFLICT DO NOTHING (ignore duplicates silently)
+-- Insert or silently ignore if already exists
 INSERT INTO event_dedup (event_id, processed_at)
-VALUES ('abc123', NOW())
+VALUES ('abc-123', NOW())
 ON CONFLICT (event_id) DO NOTHING;
 
--- EXCLUDED pseudo-table references the proposed inserted row
+-- Increment rather than overwrite
 INSERT INTO inventory (product_id, quantity)
 VALUES (1, 50)
 ON CONFLICT (product_id) DO UPDATE
     SET quantity = inventory.quantity + EXCLUDED.quantity;
-    -- adds 50 to existing quantity rather than overwriting
-```
-
-#### COPY (Bulk Insert)
-
-```sql
--- COPY is 10-100x faster than multi-row INSERT for bulk loads
-COPY products (name, price, category_id) FROM '/tmp/products.csv' CSV HEADER;
-
--- From stdin (useful in application code)
-COPY products (name, price, category_id) FROM STDIN CSV;
-
--- To file
-COPY (SELECT * FROM products WHERE is_active = true)
-TO '/tmp/active_products.csv' CSV HEADER;
 ```
 
 ---
 
-### ⚠️ Intermediate — Common Errors
+### ⚠️ Beginner — Common Errors
 
-#### Error 1: ON CONFLICT DO UPDATE updating columns that shouldn't change
+#### Error 1: Not using RETURNING — forcing an extra round-trip
+
+```sql
+-- Inserts row, then makes a SECOND query to find the ID — inefficient and has race condition risk
+INSERT INTO users (email) VALUES ('alice@example.com');
+SELECT id FROM users WHERE email = 'alice@example.com'; -- second query
+```
+
+**Fix:** Use `RETURNING` to get the ID in one round-trip:
+
+```sql
+INSERT INTO users (email) VALUES ('alice@example.com') RETURNING id;
+```
+
+#### Error 2: Inserting a single row at a time in a loop (N+1 inserts)
+
+```sql
+-- Application code doing this is very slow:
+for product in products:
+    execute("INSERT INTO products (name, price) VALUES (%s, %s)", product.name, product.price)
+```
+
+**Fix:** Multi-row insert or `COPY`:
+
+```sql
+-- Multi-row INSERT
+INSERT INTO products (name, price)
+VALUES ('A', 9.99), ('B', 19.99), ('C', 4.99), ...;
+
+-- COPY is 10–100x faster for bulk loads
+COPY products (name, price) FROM '/tmp/products.csv' CSV HEADER;
+```
+
+#### Error 3: ON CONFLICT accidentally overwriting columns that should not change
 
 ```sql
 INSERT INTO products (sku, name, price, created_at)
@@ -2496,74 +728,31 @@ VALUES ('SKU-001', 'Widget', 9.99, NOW())
 ON CONFLICT (sku) DO UPDATE
     SET name       = EXCLUDED.name,
         price      = EXCLUDED.price,
-        created_at = EXCLUDED.created_at;  -- BUG: overwrites original creation date!
+        created_at = EXCLUDED.created_at; -- BUG: overwrites the original creation date!
 ```
 
-**Fix:** Be explicit about what to update:
+**Fix:** Only update the columns you intend to change:
+
 ```sql
 ON CONFLICT (sku) DO UPDATE
     SET name  = EXCLUDED.name,
         price = EXCLUDED.price;
-    -- created_at left unchanged
+-- created_at is left untouched
 ```
 
-#### Error 2: Upsert race condition with two concurrent sessions
+#### Error 4: COPY bypasses row-level triggers
 
 ```sql
--- Session A and Session B both attempt the same upsert simultaneously
--- Both see "no conflict", both try to INSERT → one will fail and retry
--- This is safe with ON CONFLICT, but be aware of the retry overhead
--- under very high concurrency on the same key
-```
-
----
-
-### Advanced
-
-```sql
--- Conditional upsert: only update if new value is better
-INSERT INTO price_history (product_id, price, recorded_at)
-VALUES (1, 8.99, NOW())
-ON CONFLICT (product_id) DO UPDATE
-    SET price       = EXCLUDED.price,
-        recorded_at = EXCLUDED.recorded_at
-    WHERE price_history.price > EXCLUDED.price; -- only update if price dropped
-
--- Multi-table insert using writable CTE
-WITH new_customer AS (
-    INSERT INTO customers (email, name)
-    VALUES ('bob@example.com', 'Bob')
-    RETURNING id
-),
-new_address AS (
-    INSERT INTO addresses (customer_id, street, city)
-    SELECT id, '123 Main St', 'Springfield'
-    FROM new_customer
-    RETURNING id
-)
-UPDATE customers
-SET default_address_id = (SELECT id FROM new_address)
-WHERE id = (SELECT id FROM new_customer);
-```
-
----
-
-### ⚠️ Advanced — Common Errors
-
-#### Error 1: COPY vs INSERT with triggers
-
-```sql
--- COPY bypasses row-level triggers by default (performance feature)
 COPY events FROM '/tmp/events.csv' CSV;
 -- If you have a trigger that updates a summary table, it will NOT fire during COPY
-
--- Workaround: if you need triggers to fire, use regular INSERT (slower)
--- Or update summary tables manually after COPY
+-- The summary table will be out of date
 ```
+
+**Fix:** If triggers must fire, use regular `INSERT`. Otherwise, update summary tables manually after `COPY`.
 
 ---
 
-## UPDATE
+## 7. UPDATE — Modifying Data
 
 ### Beginner
 
@@ -2571,226 +760,195 @@ COPY events FROM '/tmp/events.csv' CSV;
 -- Update a single column
 UPDATE products SET price = 14.99 WHERE id = 1;
 
--- Update multiple columns
+-- Update multiple columns at once
 UPDATE products
-SET price = 14.99, updated_at = NOW()
+SET price      = 14.99,
+    updated_at = NOW()
 WHERE id = 1;
 
--- Update with expression
-UPDATE products SET price = price * 1.10 WHERE category_id = 3; -- 10% price increase
+-- Update using an expression
+UPDATE products SET price = price * 1.10 WHERE category_id = 3; -- 10% price rise
 
--- Update with RETURNING
+-- Update and return the modified rows
 UPDATE orders SET status = 'processing' WHERE id = 42
 RETURNING id, status, updated_at;
+
+-- Update using a subquery
+UPDATE orders
+SET status = 'vip_order'
+WHERE customer_id IN (
+    SELECT id FROM customers WHERE lifetime_value > 10000
+);
+```
+
+#### UPDATE with FROM (joining another table)
+
+```sql
+-- Apply discounts from a promotions table to affected products
+UPDATE products p
+SET price = p.price * c.discount_rate
+FROM promotions c
+WHERE c.category_id = p.category_id
+  AND c.is_active = true;
 ```
 
 ---
 
 ### ⚠️ Beginner — Common Errors
 
-#### Error 1: UPDATE without WHERE clause
+#### Error 1: UPDATE without a WHERE clause
 
 ```sql
--- Updates ALL rows in the table!
 UPDATE products SET is_active = false;
+-- Updates EVERY row in the products table
+-- No confirmation prompt, no undo (outside of a transaction)
 ```
 
-**Safe practice:** Always write the WHERE clause first, then the SET:
-```sql
--- Mental pattern: WHERE first
-UPDATE products
-SET is_active = false
-WHERE category_id = 99 AND last_sold_at < '2020-01-01';
+**Safe habit:** Before every UPDATE, run the equivalent SELECT first:
 
--- Test with SELECT before running UPDATE:
-SELECT count(*) FROM products WHERE category_id = 99 AND last_sold_at < '2020-01-01';
+```sql
+-- Step 1: verify which rows you will affect
+SELECT count(*) FROM products WHERE last_sold_at < '2020-01-01';
+
+-- Step 2: only then run the UPDATE
+UPDATE products SET is_active = false WHERE last_sold_at < '2020-01-01';
 ```
 
-#### Error 2: UPDATE using stale data in application
+#### Error 2: Lost update — reading a value in application, then writing it back
 
 ```sql
--- Application reads price, adds 10, writes back
--- But another session updated price in between
-SELECT price FROM products WHERE id = 1;  -- returns 9.99
--- Another session: UPDATE products SET price = 12.99 WHERE id = 1;
-UPDATE products SET price = 9.99 + 1 WHERE id = 1;  -- LOST UPDATE: should be 13.99
+-- Application reads price
+SELECT price FROM products WHERE id = 1; -- returns 9.99
+
+-- Another session changes price to 12.99 here
+
+-- Application adds 1 and writes back
+UPDATE products SET price = 9.99 + 1.00 WHERE id = 1;
+-- Result: 10.99 — but should be 13.99! The other session's change is lost.
 ```
 
-**Fix:** Use atomic expressions:
+**Fix:** Use an atomic SQL expression — read and write in one statement:
+
 ```sql
-UPDATE products SET price = price + 1 WHERE id = 1; -- reads and writes in one atomic step
--- Or use SELECT ... FOR UPDATE to lock the row before reading
+UPDATE products SET price = price + 1.00 WHERE id = 1;
+-- PostgreSQL reads and writes atomically — no lost update possible
 ```
 
----
-
-### Intermediate
+#### Error 3: UPDATE ... FROM with multiple matching rows producing undefined results
 
 ```sql
--- UPDATE with JOIN (FROM clause)
-UPDATE products p
-SET price = p.price * c.discount_rate
-FROM promotions c
-WHERE c.category_id = p.category_id
-  AND c.is_active = true;
-
--- UPDATE with subquery
-UPDATE orders
-SET status = 'vip'
-WHERE customer_id IN (
-    SELECT id FROM customers WHERE lifetime_value > 10000
-);
-
--- Conditional update (avoid multiple passes)
-UPDATE products
-SET
-    price = CASE WHEN category_id = 1 THEN price * 1.05
-                 WHEN category_id = 2 THEN price * 1.10
-                 ELSE price
-            END,
-    updated_at = NOW()
-WHERE category_id IN (1, 2);
-```
-
-#### Optimistic Locking
-
-```sql
--- Add a version column to detect concurrent modifications
-CREATE TABLE products (
-    id      SERIAL PRIMARY KEY,
-    name    TEXT NOT NULL,
-    price   NUMERIC(10,2),
-    version INTEGER NOT NULL DEFAULT 1
-);
-
--- Application: read version, then update only if version hasn't changed
-UPDATE products
-SET price = 12.99, version = version + 1
-WHERE id = 1 AND version = 3;  -- will update 0 rows if someone else already changed it
-
--- Application checks affected rows:
--- If 0 rows updated → conflict detected → retry or error
-```
-
----
-
-### ⚠️ Intermediate — Common Errors
-
-#### Error 1: UPDATE ... FROM creating unintended multiple matches
-
-```sql
--- If the FROM subquery returns multiple rows per target row, result is non-deterministic
+-- If price_updates contains 3 rows for product_id=1, which price wins?
 UPDATE products p
 SET price = s.new_price
 FROM price_updates s
 WHERE s.product_id = p.id;
--- If price_updates has 3 rows for product_id=1, which price wins? Undefined.
+-- Result is non-deterministic — PostgreSQL picks any matching row
 ```
 
-**Fix:** Ensure the FROM source is unique per target row, or use DISTINCT/GROUP BY:
+**Fix:** Ensure the source is unique per target row:
+
 ```sql
 UPDATE products p
 SET price = s.new_price
 FROM (
     SELECT DISTINCT ON (product_id) product_id, new_price
     FROM price_updates
-    ORDER BY product_id, updated_at DESC -- take the most recent
+    ORDER BY product_id, updated_at DESC  -- take the most recent price
 ) s
 WHERE s.product_id = p.id;
 ```
 
-#### Error 2: Mass UPDATE creating massive table bloat
+#### Error 4: Mass UPDATE creating table bloat
 
 ```sql
-UPDATE large_table SET status = 'processed'; -- 10 million rows
+UPDATE large_table SET status = 'processed'; -- 10 million rows updated at once
 -- Creates 10 million dead tuples instantly
--- Autovacuum will eventually clean up, but table/index size balloons in the meantime
+-- Table grows to roughly double its previous size until VACUUM cleans up
 ```
 
-**Fix:** Batch updates:
+**Fix:** Batch updates in chunks to let autovacuum keep up:
+
 ```sql
 DO $$
-DECLARE
-    rows_updated INTEGER;
+DECLARE updated INTEGER;
 BEGIN
     LOOP
         UPDATE large_table SET status = 'processed'
         WHERE id IN (
-            SELECT id FROM large_table
-            WHERE status != 'processed'
-            LIMIT 10000
+            SELECT id FROM large_table WHERE status != 'processed' LIMIT 10000
         );
-        GET DIAGNOSTICS rows_updated = ROW_COUNT;
-        EXIT WHEN rows_updated = 0;
-        PERFORM pg_sleep(0.1); -- brief pause to allow autovacuum to keep up
+        GET DIAGNOSTICS updated = ROW_COUNT;
+        EXIT WHEN updated = 0;
+        PERFORM pg_sleep(0.1); -- brief pause so autovacuum can keep up
     END LOOP;
 END $$;
 ```
 
 ---
 
-### Advanced
-
-#### HOT (Heap Only Tuple) Updates
-
-When an UPDATE modifies only columns that are **not** part of any index, PostgreSQL can perform a HOT update: the new tuple is stored on the same heap page and pointed to by the old tuple, avoiding index updates.
-
-```sql
--- HOT-friendly update (updates only non-indexed column)
-UPDATE products SET description = 'Updated description' WHERE id = 1;
--- If 'description' is not indexed, this is a HOT update — very efficient
-
--- NOT HOT (updates an indexed column, requires index update)
-UPDATE products SET price = 14.99 WHERE id = 1;
--- 'price' is indexed → new index entry required → full MVCC tuple created
-```
-
-Monitor HOT update ratio:
-```sql
-SELECT relname, n_tup_upd, n_tup_hot_upd,
-    round(100.0 * n_tup_hot_upd / NULLIF(n_tup_upd, 0), 1) AS hot_pct
-FROM pg_stat_user_tables
-ORDER BY n_tup_upd DESC;
-```
-
----
-
-## DELETE & TRUNCATE
+## 8. DELETE & TRUNCATE — Removing Data
 
 ### Beginner
 
 ```sql
--- Delete specific rows
+-- Delete rows matching a condition
 DELETE FROM sessions WHERE expires_at < NOW();
 
--- Delete with subquery
+-- Delete with a subquery
 DELETE FROM products
 WHERE id IN (SELECT product_id FROM discontinued_items);
 
--- Delete with RETURNING
+-- Delete and return what was deleted
 DELETE FROM cart_items WHERE user_id = 42 RETURNING id, product_id;
 
--- TRUNCATE: remove all rows (much faster than DELETE for full-table clear)
+-- Delete with a join (USING clause)
+DELETE FROM order_items oi
+USING orders o
+WHERE oi.order_id = o.id
+  AND o.status = 'cancelled'
+  AND o.cancelled_at < NOW() - INTERVAL '90 days';
+
+-- TRUNCATE: remove ALL rows very quickly
 TRUNCATE TABLE session_cache;
 
--- TRUNCATE with CASCADE (also truncates child tables)
-TRUNCATE orders CASCADE; -- also truncates order_items if FK with CASCADE exists
+-- TRUNCATE and reset the auto-increment sequence
+TRUNCATE TABLE staging_data RESTART IDENTITY;
+
+-- TRUNCATE child tables too
+TRUNCATE orders CASCADE; -- also truncates order_items if FK has CASCADE
 ```
 
 #### DELETE vs TRUNCATE
 
 | Feature | DELETE | TRUNCATE |
 |---|---|---|
-| Can use WHERE | Yes | No |
-| Fires row-level triggers | Yes | No (fires statement-level) |
-| Transactional | Yes | Yes |
-| Speed | Slow (row by row) | Very fast (metadata only) |
-| MVCC / dead tuples | Creates dead tuples | Resets table instantly |
-| Resets sequences | No | Yes (with RESTART IDENTITY) |
+| Filter with WHERE | ✅ Yes | ❌ No |
+| Row-level triggers fire | ✅ Yes | ❌ No |
+| Transactional (can rollback) | ✅ Yes | ✅ Yes |
+| Speed on full table | 🐌 Slow (row by row) | ⚡ Instant |
+| Creates dead tuples | ✅ Yes | ❌ No |
+| Resets sequences | ❌ No | ✅ With `RESTART IDENTITY` |
+| Lock acquired | Row-level | `ACCESS EXCLUSIVE` (blocks all) |
+
+#### Soft Delete Pattern
+
+Rather than physically deleting rows, many applications mark them as deleted. This preserves history and makes accidental deletes reversible.
 
 ```sql
-TRUNCATE orders RESTART IDENTITY; -- also resets the SERIAL sequence
-TRUNCATE orders RESTART IDENTITY CASCADE; -- resets sequences + child tables
+-- Add a deleted_at column
+ALTER TABLE users ADD COLUMN deleted_at TIMESTAMPTZ;
+
+-- Create a partial index so "active user" queries stay fast
+CREATE INDEX idx_users_active ON users (id) WHERE deleted_at IS NULL;
+
+-- "Delete" a user (soft)
+UPDATE users SET deleted_at = NOW() WHERE id = 42;
+
+-- Query only active users
+SELECT * FROM users WHERE deleted_at IS NULL;
+
+-- Restore a user
+UPDATE users SET deleted_at = NULL WHERE id = 42;
 ```
 
 ---
@@ -2800,40 +958,23 @@ TRUNCATE orders RESTART IDENTITY CASCADE; -- resets sequences + child tables
 #### Error 1: DELETE without WHERE
 
 ```sql
-DELETE FROM products; -- deletes ALL products — same danger as UPDATE without WHERE
+DELETE FROM products;
+-- Deletes every single row — identical danger to UPDATE without WHERE
 ```
 
-**Safe practice:** Always verify with SELECT first:
-```sql
-SELECT count(*) FROM products WHERE last_sold_at < '2020-01-01';
--- If count looks right:
-DELETE FROM products WHERE last_sold_at < '2020-01-01';
-```
+**Same safe habit:** run the `SELECT count(*)` with your filter conditions first.
 
-#### Error 2: TRUNCATE in a transaction you might need to roll back
+#### Error 2: TRUNCATE not firing row-level triggers
 
 ```sql
-BEGIN;
-TRUNCATE users; -- takes ACCESS EXCLUSIVE lock immediately
--- Developer panics and does:
-ROLLBACK; -- works, data is restored — but the lock was held the whole time
+-- This trigger fires on DELETE but NOT on TRUNCATE
+CREATE TRIGGER audit_delete AFTER DELETE ON users FOR EACH ROW EXECUTE FUNCTION log_deletion();
+
+TRUNCATE users; -- the audit log records NOTHING
 ```
 
-**Issue:** The `ACCESS EXCLUSIVE` lock blocks ALL other queries (even SELECTs) for the duration of the transaction. Prefer conditional DELETE for production tables.
+**Fix:** Create a statement-level trigger for TRUNCATE:
 
-#### Error 3: TRUNCATE not firing row-level triggers
-
-```sql
--- Audit trigger fires on DELETE but NOT on TRUNCATE
-CREATE TRIGGER audit_delete
-AFTER DELETE ON users
-FOR EACH ROW
-EXECUTE FUNCTION log_deletion();
-
-TRUNCATE users; -- audit trigger does NOT fire!
-```
-
-**Fix:** Use a statement-level trigger for TRUNCATE auditing:
 ```sql
 CREATE TRIGGER audit_truncate
 AFTER TRUNCATE ON users
@@ -2841,349 +982,1069 @@ FOR EACH STATEMENT
 EXECUTE FUNCTION log_truncation();
 ```
 
+#### Error 3: TRUNCATE holding ACCESS EXCLUSIVE lock for the duration of the transaction
+
+```sql
+BEGIN;
+TRUNCATE users; -- acquires ACCESS EXCLUSIVE immediately — blocks all reads and writes
+-- developer hesitates for 30 seconds trying to decide...
+-- all application queries are queued behind this lock
+ROLLBACK; -- data restored, but the damage (blocked queries, timeouts) is done
+```
+
+**Fix:** For production tables you care about, prefer `DELETE` with a `WHERE` clause, or use TRUNCATE in a very short transaction.
+
+#### Error 4: CASCADE TRUNCATE removing more than intended
+
+```sql
+TRUNCATE orders CASCADE;
+-- Also truncates: order_items, order_payments, order_events, shipments...
+-- Everything that has a FK referencing orders gets wiped
+```
+
+Always check what `CASCADE` will reach before running it:
+
+```sql
+-- Find tables that reference orders via FK
+SELECT tc.table_name
+FROM information_schema.table_constraints tc
+JOIN information_schema.referential_constraints rc ON tc.constraint_name = rc.constraint_name
+JOIN information_schema.table_constraints tc2 ON rc.unique_constraint_name = tc2.constraint_name
+WHERE tc2.table_name = 'orders';
+```
+
 ---
+
+## 9. Foreign Keys
+
+A **foreign key** links a column in one table to the primary key of another. It enforces **referential integrity**: you cannot have an order that points to a customer that does not exist.
+
+### Beginner
+
+```sql
+CREATE TABLE categories (
+    id   SERIAL PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE products (
+    id          SERIAL PRIMARY KEY,
+    name        TEXT NOT NULL,
+    category_id INTEGER NOT NULL REFERENCES categories(id)
+    -- category_id must be a value that exists in categories.id
+);
+
+-- This succeeds
+INSERT INTO categories (id, name) VALUES (1, 'Electronics');
+INSERT INTO products (name, category_id) VALUES ('Laptop', 1);
+
+-- This fails — category 999 does not exist
+INSERT INTO products (name, category_id) VALUES ('Laptop', 999);
+-- ERROR: insert or update on table "products" violates foreign key constraint
+```
+
+#### ON DELETE / ON UPDATE Actions
+
+What should happen to child rows when the parent row is deleted or its key changes?
+
+```sql
+CREATE TABLE order_items (
+    id         SERIAL PRIMARY KEY,
+    order_id   INTEGER NOT NULL REFERENCES orders(id)
+        ON DELETE CASCADE,    -- when an order is deleted, its items are deleted too
+    product_id INTEGER NOT NULL REFERENCES products(id)
+        ON DELETE RESTRICT,   -- prevent deleting a product that has order items
+    quantity   INTEGER NOT NULL
+);
+```
+
+| Action | Meaning |
+|---|---|
+| `RESTRICT` (default) | Block the DELETE/UPDATE if children exist |
+| `NO ACTION` | Like RESTRICT, but the check happens at the end of the statement |
+| `CASCADE` | Automatically delete/update child rows |
+| `SET NULL` | Set the FK column to NULL in child rows |
+| `SET DEFAULT` | Set the FK column to its default value |
+
+#### Always Index Foreign Key Columns
+
+PostgreSQL automatically creates an index on the **referenced** column (the PK side). It does **not** automatically index the **referencing** column (the FK side). An unindexed FK causes full table scans on every join and causes severe lock waits when the parent row is deleted.
+
+```sql
+-- ALWAYS add an index on the FK column
+CREATE INDEX idx_products_category_id   ON products(category_id);
+CREATE INDEX idx_order_items_order_id   ON order_items(order_id);
+CREATE INDEX idx_order_items_product_id ON order_items(product_id);
+```
+
+---
+
+### ⚠️ Beginner — Common Errors
+
+#### Error 1: CASCADE deletes going further than expected
+
+```sql
+-- Schema: customers → orders → order_items (all with ON DELETE CASCADE)
+DELETE FROM customers WHERE id = 1;
+-- Also deletes: ALL orders for that customer, ALL items for those orders
+-- Developer only meant to remove the customer record
+```
+
+**Fix:** Use `ON DELETE RESTRICT` for business-critical data. Handle deletions explicitly in application code, or use a soft-delete pattern.
+
+#### Error 2: Forgetting to index FK columns
+
+```sql
+-- 1 million order_items, none of which have an index on order_id
+DELETE FROM orders WHERE id = 5;
+-- PostgreSQL must scan ALL 1 million order_items to find which ones belong to order 5
+-- This is slow AND it holds a lock the entire time
+```
+
+#### Error 3: Adding FK to a large table locks the table during validation
+
+```sql
+-- This scans the ENTIRE table to verify existing rows — holds a lock the whole time
+ALTER TABLE order_items ADD CONSTRAINT fk_order
+    FOREIGN KEY (order_id) REFERENCES orders(id);
+```
+
+**Safe approach for large tables:**
+
+```sql
+-- Step 1: add the constraint without validating existing rows (instant)
+ALTER TABLE order_items ADD CONSTRAINT fk_order
+    FOREIGN KEY (order_id) REFERENCES orders(id) NOT VALID;
+
+-- Step 2: validate existing rows concurrently (only holds a light lock)
+ALTER TABLE order_items VALIDATE CONSTRAINT fk_order;
+```
+
+---
+
+## 10. JOINs — Combining Tables
+
+A `JOIN` combines rows from two or more tables based on a related column.
+
+### Beginner
+
+```sql
+-- INNER JOIN: only rows that have a match in BOTH tables
+SELECT o.id AS order_id, c.name AS customer_name, o.total
+FROM orders o
+INNER JOIN customers c ON c.id = o.customer_id;
+-- Orders without a customer, and customers without orders, are excluded
+
+-- LEFT JOIN: all rows from the LEFT table, plus matching rows from the right
+-- Rows from the left with no match appear with NULLs on the right side
+SELECT c.name, o.id AS order_id, o.total
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id;
+-- Customers who have never ordered appear with NULL order_id and NULL total
+
+-- RIGHT JOIN: all rows from the RIGHT table (rarely used — just swap table order and use LEFT)
+SELECT o.id, c.name
+FROM orders o
+RIGHT JOIN customers c ON c.id = o.customer_id;
+-- Same result as the LEFT JOIN above
+
+-- FULL OUTER JOIN: all rows from both tables, NULLs where there is no match
+SELECT c.name, o.id
+FROM customers c
+FULL OUTER JOIN orders o ON c.id = o.customer_id;
+
+-- CROSS JOIN: every row in the left table combined with every row in the right table
+-- 5 colours × 3 sizes = 15 rows
+SELECT c.name AS colour, s.name AS size
+FROM colours c
+CROSS JOIN sizes s;
+
+-- SELF JOIN: a table joined to itself (e.g. manager/employee hierarchy)
+SELECT e.name AS employee, m.name AS manager
+FROM employees e
+LEFT JOIN employees m ON e.manager_id = m.id;
+```
+
+#### Multi-Table JOIN
+
+```sql
+SELECT
+    o.id         AS order_id,
+    c.name       AS customer,
+    p.name       AS product,
+    oi.quantity,
+    oi.unit_price,
+    oi.quantity * oi.unit_price AS line_total
+FROM orders o
+JOIN customers c    ON c.id = o.customer_id
+JOIN order_items oi ON oi.order_id = o.id
+JOIN products p     ON p.id = oi.product_id
+WHERE o.status = 'completed'
+ORDER BY o.id, p.name;
+```
+
+#### Anti-Join — Find Rows with No Match
+
+```sql
+-- Customers who have NEVER placed an order
+SELECT c.*
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id
+WHERE o.id IS NULL;  -- no matching order row = NULL
+
+-- Equivalent using NOT EXISTS (often more readable)
+SELECT * FROM customers c
+WHERE NOT EXISTS (
+    SELECT 1 FROM orders o WHERE o.customer_id = c.id
+);
+```
+
+---
+
+### ⚠️ Beginner — Common Errors
+
+#### Error 1: INNER JOIN silently dropping rows you expected to see
+
+```sql
+-- Developer wants all orders, but some have NULL customer_id (orphaned)
+SELECT o.*, c.name
+FROM orders o
+INNER JOIN customers c ON c.id = o.customer_id;
+-- Orphaned orders (customer_id IS NULL or FK row deleted) silently disappear
+```
+
+**Fix:** Use `LEFT JOIN` and check for NULLs to understand your data:
+
+```sql
+SELECT o.*, c.name
+FROM orders o
+LEFT JOIN customers c ON c.id = o.customer_id;
+-- Orphaned orders appear with NULL name
+```
+
+#### Error 2: Forgetting the ON clause — accidental CROSS JOIN
+
+```sql
+-- The two-table syntax without WHERE = CROSS JOIN (100 customers × 10,000 orders = 1,000,000 rows)
+SELECT * FROM orders, customers; -- implicit CROSS JOIN — almost always a mistake
+
+-- Always write explicit JOIN with ON:
+SELECT * FROM orders o JOIN customers c ON c.id = o.customer_id;
+```
+
+#### Error 3: Filtering in WHERE instead of ON for LEFT JOINs
+
+```sql
+-- WRONG: the WHERE clause eliminates the NULL rows, converting LEFT JOIN to INNER JOIN
+SELECT c.name, o.total
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id
+WHERE o.status = 'completed';  -- customers with no orders are eliminated here!
+
+-- CORRECT: move the filter into the ON clause
+SELECT c.name, o.total
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id AND o.status = 'completed';
+-- Now customers with no completed orders appear with NULL total
+```
+
+#### Error 4: Duplicate rows from one-to-many joins
+
+```sql
+-- customers JOIN orders JOIN order_items
+-- A customer with 5 orders and 20 items per order = 100 rows for that customer
+SELECT c.name, c.email, o.id, oi.product_id
+FROM customers c
+JOIN orders o ON o.customer_id = c.id
+JOIN order_items oi ON oi.order_id = o.id;
+-- c.name and c.email repeat 100 times for that customer
+-- Adding DISTINCT is the wrong fix — it hides the problem
+```
+
+**Fix:** Be intentional about what level of detail you need. Aggregate, filter, or use subqueries to get exactly the rows you want.
+
+---
+
+## 11. Aggregation — GROUP BY, HAVING & Aggregate Functions
+
+Aggregate functions summarise multiple rows into a single result. `GROUP BY` divides rows into groups before aggregation.
+
+### Beginner
+
+```sql
+-- Aggregate the entire table
+SELECT
+    count(*)            AS total_orders,
+    sum(total)          AS total_revenue,
+    avg(total)          AS average_order_value,
+    min(total)          AS smallest_order,
+    max(total)          AS largest_order
+FROM orders;
+
+-- Aggregate per group
+SELECT
+    customer_id,
+    count(*)            AS order_count,
+    sum(total)          AS total_spent,
+    avg(total)          AS avg_order,
+    min(created_at)     AS first_order,
+    max(created_at)     AS latest_order
+FROM orders
+GROUP BY customer_id
+ORDER BY total_spent DESC;
+
+-- HAVING: filter groups after aggregation (like WHERE but for groups)
+SELECT customer_id, count(*) AS order_count
+FROM orders
+GROUP BY customer_id
+HAVING count(*) > 5;  -- only customers with more than 5 orders
+
+-- WHERE + GROUP BY + HAVING: filter rows first, then group, then filter groups
+SELECT customer_id, sum(total) AS completed_revenue
+FROM orders
+WHERE status = 'completed'          -- filter rows BEFORE grouping
+GROUP BY customer_id
+HAVING sum(total) > 1000            -- filter groups AFTER aggregation
+ORDER BY completed_revenue DESC;
+```
+
+#### count(*) vs count(column)
+
+```sql
+SELECT
+    count(*)                  AS total_rows,         -- all rows including NULLs
+    count(shipped_at)         AS shipped_orders,     -- only non-NULL shipped_at
+    count(DISTINCT customer_id) AS unique_customers  -- distinct non-NULL customer IDs
+FROM orders;
+```
+
+#### FILTER — Conditional Aggregation
+
+```sql
+-- Count and sum based on conditions without subqueries
+SELECT
+    count(*) FILTER (WHERE status = 'completed')  AS completed_count,
+    count(*) FILTER (WHERE status = 'cancelled')  AS cancelled_count,
+    sum(total) FILTER (WHERE status = 'completed') AS completed_revenue,
+    sum(total) FILTER (WHERE status = 'cancelled') AS cancelled_revenue
+FROM orders;
+```
+
+---
+
+### ⚠️ Beginner — Common Errors
+
+#### Error 1: Selecting columns not in GROUP BY and not aggregated
+
+```sql
+-- ERROR: total is neither in GROUP BY nor wrapped in an aggregate function
+SELECT customer_id, total, count(*)
+FROM orders
+GROUP BY customer_id;
+-- ERROR: column "orders.total" must appear in GROUP BY clause or be used in an aggregate function
+```
+
+**Fix:** Either aggregate the column or add it to `GROUP BY`:
+
+```sql
+-- Option A: aggregate it
+SELECT customer_id, sum(total), count(*) FROM orders GROUP BY customer_id;
+
+-- Option B: add to GROUP BY (only makes sense if total has one value per customer_id)
+SELECT customer_id, total, count(*) FROM orders GROUP BY customer_id, total;
+```
+
+#### Error 2: Using WHERE instead of HAVING for aggregate conditions
+
+```sql
+-- ERROR: aggregate functions not allowed in WHERE
+SELECT customer_id, count(*)
+FROM orders
+WHERE count(*) > 5         -- WRONG: WHERE is evaluated before aggregation
+GROUP BY customer_id;
+
+-- CORRECT: use HAVING
+SELECT customer_id, count(*)
+FROM orders
+GROUP BY customer_id
+HAVING count(*) > 5;
+```
+
+#### Error 3: Using CASE inside aggregation instead of FILTER
+
+```sql
+-- Verbose, harder to read
+SELECT
+    sum(CASE WHEN status = 'completed' THEN total ELSE 0 END) AS completed,
+    sum(CASE WHEN status = 'refunded'  THEN total ELSE 0 END) AS refunded
+FROM orders;
+
+-- Cleaner, more explicit with FILTER
+SELECT
+    sum(total) FILTER (WHERE status = 'completed') AS completed,
+    sum(total) FILTER (WHERE status = 'refunded')  AS refunded
+FROM orders;
+```
+
+#### Error 4: Thinking GROUP BY sorts the result
+
+```sql
+SELECT customer_id, count(*) FROM orders GROUP BY customer_id;
+-- The output order is NOT guaranteed to be sorted by customer_id
+-- Add ORDER BY if you need a specific order
+```
+
+---
+
+# 🟡 Part II — Intermediate
+
+You now know how to read and write data. This part covers how to write more expressive queries, how PostgreSQL stores data efficiently, how to control transactions, and how to extend the database with custom logic.
+
+---
+
+## 12. Subqueries & CTEs
 
 ### Intermediate
 
+A **subquery** is a `SELECT` statement nested inside another statement. A **CTE (Common Table Expression)** is a named subquery that makes complex queries more readable.
+
+#### Subqueries
+
 ```sql
--- DELETE with JOIN (using USING clause)
-DELETE FROM order_items oi
-USING orders o
-WHERE oi.order_id = o.id
-  AND o.status = 'cancelled'
-  AND o.cancelled_at < NOW() - INTERVAL '90 days';
+-- Scalar subquery: returns exactly one value
+SELECT name, price,
+    (SELECT avg(price) FROM products) AS catalogue_avg
+FROM products;
 
--- Soft delete pattern (never physically delete rows)
-ALTER TABLE users ADD COLUMN deleted_at TIMESTAMPTZ;
-CREATE INDEX idx_users_active ON users (id) WHERE deleted_at IS NULL;
+-- Products priced above the catalogue average
+SELECT * FROM products
+WHERE price > (SELECT avg(price) FROM products);
 
--- Soft delete
-UPDATE users SET deleted_at = NOW() WHERE id = 42;
+-- Subquery in FROM (called a derived table)
+SELECT category_id, avg_price
+FROM (
+    SELECT category_id, avg(price) AS avg_price
+    FROM products
+    GROUP BY category_id
+) sub
+WHERE avg_price > 50;
 
--- Query only active users
-SELECT * FROM users WHERE deleted_at IS NULL;
+-- EXISTS: true if the subquery returns any row (efficient semi-join)
+SELECT * FROM customers c
+WHERE EXISTS (
+    SELECT 1 FROM orders o
+    WHERE o.customer_id = c.id AND o.status = 'pending'
+);
+```
 
--- Partial indexes make this efficient
+#### CTEs
+
+```sql
+-- A CTE is like a temporary named result set, valid for one query
+WITH expensive_products AS (
+    SELECT * FROM products WHERE price > 100
+)
+SELECT * FROM expensive_products WHERE is_active = true;
+
+-- Multiple CTEs
+WITH
+active_customers AS (
+    SELECT id FROM customers WHERE is_active = true AND deleted_at IS NULL
+),
+recent_orders AS (
+    SELECT * FROM orders WHERE created_at > NOW() - INTERVAL '30 days'
+)
+SELECT
+    ac.id,
+    count(ro.id) AS recent_order_count,
+    sum(ro.total) AS recent_spending
+FROM active_customers ac
+LEFT JOIN recent_orders ro ON ro.customer_id = ac.id
+GROUP BY ac.id
+ORDER BY recent_spending DESC NULLS LAST;
+```
+
+#### Recursive CTEs
+
+A recursive CTE can reference itself, enabling hierarchical traversal.
+
+```sql
+-- Hierarchical employees (any depth)
+WITH RECURSIVE org_chart AS (
+    -- Base case: start from the CEO (no manager)
+    SELECT id, name, manager_id, 0 AS depth
+    FROM employees
+    WHERE manager_id IS NULL
+
+    UNION ALL
+
+    -- Recursive step: find employees who report to someone already in the result
+    SELECT e.id, e.name, e.manager_id, oc.depth + 1
+    FROM employees e
+    JOIN org_chart oc ON e.manager_id = oc.id
+)
+SELECT depth, repeat('  ', depth) || name AS name_indented
+FROM org_chart
+ORDER BY depth, name;
+```
+
+#### Writable CTEs
+
+CTEs can contain `INSERT`, `UPDATE`, and `DELETE` — useful for chained operations.
+
+```sql
+-- Archive and delete expired sessions in one statement
+WITH expired AS (
+    DELETE FROM sessions WHERE expires_at < NOW()
+    RETURNING id, user_id, created_at
+)
+INSERT INTO session_archive (session_id, user_id, session_created, archived_at)
+SELECT id, user_id, created_at, NOW()
+FROM expired;
 ```
 
 ---
 
 ### ⚠️ Intermediate — Common Errors
 
-#### Error 1: Mass DELETE causing severe bloat and lock contention
-
-Same issue as mass UPDATE. Dead tuples accumulate:
+#### Error 1: Scalar subquery returning more than one row
 
 ```sql
--- BAD: deletes 50 million rows in one transaction
-DELETE FROM event_log WHERE created_at < NOW() - INTERVAL '2 years';
+-- Fails at runtime if multiple products exist in that category
+SELECT name, (SELECT price FROM products WHERE category_id = p.category_id) AS cat_price
+FROM products p;
+-- ERROR: more than one row returned by a subquery used as an expression
 ```
 
-**Fix:** Partition the table by date and `DROP PARTITION` (instant) instead of deleting rows. Or batch-delete in chunks:
+**Fix:** Add an aggregate or `LIMIT 1`, or use a JOIN:
 
 ```sql
+SELECT p.name, avg_prices.avg_price
+FROM products p
+JOIN (
+    SELECT category_id, avg(price) AS avg_price
+    FROM products GROUP BY category_id
+) avg_prices ON avg_prices.category_id = p.category_id;
+```
+
+#### Error 2: Correlated subquery causing N+1 database calls
+
+```sql
+-- Executes the subquery once for every row in customers
+SELECT id, (SELECT count(*) FROM orders WHERE customer_id = c.id) AS order_count
+FROM customers c;
+-- 100,000 customers = 100,000 individual subquery executions
+```
+
+**Fix:** Use a `LEFT JOIN` with `GROUP BY` instead:
+
+```sql
+SELECT c.id, count(o.id) AS order_count
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id
+GROUP BY c.id;
+```
+
+#### Error 3: Assuming CTEs are always materialised (important change in PostgreSQL 12)
+
+```sql
+-- Before PostgreSQL 12: CTEs were always materialised (computed once, result stored)
+-- PostgreSQL 12+: CTEs are inlined by default — the planner can push predicates INTO them
+
+WITH recent AS (
+    SELECT * FROM orders WHERE created_at > NOW() - INTERVAL '30 days'
+)
+SELECT * FROM recent WHERE customer_id = 42;
+-- PG12+: planner may push customer_id = 42 into the CTE scan (very efficient)
+-- Pre-PG12: would scan all recent orders first, then filter — could be much slower
+
+-- Force old materialised behaviour when you explicitly want it:
+WITH recent AS MATERIALIZED (
+    SELECT * FROM orders WHERE created_at > NOW() - INTERVAL '30 days'
+)
+SELECT * FROM recent WHERE customer_id = 42;
+```
+
+#### Error 4: Recursive CTE without cycle detection
+
+```sql
+-- If categories.parent_id has a circular reference (A → B → A), this runs forever
+WITH RECURSIVE tree AS (
+    SELECT id, parent_id FROM categories WHERE id = 1
+    UNION ALL
+    SELECT c.id, c.parent_id FROM categories c
+    JOIN tree t ON c.parent_id = t.id
+    -- no cycle detection!
+)
+SELECT * FROM tree;
+```
+
+**Fix:** Track visited IDs:
+
+```sql
+WITH RECURSIVE tree AS (
+    SELECT id, parent_id, ARRAY[id] AS visited
+    FROM categories WHERE id = 1
+    UNION ALL
+    SELECT c.id, c.parent_id, visited || c.id
+    FROM categories c
+    JOIN tree t ON c.parent_id = t.id
+    WHERE NOT c.id = ANY(visited)  -- stop if we see a node we've already visited
+)
+SELECT id, parent_id FROM tree;
+```
+
+---
+
+## 13. Indexes
+
+An index is a separate data structure that lets PostgreSQL find rows matching a condition without reading every row in the table.
+
+### Intermediate
+
+```sql
+-- B-tree index (default) — good for =, <, >, BETWEEN, IN, LIKE 'prefix%', ORDER BY
+CREATE INDEX idx_orders_customer_id ON orders(customer_id);
+
+-- Unique index (also enforces uniqueness)
+CREATE UNIQUE INDEX idx_users_email ON users(email);
+
+-- Multi-column index
+CREATE INDEX idx_orders_customer_status ON orders(customer_id, status);
+-- Can satisfy: WHERE customer_id = 42
+--              WHERE customer_id = 42 AND status = 'pending'
+-- Cannot efficiently satisfy: WHERE status = 'pending'  (leading column missing)
+
+-- Descending index
+CREATE INDEX idx_events_created_desc ON events(created_at DESC);
+
+-- Partial index: only index rows matching a condition
+-- The index is smaller and faster because it covers only the relevant subset
+CREATE INDEX idx_pending_orders ON orders(customer_id, created_at)
+    WHERE status = 'pending';
+-- Only useful for queries that also filter: WHERE status = 'pending'
+
+-- Expression index: index a computed value
+CREATE INDEX idx_users_lower_email ON users(lower(email));
+-- Enables: WHERE lower(email) = 'alice@example.com'
+
+-- GIN index for JSONB columns
+CREATE INDEX idx_events_payload ON events USING GIN (payload);
+-- Enables: WHERE payload @> '{"type": "click"}'
+-- Enables: WHERE payload ? 'user_id'
+
+-- Trigram index for substring search (LIKE '%text%')
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX idx_products_name_trgm ON products USING GIN (name gin_trgm_ops);
+-- Enables: WHERE name ILIKE '%widget%'
+
+-- Covering index: include extra columns so heap access is not needed
+CREATE INDEX idx_orders_customer_cover ON orders(customer_id)
+    INCLUDE (total, status, created_at);
+-- Query can be answered from the index alone (index-only scan)
+SELECT customer_id, total, status FROM orders WHERE customer_id = 42;
+
+-- BRIN index for very large, naturally ordered tables (e.g. time-series logs)
+CREATE INDEX idx_logs_brin ON event_log USING BRIN (created_at);
+-- Tiny index, fast to build, good for append-only time-series data
+```
+
+#### Non-Blocking Index Creation (Critical for Production)
+
+```sql
+-- Standard creation: blocks ALL writes during build — dangerous in production
+CREATE INDEX idx_orders_created ON orders(created_at);
+
+-- CONCURRENT creation: allows writes to continue during build
+-- Takes longer, but does not block your application
+CREATE INDEX CONCURRENTLY idx_orders_created ON orders(created_at);
+```
+
+#### Checking Index Health
+
+```sql
+-- Which indexes exist and how much space they use
+SELECT indexname, pg_size_pretty(pg_relation_size(indexrelid)) AS size
+FROM pg_stat_user_indexes
+WHERE tablename = 'orders';
+
+-- Indexes that are never used (candidates for removal)
+SELECT schemaname, tablename, indexname,
+       pg_size_pretty(pg_relation_size(indexrelid)) AS wasted_size
+FROM pg_stat_user_indexes
+WHERE idx_scan = 0
+  AND schemaname NOT IN ('pg_catalog')
+ORDER BY pg_relation_size(indexrelid) DESC;
+
+-- Verify a query uses your index
+EXPLAIN SELECT * FROM orders WHERE customer_id = 42;
+-- Look for: "Index Scan using idx_orders_customer_id"
+```
+
+---
+
+### ⚠️ Intermediate — Common Errors
+
+#### Error 1: Wrong column order in a multi-column index
+
+```sql
+-- Index on (status, customer_id)
+CREATE INDEX idx_wrong ON orders(status, customer_id);
+
+-- Cannot efficiently answer:
+SELECT * FROM orders WHERE customer_id = 42; -- no leading column match
+
+-- Can answer:
+SELECT * FROM orders WHERE status = 'new';
+SELECT * FROM orders WHERE status = 'new' AND customer_id = 42;
+
+-- RULE: put the column(s) used in equality filters first
+-- then columns used in range filters / ORDER BY last
+CREATE INDEX idx_correct ON orders(customer_id, status);
+```
+
+#### Error 2: Index not used because of a function wrapping the column
+
+```sql
+-- There is a plain index on email
+CREATE INDEX idx_users_email ON users(email);
+
+-- This query does NOT use the index — the function call invalidates it
+SELECT * FROM users WHERE lower(email) = 'alice@example.com';
+
+-- Fix: create an expression index that matches the query
+CREATE INDEX idx_users_lower_email ON users(lower(email));
+```
+
+#### Error 3: CONCURRENT index creation leaving an invalid index on failure
+
+```sql
+CREATE INDEX CONCURRENTLY idx_large_table_col ON large_table(col);
+-- If this fails midway (connection dropped, OOM kill, etc.):
+-- The index stays in pg_class with indisvalid = false
+-- It still slows down writes but is NEVER used for reads
+
+-- Check for invalid indexes:
+SELECT indexrelid::regclass AS index_name, indisvalid
+FROM pg_index
+WHERE NOT indisvalid;
+
+-- Fix: drop and recreate
+DROP INDEX CONCURRENTLY idx_large_table_col;
+CREATE INDEX CONCURRENTLY idx_large_table_col ON large_table(col);
+```
+
+#### Error 4: Over-indexing slows down writes
+
+```sql
+-- Every index on a table costs time on every INSERT, UPDATE, DELETE
+-- The engine must maintain ALL indexes for every row change
+-- A table with 10 indexes takes ~10x longer to insert into than a table with 1 index
+
+-- Create indexes based on EXPLAIN analysis of real queries
+-- Remove unused indexes regularly (see idx_scan = 0 query above)
+```
+
+#### Error 5: Index not used because the planner prefers a sequential scan
+
+```sql
+-- This is often CORRECT behaviour, not a bug
+-- If status = 'completed' matches 60% of rows, a sequential scan is faster
+-- Indexes are only beneficial for high-selectivity conditions (< ~5-10% of rows)
+
+-- Force index for investigation (not for production):
+SET enable_seqscan = OFF;
+EXPLAIN SELECT * FROM orders WHERE status = 'completed';
+RESET enable_seqscan;
+```
+
+---
+
+## 14. Transactions
+
+A **transaction** is a group of SQL statements that execute as a single unit. Either all of them succeed, or none of them do.
+
+### Intermediate
+
+```sql
+-- Explicit transaction
+BEGIN;
+    UPDATE accounts SET balance = balance - 500 WHERE id = 1;
+    UPDATE accounts SET balance = balance + 500 WHERE id = 2;
+COMMIT; -- both updates are saved permanently
+
+-- Rollback if something goes wrong
+BEGIN;
+    DELETE FROM orders WHERE customer_id = 99;
+    -- Wait — we meant to soft-delete, not hard-delete
+ROLLBACK; -- nothing is deleted, as if the DELETE never happened
+
+-- Savepoints: partial rollback within a transaction
+BEGIN;
+    INSERT INTO orders (customer_id, total) VALUES (1, 99.99); -- succeeds
+    SAVEPOINT after_order;
+
+    INSERT INTO order_items (order_id, product_id) VALUES (999, 0); -- may fail
+    ROLLBACK TO SAVEPOINT after_order; -- undo only the order_item insert
+
+    -- the order INSERT is still intact
+    INSERT INTO order_items (order_id, product_id, quantity) VALUES (999, 1, 2);
+COMMIT;
+```
+
+#### DDL is Transactional in PostgreSQL
+
+Unlike MySQL and many other databases, PostgreSQL allows DDL (`CREATE`, `ALTER`, `DROP`) inside a transaction and will roll it back if you rollback.
+
+```sql
+BEGIN;
+    CREATE TABLE temp_results (id SERIAL, data TEXT);
+    INSERT INTO temp_results (data) VALUES ('test run 1');
+    -- Decide we do not want this
+ROLLBACK;
+-- temp_results never existed — it was rolled back
+```
+
+#### Isolation Levels
+
+By default, PostgreSQL uses `READ COMMITTED` — each statement sees the latest committed data at the time it starts. Sometimes you need stronger guarantees.
+
+```sql
+-- REPEATABLE READ: all statements in the transaction see the same snapshot
+BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+    SELECT sum(amount) FROM payments WHERE account_id = 42; -- sees snapshot A
+    -- Another session commits new payments here
+    SELECT sum(amount) FROM payments WHERE account_id = 42; -- STILL sees snapshot A
+COMMIT;
+
+-- SERIALIZABLE: full isolation — transactions behave as if run one at a time
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+    -- see Advanced section for full detail
+COMMIT;
+```
+
+---
+
+### ⚠️ Intermediate — Common Errors
+
+#### Error 1: Auto-commit causing silent split transactions
+
+Most database drivers operate in **auto-commit** mode by default — every statement is its own transaction.
+
+```python
+# Python psycopg2 — WRONG
+cursor.execute("UPDATE accounts SET balance = balance - 500 WHERE id = 1")
+# This is COMMITTED here — if the next line crashes, money is gone
+cursor.execute("UPDATE accounts SET balance = balance + 500 WHERE id = 2")
+
+# CORRECT: use the connection as a context manager
+with connection:
+    cursor.execute("UPDATE accounts SET balance = balance - 500 WHERE id = 1")
+    cursor.execute("UPDATE accounts SET balance = balance + 500 WHERE id = 2")
+# Both committed or both rolled back
+```
+
+#### Error 2: A failed statement leaves the transaction in an aborted state
+
+```sql
+BEGIN;
+    INSERT INTO orders (id, product) VALUES (1, 'Widget'); -- succeeds
+    INSERT INTO orders (id, product) VALUES (1, 'Gadget'); -- FAILS: duplicate key
+
+    -- At this point the transaction is in ERROR state
+    INSERT INTO orders (id, product) VALUES (2, 'Gizmo'); -- silently ignored!
+COMMIT; -- silently ignored! Transaction is rolled back.
+-- Final result: NOTHING was inserted
+```
+
+After any error in a transaction block, every subsequent statement is ignored until you `ROLLBACK`. Use `SAVEPOINT` if you need to handle errors within a transaction.
+
+#### Error 3: Performing external side effects inside a transaction
+
+```sql
+BEGIN;
+    UPDATE orders SET status = 'shipped' WHERE id = 42;
+    -- Application sends a "Your order has shipped!" email here
+ROLLBACK; -- order status reverted, but the email is already in the recipient's inbox
+```
+
+**Fix:** Only trigger external side effects (emails, webhook calls, message queue pushes) **after** the transaction has successfully committed.
+
+#### Error 4: Long idle-in-transaction sessions blocking others
+
+```sql
+BEGIN;
+SELECT * FROM reports WHERE year = 2020;
+-- Application starts slow processing... takes 3 hours... never commits
+
+-- Consequence: VACUUM cannot clean up dead tuples older than this transaction's snapshot.
+-- Other sessions wanting to ALTER the table wait indefinitely for the lock.
+```
+
+**Fix:** Set a timeout on idle transactions:
+
+```sql
+-- In postgresql.conf or per session:
+SET idle_in_transaction_session_timeout = '5min';
+-- Transactions idle for more than 5 minutes will be rolled back automatically
+```
+
+---
+
+## 15. Locks
+
+PostgreSQL manages locks automatically, but understanding them is essential for diagnosing slow queries, deadlocks, and blocked applications.
+
+### Intermediate
+
+#### How PostgreSQL Locks
+
+- **Table-level locks** protect the table structure from concurrent DDL.
+- **Row-level locks** protect individual rows from concurrent writes.
+- Most locks are acquired and released automatically — you rarely need to lock manually.
+
+#### Common Lock Modes
+
+| Lock Mode | Acquired By | What It Blocks |
+|---|---|---|
+| `ACCESS SHARE` | `SELECT` | Only `ACCESS EXCLUSIVE` |
+| `ROW EXCLUSIVE` | `INSERT`, `UPDATE`, `DELETE` | `SHARE`, `EXCLUSIVE`, `ACCESS EXCLUSIVE` |
+| `SHARE UPDATE EXCLUSIVE` | `VACUUM`, `ANALYZE`, `CREATE INDEX CONCURRENTLY` | Other `SHARE UPDATE EXCLUSIVE` and stricter |
+| `SHARE` | `CREATE INDEX` (non-concurrent) | `ROW EXCLUSIVE` and stricter |
+| `ACCESS EXCLUSIVE` | `ALTER TABLE`, `DROP TABLE`, `TRUNCATE` | **Everything** — blocks all reads and writes |
+
+#### Row-Level Locks
+
+```sql
+-- Lock specific rows to prevent concurrent modifications
+SELECT * FROM products WHERE id = 1 FOR UPDATE;
+-- Other sessions cannot UPDATE or DELETE this row until our transaction ends
+
+-- Skip rows that are already locked (ideal for job queues)
+SELECT * FROM jobs WHERE status = 'pending'
+ORDER BY created_at
+LIMIT 1
+FOR UPDATE SKIP LOCKED;
+-- Returns the next available job, skipping any that are being processed by other workers
+
+-- Acquire lock without waiting (fail immediately if locked)
+SELECT * FROM products WHERE id = 1 FOR UPDATE NOWAIT;
+-- ERROR: could not obtain lock on row — your app can handle this gracefully
+
+-- Acquire lock but only wait N seconds
+SET lock_timeout = '3s';
+SELECT * FROM products WHERE id = 1 FOR UPDATE;
+-- ERROR after 3 seconds: cancelling statement due to lock timeout
+```
+
+#### Detecting Blocked Queries
+
+```sql
+-- See all queries that are currently waiting for a lock
+SELECT
+    blocked.pid                   AS blocked_pid,
+    blocked.query                 AS blocked_query,
+    blocking.pid                  AS blocking_pid,
+    blocking.query                AS blocking_query,
+    now() - blocked.query_start   AS blocked_for
+FROM pg_stat_activity blocked
+JOIN pg_stat_activity blocking ON blocking.pid = ANY(pg_blocking_pids(blocked.pid))
+WHERE cardinality(pg_blocking_pids(blocked.pid)) > 0;
+
+-- Cancel a query (politely — lets it roll back cleanly)
+SELECT pg_cancel_backend(blocking_pid);
+
+-- Terminate a session (forcefully — use as last resort)
+SELECT pg_terminate_backend(blocking_pid);
+```
+
+#### Advisory Locks
+
+Advisory locks are application-managed locks stored by PostgreSQL — useful for distributed mutual exclusion.
+
+```sql
+-- Acquire a session-level advisory lock (blocks until available)
+SELECT pg_advisory_lock(12345);
+-- ... do critical work that only one process should do at a time ...
+SELECT pg_advisory_unlock(12345);
+
+-- Non-blocking: returns TRUE if acquired, FALSE if already taken
+SELECT pg_try_advisory_lock(12345);
+
+-- Transaction-level advisory lock (auto-released on COMMIT/ROLLBACK)
+SELECT pg_advisory_xact_lock(12345);
+
+-- Common use: prevent duplicate cron job execution
+-- Each worker tries to acquire lock 9999 before starting
+-- Only one succeeds; others see FALSE and skip their run
 DO $$
-DECLARE deleted INTEGER;
 BEGIN
-    LOOP
-        DELETE FROM event_log
-        WHERE id IN (
-            SELECT id FROM event_log
-            WHERE created_at < NOW() - INTERVAL '2 years'
-            LIMIT 50000
-        );
-        GET DIAGNOSTICS deleted = ROW_COUNT;
-        EXIT WHEN deleted = 0;
-        PERFORM pg_sleep(0.05);
-    END LOOP;
+    IF pg_try_advisory_xact_lock(9999) THEN
+        -- do the job
+        RAISE NOTICE 'Running job';
+    ELSE
+        RAISE NOTICE 'Another worker is already running this job, skipping';
+    END IF;
 END $$;
 ```
 
 ---
 
-### Advanced
-
-```sql
--- DELETE with CTE (process and archive in one statement)
-WITH to_delete AS (
-    DELETE FROM pending_jobs
-    WHERE status = 'failed' AND attempts > 3
-    RETURNING *
-)
-INSERT INTO failed_jobs_archive SELECT *, NOW() FROM to_delete;
-
--- Efficient purge on partitioned tables
--- Drop the entire partition (no row-by-row DELETE needed):
-DROP TABLE event_log_2022; -- instant, no dead tuples, no bloat
--- Or detach first to make it available temporarily:
-ALTER TABLE event_log DETACH PARTITION event_log_2022;
--- Then examine, export, and drop when ready
-DROP TABLE event_log_2022;
-```
-
----
-
-## Transactions
-
-### Beginner
-
-```sql
--- Explicit transaction block
-BEGIN;
-    UPDATE accounts SET balance = balance - 100 WHERE id = 1;
-    UPDATE accounts SET balance = balance + 100 WHERE id = 2;
-COMMIT;
-
--- Rollback if something goes wrong
-BEGIN;
-    DELETE FROM orders WHERE customer_id = 99;
-    -- Realise this was wrong:
-ROLLBACK;
--- All changes undone
-
--- Savepoints
-BEGIN;
-    INSERT INTO orders (customer_id, total) VALUES (1, 99.99);
-    SAVEPOINT before_items;
-    INSERT INTO order_items (order_id, product_id) VALUES (1, 999); -- may fail
-    ROLLBACK TO SAVEPOINT before_items;
-    -- Only the order_items insert is undone; the order remains
-COMMIT;
-```
-
----
-
-### ⚠️ Beginner — Common Errors
-
-#### Error 1: Auto-commit confusion
-
-Most PostgreSQL client libraries operate in **auto-commit** mode by default — every statement is its own transaction. Developers forget to explicitly BEGIN when they need multi-statement atomicity.
-
-```python
-# Python (psycopg2)
-cursor.execute("UPDATE accounts SET balance = balance - 100 WHERE id = 1")
-# AUTO-COMMITTED HERE
-cursor.execute("UPDATE accounts SET balance = balance + 100 WHERE id = 2")
-# These are TWO separate transactions — if the process crashes between them, money is lost
-
-# Fix:
-with connection:  # psycopg2 context manager handles BEGIN/COMMIT/ROLLBACK
-    cursor.execute("UPDATE accounts SET balance = balance - 100 WHERE id = 1")
-    cursor.execute("UPDATE accounts SET balance = balance + 100 WHERE id = 2")
-```
-
-#### Error 2: Performing external side effects inside a transaction
-
-```sql
-BEGIN;
-UPDATE orders SET status = 'shipped';
--- Application sends email to customer HERE
--- Email is already sent, but:
-ROLLBACK; -- order status reverted, but email cannot be recalled!
-```
-
-**Fix:** Only perform side effects (emails, external API calls) **after** the transaction commits successfully.
-
----
-
-### Intermediate
-
-```sql
--- Transaction isolation level for a specific transaction
-BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    SELECT * FROM inventory WHERE product_id = 1;
-    -- ... some processing ...
-    SELECT * FROM inventory WHERE product_id = 1; -- same result guaranteed
-COMMIT;
-
--- DDL inside transactions (PostgreSQL supports this, unlike many databases)
-BEGIN;
-    CREATE TABLE temp_results (id SERIAL, data TEXT);
-    INSERT INTO temp_results (data) VALUES ('test');
-    -- Rollback drops the table too:
-ROLLBACK;
--- temp_results never existed
-
--- Two-phase commit (distributed transactions)
-BEGIN;
-    UPDATE accounts SET balance = balance - 100 WHERE id = 1;
-PREPARE TRANSACTION 'txn_abc123';  -- suspends the transaction
-
--- Later, on coordinator decision:
-COMMIT PREPARED 'txn_abc123';
--- or:
-ROLLBACK PREPARED 'txn_abc123';
-```
-
----
-
 ### ⚠️ Intermediate — Common Errors
 
-#### Error 1: Prepared transactions left open indefinitely
+#### Error 1: DDL statements blocking the entire application
 
 ```sql
-PREPARE TRANSACTION 'orphan_txn'; -- coordinator crashed, never resolved
-
--- This HOLDS LOCKS and BLOCKS VACUUM indefinitely!
--- Check for orphaned prepared transactions:
-SELECT * FROM pg_prepared_xacts;
--- Clean up:
-ROLLBACK PREPARED 'orphan_txn';
+-- Session A: a long-running SELECT is reading the users table
+-- Session B: ALTER TABLE users ADD COLUMN bio TEXT;
+-- Session B acquires ACCESS EXCLUSIVE — must wait for Session A to finish
+-- Session C, D, E: simple SELECT * FROM users — ALL queue behind Session B
+-- Result: the entire application freezes waiting for a simple SELECT to finish
 ```
 
-#### Error 2: Using transactions for read-only queries unnecessarily
+This is the **lock queue** problem. Even compatible operations (two SELECTs) queue behind a pending DDL.
 
+**Mitigation:**
 ```sql
--- Unnecessary overhead
-BEGIN;
-SELECT * FROM products WHERE id = 1;
-COMMIT;
-
--- For read-only queries, auto-commit (no explicit transaction) is fine
--- Unless you specifically need a consistent snapshot across multiple SELECTs
+-- Set a short lock timeout so the DDL fails fast rather than blocking indefinitely
+SET lock_timeout = '2s';
+ALTER TABLE users ADD COLUMN bio TEXT;
+-- If it cannot acquire the lock in 2s, it fails — retry during a quieter moment
 ```
 
----
-
-## Locks
-
-### Beginner
-
-PostgreSQL manages locks automatically. Understanding them helps diagnose contention and deadlocks.
-
-#### Lock Modes (from least to most restrictive)
-
-| Mode | Acquired By | Conflicts With |
-|---|---|---|
-| `ACCESS SHARE` | SELECT | ACCESS EXCLUSIVE only |
-| `ROW SHARE` | SELECT FOR UPDATE/SHARE | EXCLUSIVE, ACCESS EXCLUSIVE |
-| `ROW EXCLUSIVE` | INSERT, UPDATE, DELETE | SHARE, SHARE ROW EXCLUSIVE, EXCLUSIVE, ACCESS EXCLUSIVE |
-| `SHARE UPDATE EXCLUSIVE` | VACUUM, ANALYZE, CREATE INDEX CONCURRENTLY | SHARE UPDATE EXCLUSIVE, SHARE ROW EXCLUSIVE, EXCLUSIVE, ACCESS EXCLUSIVE |
-| `SHARE` | CREATE INDEX | ROW EXCLUSIVE, SHARE ROW EXCLUSIVE, EXCLUSIVE, ACCESS EXCLUSIVE |
-| `SHARE ROW EXCLUSIVE` | Rare | ROW EXCLUSIVE and above |
-| `EXCLUSIVE` | Rare | ROW SHARE and above |
-| `ACCESS EXCLUSIVE` | ALTER TABLE, DROP TABLE, TRUNCATE, LOCK TABLE | ALL other modes |
-
-```sql
--- Check current locks
-SELECT pid, locktype, relation::regclass, mode, granted
-FROM pg_locks l
-JOIN pg_stat_activity a USING (pid)
-WHERE relation IS NOT NULL
-ORDER BY relation, mode;
-```
-
-#### Row-Level Locks
-
-```sql
--- Lock specific rows for update (prevents concurrent updates)
-SELECT * FROM products WHERE id = 1 FOR UPDATE;
-
--- Lock without blocking (returns error if already locked)
-SELECT * FROM products WHERE id = 1 FOR UPDATE NOWAIT;
-
--- Lock with timeout
-SET lock_timeout = '5s';
-SELECT * FROM products WHERE id = 1 FOR UPDATE;
-
--- Skip locked rows (useful for job queues)
-SELECT * FROM jobs WHERE status = 'pending'
-ORDER BY created_at
-LIMIT 1
-FOR UPDATE SKIP LOCKED;
-```
-
----
-
-### ⚠️ Beginner — Common Errors
-
-#### Error 1: Not understanding that ALTER TABLE takes ACCESS EXCLUSIVE lock
-
-```sql
--- This blocks ALL reads and writes while executing
-ALTER TABLE users ADD COLUMN last_login TIMESTAMPTZ;
--- Even a simple column add can block a busy production table for seconds or minutes
-```
-
-**Fix for high-traffic tables:** On PostgreSQL 11+, adding a column with a constant default is instant (metadata only). For other DDL, schedule during off-hours or use tools like `pg_repack`.
-
-#### Error 2: Lock queue starvation
-
-```sql
--- Session A: long SELECT on users table (holds ACCESS SHARE lock)
--- Session B: ALTER TABLE users ... (waiting for ACCESS EXCLUSIVE — queued)
--- Session C: another SELECT on users (also waiting! — queued behind B)
--- Sessions D, E, F... all queue up behind B
--- Even though SELECT and SELECT are compatible, they queue behind the DDL waiter
-```
-
-This can make an entire application appear frozen. Monitor with:
-```sql
-SELECT pid, wait_event_type, wait_event, query, now() - query_start AS duration
-FROM pg_stat_activity
-WHERE wait_event_type = 'Lock'
-ORDER BY duration DESC;
-```
-
----
-
-### Intermediate
-
-#### Advisory Locks
-
-Advisory locks are application-managed locks that PostgreSQL stores and enforces.
-
-```sql
--- Acquire a session-level advisory lock (blocks if taken)
-SELECT pg_advisory_lock(12345);
--- ... do critical work ...
-SELECT pg_advisory_unlock(12345);
-
--- Try-acquire (returns false immediately if taken)
-SELECT pg_try_advisory_lock(12345); -- returns TRUE or FALSE
-
--- Transaction-level advisory lock (auto-released on COMMIT/ROLLBACK)
-SELECT pg_advisory_xact_lock(12345);
-
--- Common use: distributed mutex for cron jobs
--- Job 1 and Job 2 compete for lock 9999
--- Only one proceeds; the other skips
-SELECT pg_try_advisory_xact_lock(9999);
--- If returns false: another job is already running, skip
-```
-
----
-
-### ⚠️ Intermediate — Common Errors
-
-#### Error 1: Deadlock from lock ordering
+#### Error 2: Deadlock from inconsistent lock ordering
 
 ```sql
 -- Session A:
 BEGIN;
 UPDATE accounts SET balance = balance - 100 WHERE id = 1; -- locks row 1
-UPDATE accounts SET balance = balance + 100 WHERE id = 2; -- waits for row 2
+-- waiting for row 2...
+UPDATE accounts SET balance = balance + 100 WHERE id = 2;
 
 -- Session B (concurrent):
 BEGIN;
 UPDATE accounts SET balance = balance - 50 WHERE id = 2;  -- locks row 2
-UPDATE accounts SET balance = balance + 50 WHERE id = 1;  -- waits for row 1
--- DEADLOCK: A waits for B, B waits for A
--- PostgreSQL detects this and aborts one transaction with:
+-- waiting for row 1... DEADLOCK!
+UPDATE accounts SET balance = balance + 50 WHERE id = 1;
+
+-- PostgreSQL detects the cycle and aborts one transaction:
 -- ERROR: deadlock detected
+-- DETAIL: Process 1234 waits for ShareLock on transaction 5678;
+--         blocked by process 5678. Process 5678 waits for ShareLock on transaction 1234
 ```
 
-**Fix:** Always acquire locks in a consistent order:
+**Fix:** Always lock rows in a consistent order across all transactions:
+
 ```sql
--- Both sessions always update lower ID first
+-- Both sessions: always update the lower ID first
 UPDATE accounts SET balance = balance - 100 WHERE id = LEAST(1, 2);
 UPDATE accounts SET balance = balance + 100 WHERE id = GREATEST(1, 2);
 ```
 
-#### Error 2: SELECT FOR UPDATE on joined tables
+#### Error 3: SELECT FOR UPDATE locking more rows than intended in a JOIN
 
 ```sql
--- Locks rows in BOTH orders and customers
+-- This locks rows in BOTH orders AND customers
 SELECT o.*, c.name
 FROM orders o
 JOIN customers c ON c.id = o.customer_id
@@ -3191,75 +2052,22 @@ WHERE o.id = 42
 FOR UPDATE;
 
 -- To lock only the orders row:
-FOR UPDATE OF o;
+SELECT o.*, c.name
+FROM orders o
+JOIN customers c ON c.id = o.customer_id
+WHERE o.id = 42
+FOR UPDATE OF o;  -- specify which table to lock
 ```
 
 ---
 
-### Advanced
+## 16. Functions & Stored Procedures
 
-#### Detecting and Killing Blocking Queries
+Functions let you encapsulate reusable logic inside the database, close to the data.
 
-```sql
--- Find blocking/blocked query pairs
-SELECT
-    a.pid AS blocked_pid,
-    a.query AS blocked_query,
-    b.pid AS blocking_pid,
-    b.query AS blocking_query,
-    now() - a.query_start AS blocked_duration
-FROM pg_stat_activity a
-JOIN pg_stat_activity b ON b.pid = ANY(pg_blocking_pids(a.pid))
-WHERE cardinality(pg_blocking_pids(a.pid)) > 0;
+### Intermediate
 
--- Terminate a blocking query (sends SIGINT, query stops, transaction rolls back)
-SELECT pg_cancel_backend(blocking_pid);
-
--- Force-terminate a session (sends SIGTERM — use as last resort)
-SELECT pg_terminate_backend(blocking_pid);
-```
-
-#### Lock Timeouts vs Statement Timeouts
-
-```sql
--- lock_timeout: abort if waiting for a lock longer than this
-SET lock_timeout = '2s';
-
--- statement_timeout: abort any statement running longer than this
-SET statement_timeout = '30s';
-
--- deadlock_detection_timeout: how long before PostgreSQL checks for deadlock
--- Configured in postgresql.conf: deadlock_timeout = 1s (default)
-```
-
----
-
-### ⚠️ Advanced — Common Errors
-
-#### Error 1: Advisory locks not released on crash
-
-```sql
--- Session-level advisory locks are released when the session ends
--- But if the application holds them and the connection is forcibly killed by a proxy,
--- PostgreSQL releases them automatically. However, if the app is using a
--- connection pool that recycles connections without proper cleanup:
-
-SELECT pg_advisory_lock(9999);
--- App crashes, connection returned to pool
--- Next task from pool: tries pg_try_advisory_lock(9999) → returns FALSE
--- Lock appears held by no one useful
-
--- Check for dangling advisory locks:
-SELECT pid, classid, objid, mode, granted
-FROM pg_locks
-WHERE locktype = 'advisory';
-```
-
----
-
-## Functions & Stored Procedures
-
-### Beginner
+#### SQL Functions
 
 ```sql
 -- Simple SQL function
@@ -3268,99 +2076,72 @@ RETURNS TEXT AS $$
     SELECT first || ' ' || last;
 $$ LANGUAGE SQL IMMUTABLE;
 
--- Usage
-SELECT full_name('John', 'Doe'); -- returns 'John Doe'
-SELECT full_name(first_name, last_name) FROM users;
+SELECT full_name('John', 'Doe');                      -- 'John Doe'
+SELECT full_name(first_name, last_name) FROM users;   -- applies to every row
 
--- Function returning a scalar
-CREATE OR REPLACE FUNCTION order_total(order_id INTEGER)
+-- Function returning a calculated value
+CREATE OR REPLACE FUNCTION order_total(p_order_id INTEGER)
 RETURNS NUMERIC AS $$
     SELECT sum(quantity * unit_price)
     FROM order_items
-    WHERE order_id = $1;
+    WHERE order_id = p_order_id;
 $$ LANGUAGE SQL STABLE;
 
-SELECT id, order_total(id) FROM orders LIMIT 10;
+SELECT id, order_total(id) AS calculated_total FROM orders LIMIT 10;
 ```
+
+#### Function Volatility (Important)
+
+| Category | Meaning | May be optimised? |
+|---|---|---|
+| `IMMUTABLE` | Output depends only on arguments — pure function | Yes — can be used in indexes, called once per query |
+| `STABLE` | Output may change between queries but not within one (reads from tables) | Yes — called once per query, not once per row |
+| `VOLATILE` (default) | May change anything, has side effects | No — called once per row |
 
 #### PL/pgSQL Functions
 
 ```sql
 CREATE OR REPLACE FUNCTION apply_discount(
-    p_customer_id INTEGER,
+    p_customer_id  INTEGER,
     p_discount_pct NUMERIC
 )
-RETURNS VOID AS $$
+RETURNS INTEGER AS $$  -- returns number of updated rows
 DECLARE
     v_order_count INTEGER;
+    v_updated     INTEGER;
 BEGIN
+    -- Check how many orders this customer has
     SELECT count(*) INTO v_order_count
     FROM orders
     WHERE customer_id = p_customer_id;
 
-    IF v_order_count >= 10 THEN
-        UPDATE orders
-        SET total = total * (1 - p_discount_pct / 100)
-        WHERE customer_id = p_customer_id
-          AND status = 'pending';
+    IF v_order_count < 10 THEN
+        RAISE EXCEPTION 'Customer % does not qualify for a discount (only % orders)',
+            p_customer_id, v_order_count;
     END IF;
+
+    UPDATE orders
+    SET total = total * (1 - p_discount_pct / 100.0)
+    WHERE customer_id = p_customer_id
+      AND status = 'pending';
+
+    GET DIAGNOSTICS v_updated = ROW_COUNT;
+    RETURN v_updated;
 END;
 $$ LANGUAGE plpgsql;
+
+SELECT apply_discount(42, 10); -- apply 10% to customer 42's pending orders
 ```
-
----
-
-### ⚠️ Beginner — Common Errors
-
-#### Error 1: Using VOLATILE when function is STABLE or IMMUTABLE
-
-```sql
--- WRONG: function reads from table but marked IMMUTABLE
-CREATE FUNCTION get_product_name(id INTEGER)
-RETURNS TEXT AS $$
-    SELECT name FROM products WHERE id = $1;
-$$ LANGUAGE SQL IMMUTABLE; -- WRONG! Result can change if table changes
-
--- CORRECT categories:
--- IMMUTABLE: result depends only on arguments (pure math, string ops)
--- STABLE:    result depends on args + current data (reads tables, no side effects)
--- VOLATILE:  can change anything, has side effects (default if unspecified)
-```
-
-**Why it matters:** IMMUTABLE functions can be used in index expressions. STABLE functions can be called once per query instead of once per row. Wrong annotation leads to wrong results or missed optimisations.
-
-#### Error 2: Not handling NULL arguments
-
-```sql
-CREATE FUNCTION safe_divide(numerator NUMERIC, denominator NUMERIC)
-RETURNS NUMERIC AS $$
-    SELECT numerator / denominator;
-$$ LANGUAGE SQL;
-
-SELECT safe_divide(10, 0); -- ERROR: division by zero
-SELECT safe_divide(NULL, 5); -- returns NULL (this is OK for most cases)
-
--- Better:
-CREATE OR REPLACE FUNCTION safe_divide(numerator NUMERIC, denominator NUMERIC)
-RETURNS NUMERIC AS $$
-    SELECT numerator / NULLIF(denominator, 0);
-$$ LANGUAGE SQL IMMUTABLE;
-```
-
----
-
-### Intermediate
 
 #### Functions Returning Tables
 
 ```sql
--- Return a table
-CREATE OR REPLACE FUNCTION customer_orders(p_customer_id INTEGER)
+CREATE OR REPLACE FUNCTION customer_order_history(p_customer_id INTEGER)
 RETURNS TABLE (
-    order_id    INTEGER,
-    order_date  TIMESTAMPTZ,
-    total       NUMERIC,
-    status      TEXT
+    order_id   INTEGER,
+    order_date TIMESTAMPTZ,
+    total      NUMERIC,
+    status     TEXT
 ) AS $$
     SELECT id, created_at, total, status
     FROM orders
@@ -3368,451 +2149,1757 @@ RETURNS TABLE (
     ORDER BY created_at DESC;
 $$ LANGUAGE SQL STABLE;
 
--- Usage
-SELECT * FROM customer_orders(42);
-SELECT * FROM customer_orders(42) WHERE status = 'completed';
+-- Use like a table
+SELECT * FROM customer_order_history(42);
+SELECT * FROM customer_order_history(42) WHERE status = 'completed';
 ```
 
 #### Exception Handling
 
 ```sql
-CREATE OR REPLACE FUNCTION safe_insert_user(
-    p_email TEXT,
-    p_name  TEXT
-)
+CREATE OR REPLACE FUNCTION safe_upsert_user(p_email TEXT, p_name TEXT)
 RETURNS INTEGER AS $$
 DECLARE
     v_id INTEGER;
 BEGIN
-    INSERT INTO users (email, name)
-    VALUES (p_email, p_name)
+    INSERT INTO users (email, name) VALUES (p_email, p_name)
     RETURNING id INTO v_id;
-
     RETURN v_id;
 
 EXCEPTION
     WHEN unique_violation THEN
-        -- Email already exists
+        -- User already exists — return existing ID
         SELECT id INTO v_id FROM users WHERE email = p_email;
         RETURN v_id;
 
     WHEN check_violation THEN
-        RAISE EXCEPTION 'Invalid email format: %', p_email;
+        RAISE EXCEPTION 'Invalid data for email: %', p_email;
 
     WHEN OTHERS THEN
-        RAISE EXCEPTION 'Unexpected error: % %', SQLERRM, SQLSTATE;
+        -- Log and re-raise unexpected errors
+        RAISE WARNING 'Unexpected error in safe_upsert_user: % (%)', SQLERRM, SQLSTATE;
+        RAISE;
 END;
 $$ LANGUAGE plpgsql;
 ```
 
 #### Stored Procedures (PostgreSQL 11+)
 
+Procedures are like functions but can commit or rollback within their body — useful for long batch operations.
+
 ```sql
--- Procedures differ from functions: they can COMMIT/ROLLBACK within their body
-CREATE OR REPLACE PROCEDURE batch_update_prices(p_pct NUMERIC)
+CREATE OR REPLACE PROCEDURE batch_apply_price_increase(p_pct NUMERIC)
 LANGUAGE plpgsql AS $$
 DECLARE
     v_count INTEGER := 0;
 BEGIN
     FOR rec IN SELECT id FROM products ORDER BY id LOOP
-        UPDATE products SET price = price * (1 + p_pct/100) WHERE id = rec.id;
+        UPDATE products SET price = price * (1 + p_pct / 100.0) WHERE id = rec.id;
         v_count := v_count + 1;
 
-        -- Commit every 1000 rows to avoid huge transaction
+        -- Commit every 1,000 rows to keep transaction size manageable
         IF v_count % 1000 = 0 THEN
             COMMIT;
+            RAISE NOTICE 'Committed % rows', v_count;
         END IF;
     END LOOP;
     COMMIT;
 END;
 $$;
 
--- Call a procedure (not SELECT)
-CALL batch_update_prices(5.0);
+CALL batch_apply_price_increase(5.0); -- 5% price increase for all products
 ```
 
 ---
 
 ### ⚠️ Intermediate — Common Errors
 
-#### Error 1: Catching OTHERS and swallowing errors silently
+#### Error 1: Marking a function IMMUTABLE when it reads from a table
+
+```sql
+-- WRONG: result depends on table data, not just arguments
+CREATE FUNCTION get_category_name(id INTEGER)
+RETURNS TEXT AS $$
+    SELECT name FROM categories WHERE id = $1;
+$$ LANGUAGE SQL IMMUTABLE;  -- WRONG: result can change when the table changes
+```
+
+**Consequence:** PostgreSQL may cache the result and return a stale value. Use `STABLE`:
+
+```sql
+CREATE FUNCTION get_category_name(id INTEGER)
+RETURNS TEXT AS $$
+    SELECT name FROM categories WHERE id = $1;
+$$ LANGUAGE SQL STABLE;
+```
+
+#### Error 2: Silently swallowing exceptions
 
 ```sql
 EXCEPTION
     WHEN OTHERS THEN
-        -- do nothing  -- DANGEROUS: hides real bugs
-        RETURN NULL;
+        RETURN NULL;  -- error is lost — no log, no trace, no alert
 ```
 
-**Fix:** At minimum, log the error:
+This hides real bugs and makes debugging impossible. Always at minimum log:
+
 ```sql
 WHEN OTHERS THEN
-    RAISE WARNING 'Error in function xyz: % (SQLSTATE: %)', SQLERRM, SQLSTATE;
-    RETURN NULL; -- or re-raise
-    -- To re-raise: RAISE;
+    RAISE WARNING 'Error in function my_func: % (SQLSTATE: %)', SQLERRM, SQLSTATE;
+    RETURN NULL;
+-- Or re-raise: RAISE;
 ```
 
-#### Error 2: PL/pgSQL functions creating execution plan cache issues
+#### Error 3: Using a function where a JOIN would be more efficient
 
 ```sql
--- Dynamic SQL bypasses plan cache
-EXECUTE format('SELECT * FROM %I WHERE id = $1', table_name) USING id_val;
--- This is fine for table names (cannot be parameterised directly)
+-- Called once per row (N+1 in disguise)
+SELECT id, get_customer_name(customer_id) FROM orders;
 
--- But for static queries, use regular SQL to benefit from plan caching:
-SELECT * FROM products WHERE id = p_id; -- plan cached after first execution
+-- Better: JOIN once
+SELECT o.id, c.name
+FROM orders o
+JOIN customers c ON c.id = o.customer_id;
+```
+
+#### Error 4: SECURITY DEFINER function without fixing search_path
+
+```sql
+-- Vulnerable: attacker can create a function in their schema with the same name
+-- as something called inside this function, and it may be called with elevated privileges
+CREATE FUNCTION admin_task() RETURNS VOID SECURITY DEFINER AS $$
+    PERFORM some_utility_function(); -- which schema does this resolve to?
+$$ LANGUAGE SQL;
+
+-- Fix: always pin search_path in SECURITY DEFINER functions
+CREATE FUNCTION admin_task() RETURNS VOID
+SECURITY DEFINER
+SET search_path = public, pg_catalog
+AS $$
+    PERFORM some_utility_function();
+$$ LANGUAGE SQL;
 ```
 
 ---
 
+## 17. Triggers
+
+A trigger is a function that PostgreSQL automatically calls when a specified event occurs on a table.
+
+### Intermediate
+
+#### Anatomy of a Trigger
+
+Every trigger consists of two parts:
+1. A **trigger function** (returns `TRIGGER`)
+2. The **trigger definition** (when, on which table, for which events)
+
+```sql
+-- Step 1: create the trigger function
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();  -- modify the row about to be written
+    RETURN NEW;              -- BEFORE triggers must RETURN NEW to proceed
+END;
+$$ LANGUAGE plpgsql;
+
+-- Step 2: attach to a table
+CREATE TRIGGER trg_users_updated_at
+BEFORE UPDATE ON users       -- fire BEFORE the UPDATE
+FOR EACH ROW                 -- fire once per affected row
+EXECUTE FUNCTION set_updated_at();
+
+-- Now every UPDATE automatically sets updated_at — no application code needed
+UPDATE users SET name = 'Alice Smith' WHERE id = 1;
+-- updated_at is silently set to NOW()
+```
+
+#### Trigger Timing and Events
+
+```sql
+-- BEFORE INSERT: validate or transform before writing
+CREATE TRIGGER trg_normalise_email
+BEFORE INSERT OR UPDATE ON users
+FOR EACH ROW
+EXECUTE FUNCTION normalise_email();
+
+-- AFTER INSERT: react after the row is committed to the heap
+CREATE TRIGGER trg_welcome_email
+AFTER INSERT ON users
+FOR EACH ROW
+EXECUTE FUNCTION queue_welcome_email();
+
+-- AFTER UPDATE on specific columns only: fire only when price changes
+CREATE TRIGGER trg_price_change
+AFTER UPDATE OF price ON products
+FOR EACH ROW
+WHEN (OLD.price IS DISTINCT FROM NEW.price)  -- only when value actually changed
+EXECUTE FUNCTION notify_price_change();
+
+-- AFTER DELETE: audit trail
+CREATE TRIGGER trg_user_deleted
+AFTER DELETE ON users
+FOR EACH ROW
+EXECUTE FUNCTION archive_deleted_user();
+```
+
+#### Generic Audit Trigger
+
+```sql
+-- One trigger function reused across multiple tables
+CREATE OR REPLACE FUNCTION record_audit_log() RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        INSERT INTO audit_log (table_name, operation, new_data, changed_at)
+        VALUES (TG_TABLE_NAME, 'INSERT', row_to_json(NEW), NOW());
+        RETURN NEW;
+
+    ELSIF TG_OP = 'UPDATE' THEN
+        INSERT INTO audit_log (table_name, operation, old_data, new_data, changed_at)
+        VALUES (TG_TABLE_NAME, 'UPDATE', row_to_json(OLD), row_to_json(NEW), NOW());
+        RETURN NEW;
+
+    ELSIF TG_OP = 'DELETE' THEN
+        INSERT INTO audit_log (table_name, operation, old_data, changed_at)
+        VALUES (TG_TABLE_NAME, 'DELETE', row_to_json(OLD), NOW());
+        RETURN OLD;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Attach to any table
+CREATE TRIGGER trg_audit_users
+    AFTER INSERT OR UPDATE OR DELETE ON users
+    FOR EACH ROW EXECUTE FUNCTION record_audit_log();
+
+CREATE TRIGGER trg_audit_orders
+    AFTER INSERT OR UPDATE OR DELETE ON orders
+    FOR EACH ROW EXECUTE FUNCTION record_audit_log();
+```
+
+#### Statement-Level Triggers
+
+```sql
+-- Fire once per statement, not once per row — useful for bulk operations
+CREATE OR REPLACE FUNCTION log_bulk_change() RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO change_log (table_name, operation, changed_at)
+    VALUES (TG_TABLE_NAME, TG_OP, NOW());
+    RETURN NULL;  -- statement-level triggers return NULL
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_orders_bulk
+AFTER INSERT OR UPDATE OR DELETE ON orders
+FOR EACH STATEMENT
+EXECUTE FUNCTION log_bulk_change();
+```
+
+---
+
+### ⚠️ Intermediate — Common Errors
+
+#### Error 1: Forgetting RETURN NEW in a BEFORE trigger
+
+```sql
+CREATE OR REPLACE FUNCTION log_insert() RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO audit_log (table_name) VALUES (TG_TABLE_NAME);
+    -- FORGOT: RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+-- Every INSERT into the table inserts NOTHING — silently swallowed
+```
+
+**Rule:**
+- `BEFORE INSERT / UPDATE` → must `RETURN NEW` to allow the operation, or `RETURN NULL` to cancel it
+- `BEFORE DELETE` → must `RETURN OLD` to allow, or `RETURN NULL` to cancel
+- `AFTER` triggers → return value is ignored, but convention is `RETURN NULL`
+
+#### Error 2: Using an AFTER trigger to modify the row being written
+
+```sql
+-- Cannot modify the row in an AFTER trigger — it is already written
+CREATE OR REPLACE FUNCTION set_slug() RETURNS TRIGGER AS $$
+BEGIN
+    NEW.slug = lower(replace(NEW.title, ' ', '-')); -- ERROR in AFTER context
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_set_slug
+AFTER INSERT ON articles  -- wrong timing
+FOR EACH ROW EXECUTE FUNCTION set_slug();
+```
+
+**Fix:** Use a `BEFORE` trigger for any modification to the row itself.
+
+#### Error 3: Trigger recursion causing infinite loop
+
+```sql
+CREATE OR REPLACE FUNCTION sync_user_summary() RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE users SET summary_updated = true WHERE id = NEW.id; -- triggers itself again!
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+**Fix:** Modify `NEW` directly in a BEFORE trigger — no extra UPDATE needed:
+
+```sql
+CREATE OR REPLACE FUNCTION sync_user_summary() RETURNS TRIGGER AS $$
+BEGIN
+    NEW.summary_updated := true; -- modify the incoming row, no recursion
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_sync_summary
+BEFORE UPDATE ON users
+FOR EACH ROW EXECUTE FUNCTION sync_user_summary();
+```
+
+#### Error 4: Trigger firing on update when value did not change
+
+```sql
+-- Fires even if status did not actually change (UPDATE users SET status = status)
+CREATE TRIGGER trg_status_notify
+AFTER UPDATE ON orders
+FOR EACH ROW
+EXECUTE FUNCTION notify_status_change();
+
+-- Fix: add WHEN clause to check actual change
+CREATE TRIGGER trg_status_notify
+AFTER UPDATE OF status ON orders
+FOR EACH ROW
+WHEN (OLD.status IS DISTINCT FROM NEW.status)  -- IS DISTINCT FROM handles NULLs correctly
+EXECUTE FUNCTION notify_status_change();
+```
+
+#### Error 5: TRUNCATE not firing row-level triggers
+
+Same issue covered in Section 8. Row-level triggers do not fire on `TRUNCATE`. Use a statement-level `AFTER TRUNCATE` trigger if you need that coverage.
+
+---
+
+## 18. VACUUM & Bloat
+
+### Intermediate
+
+Understanding VACUUM is essential for any developer whose application does significant UPDATEs or DELETEs.
+
+#### Why Dead Tuples Exist
+
+PostgreSQL's MVCC model (covered in detail in Part III) never overwrites a row in-place. When you update a row, a new version is written and the old one is **marked dead** but left on disk. This is necessary so other transactions can still read the old version.
+
+```sql
+-- Each of these creates dead tuples
+UPDATE products SET price = price * 1.10;   -- 100,000 dead tuples if 100k rows
+DELETE FROM sessions WHERE expires_at < NOW(); -- N dead tuples for N deleted rows
+```
+
+#### VACUUM — Reclaiming Space
+
+```sql
+-- VACUUM: mark dead tuple space as reusable (space stays in the file, available for new rows)
+VACUUM orders;
+
+-- VACUUM ANALYZE: vacuum + refresh planner statistics
+VACUUM ANALYZE orders;
+
+-- VACUUM VERBOSE: show what VACUUM is doing
+VACUUM VERBOSE products;
+
+-- VACUUM FULL: compact the table and return space to the OS
+-- WARNING: acquires ACCESS EXCLUSIVE lock — blocks all reads AND writes
+VACUUM FULL orders;
+
+-- Check dead tuple accumulation and last vacuum times
+SELECT
+    relname,
+    n_live_tup,
+    n_dead_tup,
+    round(100.0 * n_dead_tup / NULLIF(n_live_tup + n_dead_tup, 0), 1) AS dead_pct,
+    last_vacuum,
+    last_autovacuum,
+    last_analyze
+FROM pg_stat_user_tables
+WHERE n_dead_tup > 1000
+ORDER BY n_dead_tup DESC;
+```
+
+#### Autovacuum
+
+PostgreSQL runs an **autovacuum** daemon that automatically vacuums tables when they accumulate too many dead tuples. For most workloads, autovacuum is sufficient. For high-churn tables, you may need to tune it:
+
+```sql
+-- Tune autovacuum per table (overrides global settings)
+ALTER TABLE sessions SET (
+    autovacuum_vacuum_scale_factor = 0.01,   -- vacuum when 1% rows are dead (default: 20%)
+    autovacuum_analyze_scale_factor = 0.005, -- analyze when 0.5% rows changed (default: 10%)
+    autovacuum_vacuum_cost_delay = 2         -- less throttling (ms) for this table
+);
+
+-- For very large tables, use absolute thresholds instead of percentages
+-- (1% of 500M rows = 5M dead tuples before autovacuum fires — too late)
+ALTER TABLE large_events SET (
+    autovacuum_vacuum_scale_factor = 0,
+    autovacuum_vacuum_threshold = 50000  -- vacuum when 50k dead tuples exist
+);
+```
+
+#### Bloat
+
+**Bloat** is the wasted space inside a table or index caused by dead tuples. A bloated table:
+- Takes up more disk space than necessary
+- Requires more I/O to scan (more pages to read)
+- Has a larger memory footprint in shared_buffers
+
+```sql
+-- Estimate table bloat
+SELECT
+    schemaname,
+    tablename,
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS total_size,
+    n_dead_tup,
+    n_live_tup,
+    round(100.0 * n_dead_tup / NULLIF(n_live_tup + n_dead_tup, 0), 1) AS dead_pct
+FROM pg_stat_user_tables
+ORDER BY n_dead_tup DESC
+LIMIT 20;
+```
+
+**VACUUM FULL** eliminates bloat but requires an exclusive lock. For production tables, use `pg_repack` instead:
+
+```bash
+# pg_repack: non-blocking table compaction (runs concurrently with reads/writes)
+pg_repack -d mydb -t bloated_table
+```
+
+---
+
+### ⚠️ Intermediate — Common Errors
+
+#### Error 1: Disabling autovacuum to "improve performance"
+
+```sql
+ALTER TABLE hot_table SET (autovacuum_enabled = false);
+-- Seems to reduce random I/O spikes
+-- But: dead tuples accumulate without bound
+-- Table grows larger → more I/O per query
+-- Eventually: XID wraparound protection kicks in → database refuses all writes
+```
+
+**Fix:** Tune autovacuum aggressiveness (see above). Never disable it entirely.
+
+#### Error 2: VACUUM FULL on a production table during business hours
+
+```sql
+VACUUM FULL orders; -- holds ACCESS EXCLUSIVE lock for potentially hours
+-- Zero reads or writes to orders are possible while this runs
+-- Application appears down
+```
+
+**Fix:** Use `pg_repack` for online compaction, or schedule `VACUUM FULL` during a confirmed maintenance window.
+
+#### Error 3: Long-running transactions blocking VACUUM
+
+```sql
+-- A transaction open for hours prevents VACUUM from cleaning up dead tuples
+-- created AFTER the transaction started
+-- Result: table bloat accumulates even though autovacuum is running normally
+
+-- Find long-running transactions:
+SELECT pid, now() - query_start AS duration, state, query
+FROM pg_stat_activity
+WHERE state != 'idle'
+  AND now() - query_start > INTERVAL '5 minutes'
+ORDER BY duration DESC;
+```
+
+**Fix:** Set `idle_in_transaction_session_timeout`. Investigate and fix slow application logic.
+
+#### Error 4: Not vacuuming after a large DELETE
+
+```sql
+DELETE FROM event_log WHERE created_at < NOW() - INTERVAL '1 year'; -- deletes 10M rows
+-- Table size on disk: unchanged (space is marked reusable internally, not returned to OS)
+-- Sequential scan of event_log: still reads the same number of pages
+```
+
+After a large `DELETE`, run:
+
+```sql
+VACUUM ANALYZE event_log;
+-- Marks space reusable, updates statistics
+-- For space reclamation to OS: VACUUM FULL event_log; (or pg_repack)
+```
+
+---
+
+# 🔴 Part III — Advanced
+
+You are now comfortable with day-to-day SQL and PostgreSQL features. This part covers the internals and advanced features that separate a good developer from a great one: how PostgreSQL really stores and versions data, sophisticated analytical queries, query planning, and partitioning.
+
+---
+
+## 19. Window Functions
+
+Window functions compute a value for each row based on a set of related rows — without collapsing them into one row the way `GROUP BY` does.
+
 ### Advanced
 
 ```sql
--- Variadic functions
-CREATE OR REPLACE FUNCTION concat_all(VARIADIC parts TEXT[])
-RETURNS TEXT AS $$
-    SELECT string_agg(x, '') FROM unnest(parts) x;
-$$ LANGUAGE SQL IMMUTABLE;
+-- ROW_NUMBER: unique sequential number within a partition
+SELECT
+    customer_id,
+    order_id,
+    total,
+    row_number() OVER (PARTITION BY customer_id ORDER BY created_at) AS order_sequence
+FROM orders;
+-- customer 1: orders numbered 1, 2, 3, ...
+-- customer 2: orders numbered 1, 2, 3, ... (restarts per partition)
 
-SELECT concat_all('Hello', ', ', 'World', '!'); -- 'Hello, World!'
+-- RANK vs DENSE_RANK
+SELECT
+    product_id,
+    category_id,
+    revenue,
+    rank()       OVER (PARTITION BY category_id ORDER BY revenue DESC) AS rank,
+    dense_rank() OVER (PARTITION BY category_id ORDER BY revenue DESC) AS dense_rank
+FROM product_sales;
+-- rank():       1, 2, 2, 4  (gap after tie)
+-- dense_rank(): 1, 2, 2, 3  (no gap)
 
--- Function with OUT parameters
-CREATE OR REPLACE FUNCTION get_stats(
-    p_category_id INTEGER,
-    OUT min_price NUMERIC,
-    OUT max_price NUMERIC,
-    OUT avg_price NUMERIC,
-    OUT count_products INTEGER
-) AS $$
-    SELECT min(price), max(price), avg(price), count(*)
-    FROM products
-    WHERE category_id = p_category_id;
-$$ LANGUAGE SQL STABLE;
+-- Running total
+SELECT
+    order_id,
+    total,
+    created_at,
+    sum(total) OVER (ORDER BY created_at) AS running_total
+FROM orders;
 
-SELECT * FROM get_stats(3);
-
--- Polymorphic functions (work on any type)
-CREATE OR REPLACE FUNCTION first_element(ANYARRAY)
-RETURNS ANYELEMENT AS $$
-    SELECT $1[1];
-$$ LANGUAGE SQL IMMUTABLE;
-
-SELECT first_element(ARRAY[1,2,3]);     -- returns 1 (integer)
-SELECT first_element(ARRAY['a','b']);   -- returns 'a' (text)
+-- Moving average (7-row window)
+SELECT
+    date,
+    daily_sales,
+    avg(daily_sales) OVER (
+        ORDER BY date
+        ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) AS moving_avg_7d
+FROM daily_stats;
 ```
 
-#### Security Definer Functions
+#### LAG and LEAD — Access Neighbouring Rows
 
 ```sql
--- Function runs with the privileges of the DEFINER, not the caller
--- Useful to grant limited access to underlying tables
-CREATE OR REPLACE FUNCTION get_my_salary()
-RETURNS NUMERIC
-SECURITY DEFINER  -- runs as function owner
-SET search_path = public  -- prevent search_path injection
-AS $$
-    SELECT salary FROM employees WHERE id = current_setting('app.current_user_id')::INTEGER;
-$$ LANGUAGE SQL STABLE;
+SELECT
+    date,
+    revenue,
+    lag(revenue, 1)  OVER (ORDER BY date) AS prev_day,
+    lead(revenue, 1) OVER (ORDER BY date) AS next_day,
+    revenue - lag(revenue, 1) OVER (ORDER BY date) AS day_over_day_change,
+    round(
+        100.0 * (revenue - lag(revenue, 1) OVER (ORDER BY date))
+             / NULLIF(lag(revenue, 1) OVER (ORDER BY date), 0),
+        1
+    ) AS pct_change
+FROM daily_revenue
+ORDER BY date;
+```
 
-GRANT EXECUTE ON FUNCTION get_my_salary() TO employee_role;
--- Employees can call this function but cannot directly SELECT from employees table
+#### NTILE, CUME_DIST, PERCENT_RANK
+
+```sql
+-- Divide customers into 4 spending quartiles
+SELECT
+    customer_id,
+    lifetime_value,
+    ntile(4) OVER (ORDER BY lifetime_value) AS quartile
+    -- 1 = bottom 25%, 4 = top 25%
+FROM customer_stats;
+
+-- What percentage of scores are at or below this score?
+SELECT
+    student_id,
+    score,
+    round(cume_dist()    OVER (ORDER BY score) * 100, 1) AS percentile,
+    round(percent_rank() OVER (ORDER BY score) * 100, 1) AS percent_rank
+FROM exam_results;
+```
+
+#### FIRST_VALUE, LAST_VALUE, NTH_VALUE
+
+```sql
+SELECT
+    product_id,
+    category_id,
+    price,
+    first_value(price) OVER (
+        PARTITION BY category_id ORDER BY price
+        ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+    ) AS cheapest_in_category,
+    last_value(price)  OVER (
+        PARTITION BY category_id ORDER BY price
+        ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+    ) AS most_expensive_in_category
+FROM products;
+```
+
+#### Named Window — Reuse the Same OVER Clause
+
+```sql
+-- Without named window: verbose and repetitive
+SELECT id, sum(total) OVER (PARTITION BY customer_id ORDER BY created_at),
+           avg(total) OVER (PARTITION BY customer_id ORDER BY created_at),
+           count(*)   OVER (PARTITION BY customer_id ORDER BY created_at)
+FROM orders;
+
+-- With WINDOW clause: define once, reference by name
+SELECT id,
+       sum(total)  OVER cw,
+       avg(total)  OVER cw,
+       count(*)    OVER cw
+FROM orders
+WINDOW cw AS (PARTITION BY customer_id ORDER BY created_at);
+```
+
+#### Practical Pattern: Top-N Per Group
+
+```sql
+-- Top 3 best-selling products per category
+SELECT category_id, product_id, sales, rank
+FROM (
+    SELECT
+        category_id,
+        product_id,
+        sales,
+        rank() OVER (PARTITION BY category_id ORDER BY sales DESC) AS rank
+    FROM product_sales
+) ranked
+WHERE rank <= 3
+ORDER BY category_id, rank;
+```
+
+#### Practical Pattern: Gaps and Islands
+
+Find consecutive date ranges (e.g. continuous login streaks):
+
+```sql
+SELECT
+    user_id,
+    min(login_date) AS streak_start,
+    max(login_date) AS streak_end,
+    count(*)        AS streak_days
+FROM (
+    SELECT
+        user_id,
+        login_date,
+        -- Subtracting the row number groups consecutive dates into the same "island"
+        login_date - (row_number() OVER (PARTITION BY user_id ORDER BY login_date))::INTEGER AS grp
+    FROM daily_logins
+) g
+GROUP BY user_id, grp
+ORDER BY user_id, streak_start;
 ```
 
 ---
 
 ### ⚠️ Advanced — Common Errors
 
-#### Error 1: SECURITY DEFINER without SET search_path
+#### Error 1: Window functions not allowed in WHERE — must wrap in subquery
 
 ```sql
--- Vulnerable to search_path hijacking
-CREATE FUNCTION admin_action() RETURNS VOID SECURITY DEFINER AS $$
-    SELECT drop_all_tables(); -- if an attacker creates a function named drop_all_tables
-                               -- in their schema, and manipulates search_path,
-                               -- this could call their function with elevated privileges
-$$ LANGUAGE SQL;
-
--- Fix: always set search_path in SECURITY DEFINER functions
-CREATE FUNCTION admin_action() RETURNS VOID
-SECURITY DEFINER
-SET search_path = public, pg_catalog
-AS $$ ... $$ LANGUAGE SQL;
-```
-
-#### Error 2: Functions not benefiting from query planner statistics
-
-```sql
--- Planner cannot estimate result set size of a function returning SETOF
--- This may cause bad join strategies when using a function in FROM
-
--- Fix: use explicit row estimates via function cost
-CREATE FUNCTION get_active_products()
-RETURNS SETOF products
-ROWS 1000  -- hint to planner: expect ~1000 rows
-AS $$ SELECT * FROM products WHERE is_active = true; $$ LANGUAGE SQL STABLE;
-```
-
----
-
-## Triggers
-
-### Beginner
-
-A trigger is a function that PostgreSQL automatically calls in response to a table event (INSERT, UPDATE, DELETE, TRUNCATE).
-
-```sql
--- Step 1: Create the trigger function
-CREATE OR REPLACE FUNCTION set_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Step 2: Attach the trigger to a table
-CREATE TRIGGER trg_users_updated_at
-BEFORE UPDATE ON users
-FOR EACH ROW
-EXECUTE FUNCTION set_updated_at();
-
--- Now every UPDATE on users automatically sets updated_at:
-UPDATE users SET name = 'Alice New Name' WHERE id = 1;
--- updated_at is set automatically without the application needing to do it
-```
-
-#### Trigger Timing and Events
-
-```sql
--- BEFORE trigger: can modify NEW (for INSERT/UPDATE), can cancel with RETURN NULL
--- AFTER trigger: sees final state, cannot modify row, used for side effects
-
--- On INSERT
-CREATE TRIGGER trg_audit_insert
-AFTER INSERT ON orders
-FOR EACH ROW
-EXECUTE FUNCTION log_order_insert();
-
--- On UPDATE (optionally on specific columns)
-CREATE TRIGGER trg_price_change
-AFTER UPDATE OF price ON products
-FOR EACH ROW
-EXECUTE FUNCTION notify_price_change();
-
--- On DELETE
-CREATE TRIGGER trg_soft_delete
-BEFORE DELETE ON users
-FOR EACH ROW
-EXECUTE FUNCTION archive_user();
-
--- Statement-level (once per statement, not once per row)
-CREATE TRIGGER trg_bulk_change
-AFTER INSERT OR UPDATE OR DELETE ON orders
-FOR EACH STATEMENT
-EXECUTE FUNCTION update_order_summary();
-```
-
----
-
-### ⚠️ Beginner — Common Errors
-
-#### Error 1: Forgetting to RETURN NEW in a BEFORE trigger
-
-```sql
-CREATE OR REPLACE FUNCTION log_insert() RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO audit_log (table_name, action, logged_at)
-    VALUES (TG_TABLE_NAME, 'INSERT', NOW());
-    -- FORGOT RETURN NEW
-END;
-$$ LANGUAGE plpgsql;
--- Result: every INSERT into the table silently inserts NOTHING
--- BEFORE triggers must RETURN NEW (or RETURN NULL to cancel the operation)
+-- ERROR: window functions are not allowed in WHERE
+SELECT * FROM orders WHERE row_number() OVER (ORDER BY created_at) <= 5;
 ```
 
 **Fix:**
+
 ```sql
-    INSERT INTO audit_log ...;
-    RETURN NEW;  -- always return NEW for BEFORE INSERT/UPDATE triggers
+SELECT * FROM (
+    SELECT *, row_number() OVER (ORDER BY created_at) AS rn FROM orders
+) sub
+WHERE rn <= 5;
 ```
 
-#### Error 2: Using AFTER trigger where you need to modify the row
+#### Error 2: LAST_VALUE returning the current row, not the partition maximum
 
 ```sql
--- Cannot modify row in AFTER trigger
-CREATE OR REPLACE FUNCTION set_slug() RETURNS TRIGGER AS $$
-BEGIN
-    NEW.slug = lower(replace(NEW.name, ' ', '-')); -- ERROR in AFTER trigger
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_set_slug
-AFTER INSERT ON articles  -- WRONG timing for row modification
-FOR EACH ROW EXECUTE FUNCTION set_slug();
+-- Default window frame is ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+-- LAST_VALUE of that frame = the current row's own value
+SELECT price,
+       last_value(price) OVER (PARTITION BY category_id ORDER BY price) AS "last"
+-- "last" equals price — because the frame ends at the current row!
 ```
 
-**Fix:** Use BEFORE trigger to modify the row.
-
----
-
-### Intermediate
+**Fix:** Explicitly expand the frame to the full partition:
 
 ```sql
--- Conditional trigger (PostgreSQL 9.0+ WHEN clause)
-CREATE TRIGGER trg_notify_large_order
-AFTER INSERT ON orders
-FOR EACH ROW
-WHEN (NEW.total > 1000)
-EXECUTE FUNCTION notify_large_order();
-
--- Access OLD and NEW in triggers
-CREATE OR REPLACE FUNCTION audit_changes() RETURNS TRIGGER AS $$
-BEGIN
-    IF TG_OP = 'UPDATE' THEN
-        INSERT INTO audit_log (table_name, op, old_data, new_data, changed_at)
-        VALUES (TG_TABLE_NAME, 'UPDATE', row_to_json(OLD), row_to_json(NEW), NOW());
-    ELSIF TG_OP = 'DELETE' THEN
-        INSERT INTO audit_log (table_name, op, old_data, changed_at)
-        VALUES (TG_TABLE_NAME, 'DELETE', row_to_json(OLD), NOW());
-    ELSIF TG_OP = 'INSERT' THEN
-        INSERT INTO audit_log (table_name, op, new_data, changed_at)
-        VALUES (TG_TABLE_NAME, 'INSERT', row_to_json(NEW), NOW());
-    END IF;
-    RETURN COALESCE(NEW, OLD);
-END;
-$$ LANGUAGE plpgsql;
-
--- Reuse for multiple tables
-CREATE TRIGGER trg_audit_users    AFTER INSERT OR UPDATE OR DELETE ON users    FOR EACH ROW EXECUTE FUNCTION audit_changes();
-CREATE TRIGGER trg_audit_orders   AFTER INSERT OR UPDATE OR DELETE ON orders   FOR EACH ROW EXECUTE FUNCTION audit_changes();
-CREATE TRIGGER trg_audit_products AFTER INSERT OR UPDATE OR DELETE ON products FOR EACH ROW EXECUTE FUNCTION audit_changes();
+last_value(price) OVER (
+    PARTITION BY category_id ORDER BY price
+    ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+) AS max_price
 ```
 
-#### Transition Tables (Statement-Level)
+#### Error 3: Window function evaluated after HAVING — can cause unexpected results
 
 ```sql
--- Access all affected rows at once in a statement-level trigger
-CREATE OR REPLACE FUNCTION sync_search_index() RETURNS TRIGGER AS $$
-DECLARE
-    rec RECORD;
-BEGIN
-    FOR rec IN SELECT * FROM new_table LOOP
-        -- update search index for each inserted/updated row
-        PERFORM update_search_index(rec.id, rec.name, rec.description);
-    END LOOP;
-    RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
+-- Window functions cannot reference GROUP BY aggregates in the same query level
+-- This requires nesting
+SELECT customer_id, order_count, total_spent,
+       rank() OVER (ORDER BY total_spent DESC) AS spending_rank
+FROM (
+    SELECT customer_id,
+           count(*)    AS order_count,
+           sum(total)  AS total_spent
+    FROM orders
+    GROUP BY customer_id
+    HAVING count(*) >= 3   -- filter first
+) grouped
+ORDER BY spending_rank;
+```
 
-CREATE TRIGGER trg_sync_search
-AFTER INSERT OR UPDATE ON articles
-REFERENCING NEW TABLE AS new_table
-FOR EACH STATEMENT
-EXECUTE FUNCTION sync_search_index();
+#### Error 4: LAG/LEAD returning NULL for the first/last row without a default
+
+```sql
+SELECT date, revenue,
+       lag(revenue) OVER (ORDER BY date) AS prev_day -- NULL for first row
+FROM daily_revenue;
+
+-- Fix: provide a default value as the third argument
+SELECT date, revenue,
+       lag(revenue, 1, 0) OVER (ORDER BY date) AS prev_day -- 0 for first row
+FROM daily_revenue;
 ```
 
 ---
 
-### ⚠️ Intermediate — Common Errors
+## 20. EXPLAIN & Query Planning
 
-#### Error 1: Infinite trigger recursion
-
-```sql
--- Trigger on users calls UPDATE users → triggers itself again → infinite loop
-CREATE OR REPLACE FUNCTION sync_profile() RETURNS TRIGGER AS $$
-BEGIN
-    UPDATE users SET profile_synced = true WHERE id = NEW.id; -- triggers itself!
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-```
-
-**Fix options:**
-```sql
--- Option 1: Disable trigger recursion for this session
-SET session_replication_role = 'replica'; -- disables triggers
-UPDATE users SET profile_synced = true WHERE id = NEW.id;
-SET session_replication_role = 'origin';
-
--- Option 2: Use a guard variable
-CREATE OR REPLACE FUNCTION sync_profile() RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.profile_synced THEN RETURN NEW; END IF; -- already done
-    NEW.profile_synced := true;
-    RETURN NEW; -- BEFORE trigger modifies NEW, no extra UPDATE needed
-END;
-$$ LANGUAGE plpgsql;
-```
-
-#### Error 2: Heavy processing in BEFORE trigger blocking writes
-
-```sql
--- Sending an HTTP request, querying a slow external system, etc. in a trigger
--- blocks the INSERT/UPDATE until the trigger completes
--- Use AFTER triggers for side effects, and async processing (e.g. pg_notify + worker)
-```
-
-#### Error 3: Trigger firing on columns not changed
-
-```sql
--- This fires even if other columns change, not just status
-CREATE TRIGGER trg_status_change
-AFTER UPDATE ON orders
-FOR EACH ROW
-EXECUTE FUNCTION handle_status_change();
-
--- Fix: only fire when status actually changed
-CREATE TRIGGER trg_status_change
-AFTER UPDATE OF status ON orders
-FOR EACH ROW
-WHEN (OLD.status IS DISTINCT FROM NEW.status)
-EXECUTE FUNCTION handle_status_change();
-```
-
----
+`EXPLAIN` reveals how PostgreSQL will execute a query. `EXPLAIN ANALYZE` executes the query and shows actual timing. This is the primary tool for diagnosing slow queries.
 
 ### Advanced
 
-#### Event Triggers (DDL-level triggers)
+```sql
+-- Show the plan without executing
+EXPLAIN SELECT * FROM orders WHERE customer_id = 42;
+
+-- Execute and show actual timing (use this for most analysis)
+EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 42;
+
+-- Full detail: actual timing + buffer hit/miss stats
+EXPLAIN (ANALYZE, BUFFERS, VERBOSE, FORMAT TEXT)
+SELECT o.*, c.name
+FROM orders o
+JOIN customers c ON c.id = o.customer_id
+WHERE o.status = 'pending';
+
+-- IMPORTANT: wrap destructive statements in a transaction when using EXPLAIN ANALYZE
+BEGIN;
+EXPLAIN ANALYZE DELETE FROM sessions WHERE expires_at < NOW();
+ROLLBACK; -- delete did execute, this undoes it
+```
+
+#### Reading a Plan
+
+```
+Nested Loop  (cost=0.86..16.90 rows=3 width=60)
+             (actual time=0.030..0.045 rows=3 loops=1)
+  ->  Index Scan using idx_orders_customer on orders
+      (cost=0.43..8.45 rows=3 width=52)
+      (actual time=0.020..0.025 rows=3 loops=1)
+      Index Cond: (customer_id = 42)
+  ->  Index Scan using customers_pkey on customers
+      (cost=0.43..2.81 rows=1 width=8)
+      (actual time=0.005..0.005 rows=1 loops=3)
+      Index Cond: (id = orders.customer_id)
+```
+
+| Field | Meaning |
+|---|---|
+| `cost=X..Y` | Estimated startup cost .. total cost (abstract units, not ms) |
+| `rows=N` | Estimated number of rows returned |
+| `width=N` | Estimated average row size in bytes |
+| `actual time=X..Y` | Real milliseconds: first row .. last row |
+| `actual rows=N` | Real rows returned |
+| `loops=N` | How many times this node was executed — multiply time by loops for total |
+| `Buffers: shared hit=X read=Y` | X pages from cache, Y pages from disk |
+
+#### Scan Types
+
+| Scan | When Used | Typical Cost |
+|---|---|---|
+| `Seq Scan` | No usable index, or index not selective enough | High for large tables |
+| `Index Scan` | Selective condition + index exists | Low for small result sets |
+| `Index Only Scan` | All needed columns are in the index | Lowest — no heap access |
+| `Bitmap Heap Scan` | Medium selectivity: build bitmap from index, then batch-read heap | Medium |
+
+#### Join Strategies
+
+| Join | When Chosen |
+|---|---|
+| `Nested Loop` | Small outer table, indexed inner table |
+| `Hash Join` | Large unsorted tables with equality condition |
+| `Merge Join` | Both sides already sorted on the join key |
+
+#### Statistics and the Planner
+
+The planner makes decisions based on table statistics. Stale statistics → bad plan choices.
 
 ```sql
--- Fire on DDL events (CREATE, ALTER, DROP, etc.)
-CREATE OR REPLACE FUNCTION log_ddl_event() RETURNS event_trigger AS $$
+-- If estimated rows != actual rows, statistics may be stale
+EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 42;
+-- rows=1 (estimate) vs actual rows=15,234 → very stale statistics!
+
+-- Fix: refresh statistics
+ANALYZE orders;                              -- all columns
+ANALYZE orders(customer_id);                 -- specific column
+
+-- For columns with very many distinct values, increase the statistics target
+ALTER TABLE orders ALTER COLUMN customer_id SET STATISTICS 500; -- default is 100
+ANALYZE orders;
+```
+
+#### pg_stat_statements — Find the Slowest Queries
+
+```sql
+-- Enable the extension (requires server restart if not already loaded)
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+
+-- Find queries consuming the most total time
+SELECT
+    round(total_exec_time::numeric, 0) AS total_ms,
+    calls,
+    round((total_exec_time / calls)::numeric, 2) AS avg_ms,
+    round(stddev_exec_time::numeric, 2) AS stddev_ms,
+    left(query, 120) AS query_preview
+FROM pg_stat_statements
+ORDER BY total_exec_time DESC
+LIMIT 20;
+
+-- Find queries with high variance (sometimes fast, sometimes slow)
+SELECT
+    round((total_exec_time / calls)::numeric, 2) AS avg_ms,
+    round(stddev_exec_time::numeric, 2) AS stddev_ms,
+    calls,
+    left(query, 120) AS query
+FROM pg_stat_statements
+WHERE calls > 100
+  AND stddev_exec_time > total_exec_time / calls  -- stddev > average = inconsistent
+ORDER BY stddev_ms DESC
+LIMIT 20;
+
+-- Reset stats
+SELECT pg_stat_statements_reset();
+```
+
+---
+
+### ⚠️ Advanced — Common Errors
+
+#### Error 1: Reading cost numbers as milliseconds
+
+```sql
+cost=0.00..50000.00
+-- This is NOT 50,000 milliseconds
+-- Cost is an abstract unit used for relative comparison between plan alternatives
+-- Only "actual time=X..Y" is real wall-clock time
+```
+
+#### Error 2: Forgetting to multiply actual time by loops
+
+```sql
+-- Index Scan: actual time=0.010..0.012 rows=1 loops=500
+-- Real total time for this node: 0.012ms × 500 = 6ms
+-- The plan shows per-loop timing, not cumulative
+```
+
+#### Error 3: JIT compilation adding overhead on short queries
+
+```sql
+-- EXPLAIN ANALYZE output:
+-- JIT: Functions: 3  Options: Inlining true  Timing: Generation 1.5ms, Inlining 12ms...
+-- For a query that takes 5ms total, JIT compilation overhead is 3x the query itself
+
+-- Disable JIT for OLTP workloads with fast queries
+SET jit = off;
+```
+
+#### Error 4: Trusting EXPLAIN without ANALYZE for performance decisions
+
+```sql
+EXPLAIN SELECT * FROM orders WHERE customer_id = 42;
+-- Shows estimated rows=1
+-- Reality: actual rows=15,000 because statistics are stale
+-- EXPLAIN without ANALYZE cannot reveal this discrepancy
+```
+
+Always use `EXPLAIN ANALYZE` when diagnosing performance issues. Use `EXPLAIN` (without ANALYZE) only when you cannot afford to execute the query.
+
+#### Error 5: Not checking for spilled hash joins
+
+```sql
+-- EXPLAIN ANALYZE shows:
+-- Hash  (actual time=...)
+--   Buckets: 1024  Batches: 8  Memory Usage: 8192kB
+-- Batches > 1 means the hash join SPILLED TO DISK (work_mem was too small)
+
+-- Fix for the session:
+SET work_mem = '256MB';
+-- Then re-run the query — batches should drop to 1
+```
+
+---
+
+## 21. ACID & Transactions — Deep Dive
+
+### Advanced
+
+ACID is the set of four properties that guarantee database transactions are processed reliably. You have already used transactions — this section explains the guarantees they provide and their limits.
+
+#### The Four ACID Properties
+
+**Atomicity** — All or nothing.
+
+```sql
+BEGIN;
+    UPDATE accounts SET balance = balance - 500 WHERE id = 1;
+    UPDATE accounts SET balance = balance + 500 WHERE id = 2;
+COMMIT;
+-- Either BOTH updates are saved, or NEITHER is.
+-- If the server crashes between the two UPDATEs:
+-- On restart, PostgreSQL replays the WAL → the transaction was not committed → rolled back
+-- No partial state is possible
+```
+
+**Consistency** — Every transaction takes the database from one valid state to another.
+
+```sql
+-- All constraints, foreign keys, check constraints, and triggers
+-- are enforced at transaction commit (or per-statement for non-deferred)
+BEGIN;
+    INSERT INTO order_items (order_id, product_id, quantity) VALUES (99, 1, 2);
+    -- If order 99 does not exist and FK is enforced: ERROR here
+    -- Transaction rolls back → no orphaned order_item
+COMMIT;
+```
+
+**Isolation** — Transactions do not see each other's uncommitted work.
+
+```sql
+-- Session A (READ COMMITTED, the default)
+BEGIN;
+SELECT balance FROM accounts WHERE id = 1; -- sees 1000
+
+-- Session B (concurrent)
+BEGIN;
+UPDATE accounts SET balance = 500 WHERE id = 1;
+-- NOT YET COMMITTED
+
+-- Session A (same transaction, second statement)
+SELECT balance FROM accounts WHERE id = 1; -- still sees 1000
+-- Session A cannot see Session B's uncommitted change — isolation guaranteed
+```
+
+**Durability** — Committed transactions survive crashes.
+
+PostgreSQL writes changes to the **Write-Ahead Log (WAL)** before acknowledging a commit. On recovery from a crash, PostgreSQL replays the WAL to restore all committed transactions.
+
+#### Isolation Levels
+
+| Isolation Level | Prevents Dirty Reads | Prevents Non-Repeatable Reads | Prevents Phantoms | Prevents Serialisation Anomaly |
+|---|---|---|---|---|
+| `READ UNCOMMITTED` | ✅ (PG always prevents) | ❌ | ❌ | ❌ |
+| `READ COMMITTED` (default) | ✅ | ❌ | ❌ | ❌ |
+| `REPEATABLE READ` | ✅ | ✅ | ✅ (PG extension) | ❌ |
+| `SERIALIZABLE` | ✅ | ✅ | ✅ | ✅ |
+
+```sql
+-- Non-repeatable read: same SELECT returns different results within a transaction
+-- SET REPEATABLE READ prevents this
+BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+SELECT count(*) FROM invoices WHERE status = 'open'; -- 47
+-- Another session pays 3 invoices and commits
+SELECT count(*) FROM invoices WHERE status = 'open'; -- still 47 — snapshot is fixed
+COMMIT;
+
+-- SERIALIZABLE: prevents write skew
+-- Classic example: two doctors both go off-call, violating the "at least one on duty" rule
+BEGIN ISOLATION LEVEL SERIALIZABLE;
+SELECT count(*) FROM on_call WHERE on_duty = true; -- sees 2
+UPDATE on_call SET on_duty = false WHERE doctor_id = 1;
+COMMIT;
+-- Concurrent transaction doing the same for doctor_id = 2
+-- One of them will get: ERROR: could not serialize access due to concurrent update
+-- Application must catch this and retry
+```
+
+#### Two-Phase Commit (Distributed Transactions)
+
+```sql
+-- Used when a single transaction spans multiple databases or systems
+BEGIN;
+    UPDATE local_accounts SET balance = balance - 100 WHERE id = 1;
+PREPARE TRANSACTION 'txn_transfer_001'; -- suspend in prepared state
+
+-- Coordinator decides outcome...
+
+-- Either:
+COMMIT PREPARED 'txn_transfer_001';
+-- Or:
+ROLLBACK PREPARED 'txn_transfer_001';
+
+-- Orphaned prepared transactions hold locks and block VACUUM:
+SELECT gid, prepared, owner FROM pg_prepared_xacts; -- check for stuck transactions
+ROLLBACK PREPARED 'txn_transfer_001'; -- clean up manually if coordinator died
+```
+
+---
+
+### ⚠️ Advanced — Common Errors
+
+#### Error 1: Using SERIALIZABLE without application-level retry
+
+```sql
+-- SERIALIZABLE transactions can fail with:
+-- ERROR: could not serialize access due to concurrent update
+-- This is expected and correct — not a bug
+-- The application MUST catch this error and retry the transaction
+
+for attempt in range(5):
+    try:
+        with connection.transaction(isolation='serializable'):
+            # ... your business logic ...
+        break  # success
+    except SerializationFailure:
+        sleep(0.1 * attempt)  # exponential back-off before retry
+else:
+    raise Exception("Failed after 5 attempts")
+```
+
+#### Error 2: Assuming READ COMMITTED prevents all inconsistency within a transaction
+
+```sql
+BEGIN; -- READ COMMITTED
+SELECT count(*) FROM tickets WHERE status = 'available'; -- returns 3
+-- Application decides to book 2 tickets
+-- Another session books the last 3 tickets and commits HERE
+UPDATE tickets SET status = 'sold' WHERE id IN (1, 2); -- books tickets that were already sold!
+-- UPDATE sees the current committed state — not the snapshot from the first SELECT
+COMMIT;
+```
+
+**Cause:** Under `READ COMMITTED`, each statement gets a fresh snapshot. The SELECT and UPDATE see different states of the world.
+
+**Fix:** Use `REPEATABLE READ` for the whole transaction, or use `SELECT ... FOR UPDATE` to lock the rows before deciding:
+
+```sql
+BEGIN;
+SELECT id FROM tickets WHERE status = 'available' LIMIT 2 FOR UPDATE;
+-- No other session can change these rows until we commit
+UPDATE tickets SET status = 'sold' WHERE id IN (...);
+COMMIT;
+```
+
+#### Error 3: Believing ACID protects against application logic errors
+
+```sql
+BEGIN;
+    UPDATE accounts SET balance = balance - 500 WHERE id = 1; -- correct
+    UPDATE accounts SET balance = balance - 500 WHERE id = 2; -- BUG: should be +500
+COMMIT; -- atomically commits the wrong values — ACID does not protect against wrong logic
+```
+
+ACID guarantees **correctness of execution**, not **correctness of logic**. The developer is responsible for writing correct SQL.
+
+---
+
+## 22. MVCC — Multi-Version Concurrency Control
+
+### Advanced
+
+MVCC is the mechanism that makes PostgreSQL's isolation possible. Understanding it explains why `VACUUM` is necessary, why tables grow over time, and how concurrent access works without readers blocking writers.
+
+#### The Core Idea
+
+Instead of overwriting a row when it is updated, PostgreSQL writes a **new version** of the row and marks the old one as no longer current. Each transaction sees the version of rows that existed when its snapshot was taken.
+
+```
+Before UPDATE:
+  Row (id=1, name='Alice')  xmin=100  xmax=0   ← live, created by txn 100
+
+Transaction 200 runs: UPDATE users SET name='Bob' WHERE id=1
+
+After UPDATE:
+  Row (id=1, name='Alice')  xmin=100  xmax=200  ← dead (updated by txn 200)
+  Row (id=1, name='Bob')    xmin=200  xmax=0    ← new live version
+```
+
+- `xmin`: transaction ID that created this row version
+- `xmax`: transaction ID that deleted or replaced this row version (0 = still live)
+
+#### Inspecting MVCC Headers
+
+```sql
+-- See the hidden MVCC system columns
+SELECT xmin, xmax, ctid, id, name FROM users;
+
+-- ctid = physical location: (page_number, row_number_within_page)
+-- (0,1) = page 0, 1st row
+
+-- Use pageinspect extension to see all row versions including dead ones
+CREATE EXTENSION IF NOT EXISTS pageinspect;
+
+SELECT t_xmin, t_xmax, t_infomask, t_data
+FROM heap_page_items(get_raw_page('users', 0));
+-- Shows both live and dead tuples on page 0
+```
+
+#### How Snapshots Work
+
+When a transaction starts, PostgreSQL takes a snapshot of which transactions are currently in-progress. A row is visible to a snapshot if:
+1. `xmin` is committed AND committed before this snapshot was taken
+2. `xmax` is either 0, or not yet committed in this snapshot
+
+```sql
+-- Demonstrate snapshot isolation under REPEATABLE READ
+-- Session A
+BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+SELECT name FROM users WHERE id = 1; -- sees 'Alice' (snapshot taken at this point)
+
+-- Session B (concurrent)
+UPDATE users SET name = 'Bob' WHERE id = 1;
+COMMIT; -- xmax for Alice row = B's XID; new row created with xmin = B's XID
+
+-- Session A (still running, same snapshot)
+SELECT name FROM users WHERE id = 1; -- STILL sees 'Alice' — snapshot is fixed
+COMMIT;
+```
+
+#### MVCC and VACUUM
+
+Because old row versions are never overwritten, they accumulate as **dead tuples**. VACUUM is the garbage collector that cleans them up.
+
+```sql
+-- Dead tuples grow with heavy UPDATE/DELETE workloads
+-- Monitor accumulation:
+SELECT relname, n_live_tup, n_dead_tup,
+       round(100.0 * n_dead_tup / NULLIF(n_live_tup + n_dead_tup, 0), 1) AS dead_pct
+FROM pg_stat_user_tables
+ORDER BY n_dead_tup DESC;
+
+-- VACUUM marks dead tuples as free space (MVCC cleanup)
+-- It CANNOT reclaim tuples newer than the oldest running transaction
+-- This is why long transactions cause bloat even with autovacuum running
+```
+
+#### Transaction ID Wraparound
+
+PostgreSQL uses 32-bit transaction IDs (XIDs). After approximately 2.1 billion transactions, the XID counter wraps around. PostgreSQL uses `VACUUM FREEZE` to mark old tuples as "frozen" (always visible, no longer subject to XID-based visibility), preventing wraparound.
+
+```sql
+-- Monitor wraparound risk (critical operational metric)
+SELECT datname,
+       age(datfrozenxid)     AS xid_age,
+       2100000000 - age(datfrozenxid) AS xids_remaining
+FROM pg_database
+ORDER BY xid_age DESC;
+
+-- Thresholds:
+-- age > 1,500,000,000 → WARNING: schedule manual VACUUM FREEZE soon
+-- age > 2,000,000,000 → PostgreSQL will begin refusing all writes to protect itself
+
+-- Emergency manual freeze of a specific table:
+VACUUM FREEZE ANALYZE critical_table;
+```
+
+#### HOT Updates (Heap Only Tuple)
+
+When you update a column that is **not part of any index**, PostgreSQL can perform a **HOT update**: the new tuple is placed on the same heap page and the old tuple points to it. No index entries need updating — much cheaper.
+
+```sql
+-- HOT-eligible update: description is not indexed
+UPDATE products SET description = 'Updated text' WHERE id = 1;
+-- If the same page has free space (controlled by fillfactor), this is a HOT update
+
+-- NOT HOT: price is indexed → index entry must be updated too
+UPDATE products SET price = 14.99 WHERE id = 1;
+
+-- Monitor HOT update ratio
+SELECT relname,
+       n_tup_upd,
+       n_tup_hot_upd,
+       round(100.0 * n_tup_hot_upd / NULLIF(n_tup_upd, 0), 1) AS hot_pct
+FROM pg_stat_user_tables
+WHERE n_tup_upd > 0
+ORDER BY n_tup_upd DESC;
+-- hot_pct close to 100% = efficient; close to 0% = many index updates
+```
+
+---
+
+### ⚠️ Advanced — Common Errors
+
+#### Error 1: Long transactions blocking VACUUM and causing bloat
+
+```sql
+-- A 3-hour-old transaction prevents VACUUM from cleaning up ALL dead tuples
+-- created after that transaction started, across ALL tables
+
+-- Find the oldest transaction and how much it is blocking:
+SELECT pid,
+       now() - backend_xmin::text::interval AS bloat_horizon,
+       query_start,
+       state,
+       left(query, 80) AS query
+FROM pg_stat_activity
+WHERE backend_xmin IS NOT NULL
+ORDER BY backend_xmin::text::bigint ASC
+LIMIT 5;
+```
+
+#### Error 2: Assuming deleted rows are gone from disk
+
+```sql
+DELETE FROM users WHERE id = 1;
+-- The row is invisible to all future queries
+-- But it physically exists on disk as a dead tuple with xmax set
+-- It will be cleaned up by the next VACUUM pass
+-- Until then, it occupies space and must be skipped by sequential scans
+```
+
+#### Error 3: Not understanding why mass UPDATE inflates table size
+
+```sql
+UPDATE orders SET processed = true; -- 5 million rows
+-- Result: table is now approximately DOUBLE its original size
+-- 5M live tuples + 5M dead tuples = 2× disk usage
+-- Autovacuum will eventually clean up, but during that window performance degrades
+
+-- After a mass update, proactively trigger vacuum:
+VACUUM ANALYZE orders;
+```
+
+#### Error 4: XID wraparound causing emergency database shutdown
+
+```sql
+-- PostgreSQL will issue this warning in logs when approaching wraparound:
+-- WARNING: database "mydb" must be vacuumed within 11,000,000 transactions
+-- If ignored:
+-- ERROR: database is not accepting commands to avoid wraparound data loss
+
+-- Prevention: monitor xid_age regularly (see monitoring query above)
+-- Action: VACUUM FREEZE on tables with old unfrozen tuples
+```
+
+---
+
+## 23. Table Partitioning
+
+### Advanced
+
+Partitioning divides a large table into smaller, physically separate sub-tables (partitions) that are transparent to queries. The primary benefits are:
+- **Query performance**: the planner can skip irrelevant partitions (partition pruning)
+- **Maintenance**: drop an old partition instantly instead of deleting millions of rows
+- **Index size**: each partition's index is smaller and fits more easily in cache
+
+#### Range Partitioning
+
+```sql
+-- Parent table: defines the structure, stores no data itself
+CREATE TABLE orders (
+    id          BIGSERIAL,
+    customer_id INTEGER       NOT NULL,
+    total       NUMERIC(10,2) NOT NULL,
+    status      TEXT          NOT NULL DEFAULT 'new',
+    created_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (id, created_at)  -- partition key must be part of PK
+) PARTITION BY RANGE (created_at);
+
+-- Create individual partitions
+CREATE TABLE orders_2023 PARTITION OF orders
+    FOR VALUES FROM ('2023-01-01') TO ('2024-01-01');
+
+CREATE TABLE orders_2024 PARTITION OF orders
+    FOR VALUES FROM ('2024-01-01') TO ('2025-01-01');
+
+CREATE TABLE orders_2025 PARTITION OF orders
+    FOR VALUES FROM ('2025-01-01') TO ('2026-01-01');
+
+-- Default partition: catches anything not matching the above ranges
+CREATE TABLE orders_default PARTITION OF orders DEFAULT;
+
+-- Queries are transparent — the planner routes to the correct partition
+INSERT INTO orders (customer_id, total) VALUES (42, 99.99); -- goes to orders_2025
+
+-- Query with date filter: only scans orders_2024
+SELECT * FROM orders
+WHERE created_at >= '2024-06-01' AND created_at < '2024-07-01';
+
+-- Drop an old partition instantly (vs deleting millions of rows)
+DROP TABLE orders_2023; -- instant, no bloat, no dead tuples
+-- Or detach first if you need it temporarily available:
+ALTER TABLE orders DETACH PARTITION orders_2023;
+-- Examine, export, then drop:
+DROP TABLE orders_2023;
+```
+
+#### List Partitioning
+
+```sql
+CREATE TABLE customers (
+    id      BIGSERIAL,
+    name    TEXT NOT NULL,
+    region  TEXT NOT NULL,
+    PRIMARY KEY (id, region)
+) PARTITION BY LIST (region);
+
+CREATE TABLE customers_eu PARTITION OF customers
+    FOR VALUES IN ('DE', 'FR', 'PT', 'ES', 'IT', 'NL');
+
+CREATE TABLE customers_us PARTITION OF customers
+    FOR VALUES IN ('US', 'CA', 'MX');
+
+CREATE TABLE customers_apac PARTITION OF customers
+    FOR VALUES IN ('JP', 'SG', 'AU', 'KR');
+
+CREATE TABLE customers_other PARTITION OF customers DEFAULT;
+```
+
+#### Hash Partitioning
+
+```sql
+-- Distribute rows evenly across partitions (good for parallelism, not pruning)
+CREATE TABLE events (
+    id      BIGSERIAL,
+    type    TEXT NOT NULL,
+    payload JSONB,
+    PRIMARY KEY (id)
+) PARTITION BY HASH (id);
+
+CREATE TABLE events_0 PARTITION OF events FOR VALUES WITH (MODULUS 4, REMAINDER 0);
+CREATE TABLE events_1 PARTITION OF events FOR VALUES WITH (MODULUS 4, REMAINDER 1);
+CREATE TABLE events_2 PARTITION OF events FOR VALUES WITH (MODULUS 4, REMAINDER 2);
+CREATE TABLE events_3 PARTITION OF events FOR VALUES FOR VALUES WITH (MODULUS 4, REMAINDER 3);
+```
+
+#### Indexes on Partitioned Tables
+
+```sql
+-- Creating an index on the parent automatically creates it on all partitions
+CREATE INDEX idx_orders_customer ON orders(customer_id);
+-- Creates: idx_orders_customer on orders_2023, orders_2024, orders_2025, etc.
+
+-- CONCURRENTLY is not supported on partitioned tables directly
+-- Create on each partition individually:
+CREATE INDEX CONCURRENTLY idx_orders_2024_customer ON orders_2024(customer_id);
+```
+
+#### Automating Partition Creation
+
+```sql
+-- Procedure to create the next month's partition
+CREATE OR REPLACE PROCEDURE create_monthly_partition(p_table TEXT, p_month DATE)
+LANGUAGE plpgsql AS $$
+DECLARE
+    v_partition_name TEXT;
+    v_start DATE;
+    v_end DATE;
+BEGIN
+    v_start := date_trunc('month', p_month);
+    v_end   := v_start + INTERVAL '1 month';
+    v_partition_name := p_table || '_' || to_char(v_start, 'YYYY_MM');
+
+    EXECUTE format(
+        'CREATE TABLE IF NOT EXISTS %I PARTITION OF %I FOR VALUES FROM (%L) TO (%L)',
+        v_partition_name, p_table, v_start, v_end
+    );
+
+    RAISE NOTICE 'Created partition: %', v_partition_name;
+END;
+$$;
+
+CALL create_monthly_partition('orders', '2026-04-01');
+```
+
+---
+
+### ⚠️ Advanced — Common Errors
+
+#### Error 1: Partition key not included in the primary key
+
+```sql
+-- FAILS: the partition key must be part of the primary key
+CREATE TABLE orders (
+    id         BIGSERIAL PRIMARY KEY,  -- ERROR
+    created_at TIMESTAMPTZ NOT NULL
+) PARTITION BY RANGE (created_at);
+-- ERROR: insufficient columns in PRIMARY KEY for table "orders"
+-- DETAIL: PRIMARY KEY constraint on table "orders" lacks column "created_at"
+-- which is part of the partition key.
+```
+
+**Fix:**
+
+```sql
+CREATE TABLE orders (
+    id         BIGSERIAL,
+    created_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (id, created_at)
+) PARTITION BY RANGE (created_at);
+```
+
+#### Error 2: Missing default partition causes errors on out-of-range inserts
+
+```sql
+-- No default partition defined
+CREATE TABLE orders_2024 PARTITION OF orders FOR VALUES FROM ('2024-01-01') TO ('2025-01-01');
+
+INSERT INTO orders (customer_id, total, created_at) VALUES (1, 99, '2023-06-01');
+-- ERROR: no partition of relation "orders" found for row
+-- DETAIL: Partition key of the failing row contains (created_at) = (2023-06-01)
+```
+
+**Fix:** Always create a default partition, then monitor it for unexpected data:
+
+```sql
+CREATE TABLE orders_default PARTITION OF orders DEFAULT;
+-- Periodically check for rows that should have their own partition:
+SELECT count(*), min(created_at), max(created_at) FROM orders_default;
+```
+
+#### Error 3: Queries not benefiting from partition pruning
+
+```sql
+-- Partition pruning works only when the filter is on the partition key
+-- and the value is known at plan time
+
+-- Works — prunes all but orders_2024:
+SELECT * FROM orders WHERE created_at >= '2024-01-01' AND created_at < '2025-01-01';
+
+-- Does NOT prune — function result unknown at plan time:
+SELECT * FROM orders WHERE date_trunc('year', created_at) = '2024-01-01';
+-- Must scan all partitions
+
+-- Fix: rewrite to use direct comparisons on the partition key column
+SELECT * FROM orders WHERE created_at >= '2024-01-01' AND created_at < '2025-01-01';
+```
+
+#### Error 4: Creating unique indexes on partitioned tables
+
+```sql
+-- UNIQUE index on partitioned table must include the partition key
+CREATE UNIQUE INDEX ON orders(id); -- FAILS
+
+-- Fix: include partition key
+CREATE UNIQUE INDEX ON orders(id, created_at);
+-- This means uniqueness is only enforced WITHIN a partition — not globally
+-- If true global uniqueness is required, use a separate lookup table with a global PK
+```
+
+#### Error 5: Attaching a large existing table as a partition
+
+```sql
+-- Attaching scans the entire table to validate constraints — can be very slow
+ALTER TABLE orders ATTACH PARTITION old_orders_2022
+    FOR VALUES FROM ('2022-01-01') TO ('2023-01-01');
+
+-- Faster approach: add constraint first, then attach
+ALTER TABLE old_orders_2022 ADD CONSTRAINT chk_2022
+    CHECK (created_at >= '2022-01-01' AND created_at < '2023-01-01')
+    NOT VALID;
+ALTER TABLE old_orders_2022 VALIDATE CONSTRAINT chk_2022; -- concurrent validation
+ALTER TABLE orders ATTACH PARTITION old_orders_2022
+    FOR VALUES FROM ('2022-01-01') TO ('2023-01-01');
+-- Attach is now near-instant because PostgreSQL trusts the validated constraint
+```
+
+---
+
+## 24. Advanced Locking & Concurrency Patterns
+
+### Advanced
+
+#### Optimistic Locking
+
+Instead of locking rows before reading, optimistic locking detects conflicts at write time using a version column.
+
+```sql
+-- Add a version counter to the table
+ALTER TABLE products ADD COLUMN version INTEGER NOT NULL DEFAULT 1;
+
+-- Application: read the current version
+SELECT id, name, price, version FROM products WHERE id = 1;
+-- Returns: id=1, name='Widget', price=9.99, version=5
+
+-- Update ONLY IF the version has not changed
+UPDATE products
+SET price = 12.99, version = version + 1
+WHERE id = 1 AND version = 5;
+-- Returns 0 rows if someone else modified the product between our SELECT and UPDATE
+-- Application checks: if 0 rows updated → conflict → reload and retry
+
+GET DIAGNOSTICS updated_rows = ROW_COUNT;
+IF updated_rows = 0 THEN
+    RAISE EXCEPTION 'Conflict: product was modified by another session';
+END IF;
+```
+
+#### SELECT FOR UPDATE SKIP LOCKED — Job Queue Pattern
+
+```sql
+-- Reliable job queue: each worker claims the next available job
+-- No worker picks the same job twice, even under high concurrency
+
+-- Worker process:
+BEGIN;
+SELECT id, payload FROM jobs
+WHERE status = 'pending'
+ORDER BY priority DESC, created_at ASC
+LIMIT 1
+FOR UPDATE SKIP LOCKED;  -- skip any job locked by another worker
+
+-- If no row returned: no available jobs right now
+-- If a row is returned: we own it exclusively until we COMMIT
+
+UPDATE jobs SET status = 'processing', started_at = NOW() WHERE id = :job_id;
+COMMIT;
+
+-- After processing:
+UPDATE jobs SET status = 'done', finished_at = NOW() WHERE id = :job_id;
+-- Or on failure:
+UPDATE jobs SET status = 'failed', error = :error_msg WHERE id = :job_id;
+```
+
+#### pg_notify / LISTEN / NOTIFY — Asynchronous Messaging
+
+```sql
+-- Publisher (any session):
+NOTIFY order_channel, '{"order_id": 42, "event": "status_changed"}';
+
+-- Subscriber (listens for notifications):
+LISTEN order_channel;
+-- Application receives the notification asynchronously — no polling needed
+
+-- Common pattern: trigger publishes a notification when data changes
+CREATE OR REPLACE FUNCTION notify_order_change() RETURNS TRIGGER AS $$
+BEGIN
+    PERFORM pg_notify(
+        'order_channel',
+        json_build_object(
+            'order_id', NEW.id,
+            'status', NEW.status,
+            'event', TG_OP
+        )::text
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_order_notify
+AFTER INSERT OR UPDATE OF status ON orders
+FOR EACH ROW EXECUTE FUNCTION notify_order_change();
+```
+
+#### Serializable Snapshot Isolation — Write Skew
+
+`SERIALIZABLE` isolation prevents the most subtle concurrency anomalies:
+
+```sql
+-- Write skew: two transactions make decisions based on the same read,
+-- and their combined writes violate a constraint that neither violates individually
+
+-- Rule: at least one doctor must be on duty
+-- Current state: doctor_1=on_duty, doctor_2=on_duty
+
+-- Session A:
+BEGIN ISOLATION LEVEL SERIALIZABLE;
+SELECT count(*) FROM on_call WHERE on_duty = true; -- sees 2
+UPDATE on_call SET on_duty = false WHERE doctor_id = 1; -- going off duty
+COMMIT; -- may succeed or may be serialized-out
+
+-- Session B (concurrent):
+BEGIN ISOLATION LEVEL SERIALIZABLE;
+SELECT count(*) FROM on_call WHERE on_duty = true; -- also sees 2
+UPDATE on_call SET on_duty = false WHERE doctor_id = 2; -- also going off duty
+COMMIT; -- ERROR: could not serialize access — one of these must abort
+
+-- Only one of A or B will commit; the other gets the serialization failure
+-- and must retry — at which point they will see the updated count = 1 and refuse
+```
+
+---
+
+### ⚠️ Advanced — Common Errors
+
+#### Error 1: Advisory locks not released on connection pool recycling
+
+```sql
+-- Session-level advisory locks are tied to the session (connection)
+SELECT pg_advisory_lock(9999); -- acquired
+-- Connection returned to pool (not closed, just recycled)
+-- Next task using this connection: pg_try_advisory_lock(9999) → FALSE
+-- Lock appears permanently held with no owner doing useful work
+
+-- Check for dangling advisory locks:
+SELECT pid, classid, objid, mode, granted
+FROM pg_locks
+WHERE locktype = 'advisory';
+
+-- Fix: use transaction-level advisory locks (auto-released on COMMIT/ROLLBACK)
+SELECT pg_advisory_xact_lock(9999);
+-- Or: use session-level but always release explicitly in a finally/ensure block
+```
+
+#### Error 2: Serializable isolation without retry logic
+
+```sql
+-- Developers add SERIALIZABLE hoping it "just works"
+-- But serialization failures are expected and must be retried by the application
+-- Without retry: every serialization conflict = user-visible error
+
+-- All serializable transaction code paths must handle:
+-- psycopg2: except psycopg2.extensions.TransactionRollbackError
+-- SQLAlchemy: except sqlalchemy.exc.OperationalError with pgcode '40001'
+```
+
+#### Error 3: Using table-level LOCK TABLE when row-level locks suffice
+
+```sql
+-- Too broad — blocks all concurrent reads and writes
+LOCK TABLE products IN EXCLUSIVE MODE;
+
+-- Usually, row-level locking is sufficient and far less disruptive
+SELECT * FROM products WHERE id = 1 FOR UPDATE;
+-- Only blocks other writes to that specific row
+```
+
+---
+
+## 25. Advanced Functions & Extensibility
+
+### Advanced
+
+#### Polymorphic Functions
+
+```sql
+-- Works with any data type
+CREATE OR REPLACE FUNCTION array_first_element(ANYARRAY)
+RETURNS ANYELEMENT AS $$
+    SELECT $1[1];
+$$ LANGUAGE SQL IMMUTABLE;
+
+SELECT array_first_element(ARRAY[10, 20, 30]);    -- returns 10 (integer)
+SELECT array_first_element(ARRAY['a', 'b', 'c']); -- returns 'a' (text)
+SELECT array_first_element(ARRAY[1.5, 2.5, 3.5]); -- returns 1.5 (numeric)
+```
+
+#### Variadic Functions
+
+```sql
+CREATE OR REPLACE FUNCTION concat_with_sep(separator TEXT, VARIADIC parts TEXT[])
+RETURNS TEXT AS $$
+    SELECT string_agg(x, separator) FROM unnest(parts) x;
+$$ LANGUAGE SQL IMMUTABLE;
+
+SELECT concat_with_sep(' | ', 'Alpha', 'Beta', 'Gamma'); -- 'Alpha | Beta | Gamma'
+SELECT concat_with_sep(', ', 'a', 'b', 'c', 'd', 'e');  -- 'a, b, c, d, e'
+```
+
+#### Functions with OUT Parameters
+
+```sql
+CREATE OR REPLACE FUNCTION product_stats(
+    p_category_id INTEGER,
+    OUT min_price    NUMERIC,
+    OUT max_price    NUMERIC,
+    OUT avg_price    NUMERIC,
+    OUT product_count INTEGER
+) AS $$
+    SELECT
+        min(price),
+        max(price),
+        round(avg(price), 2),
+        count(*)::INTEGER
+    FROM products
+    WHERE category_id = p_category_id;
+$$ LANGUAGE SQL STABLE;
+
+SELECT * FROM product_stats(3);
+-- min_price | max_price | avg_price | product_count
+-- 4.99      | 249.99    | 47.30     | 23
+```
+
+#### Event Triggers (DDL-Level)
+
+```sql
+-- Fire on DDL events (CREATE, ALTER, DROP) — database-wide
+CREATE OR REPLACE FUNCTION log_ddl() RETURNS event_trigger AS $$
 DECLARE
     obj RECORD;
 BEGIN
     FOR obj IN SELECT * FROM pg_event_trigger_ddl_commands() LOOP
-        INSERT INTO ddl_log (event, object_type, object_identity, ddl_tag, occurred_at)
-        VALUES (TG_EVENT, obj.object_type, obj.object_identity, TG_TAG, NOW());
+        INSERT INTO ddl_audit_log (event_type, object_type, object_identity, occurred_at)
+        VALUES (TG_EVENT, obj.object_type, obj.object_identity, NOW());
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE EVENT TRIGGER trg_log_ddl
+CREATE EVENT TRIGGER trg_ddl_audit
 ON ddl_command_end
-EXECUTE FUNCTION log_ddl_event();
+EXECUTE FUNCTION log_ddl();
 
--- Now all DDL changes are logged automatically
-CREATE TABLE new_table (id SERIAL); -- logged in ddl_log
-ALTER TABLE users ADD COLUMN bio TEXT; -- logged in ddl_log
+-- Now all DDL is automatically logged:
+CREATE TABLE new_feature_table (id SERIAL); -- logged in ddl_audit_log
+ALTER TABLE users ADD COLUMN preferences JSONB; -- logged
 ```
 
-#### Deferred Triggers
+#### Lateral Joins with Functions
 
 ```sql
--- Trigger fires at COMMIT instead of immediately
-CREATE CONSTRAINT TRIGGER trg_check_balance
-AFTER UPDATE ON accounts
-DEFERRABLE INITIALLY DEFERRED
-FOR EACH ROW
-EXECUTE FUNCTION check_balance_constraint();
+-- Apply a function to each row of an outer query
+SELECT c.id, c.name, recent.*
+FROM customers c
+CROSS JOIN LATERAL customer_order_history(c.id) AS recent
+WHERE recent.status = 'pending'
+ORDER BY c.id, recent.order_date DESC;
 
-BEGIN;
-UPDATE accounts SET balance = balance - 1000 WHERE id = 1;
--- Trigger deferred — balance might be temporarily negative
-UPDATE accounts SET balance = balance + 1000 WHERE id = 2;
-COMMIT; -- trigger fires HERE, both updates visible, constraint satisfied
+-- Get the top 3 products per category using LATERAL
+SELECT cat.name AS category, top_products.*
+FROM categories cat
+CROSS JOIN LATERAL (
+    SELECT p.name, p.price
+    FROM products p
+    WHERE p.category_id = cat.id
+    ORDER BY p.price DESC
+    LIMIT 3
+) AS top_products;
+```
+
+#### Range Types and Exclusion Constraints
+
+```sql
+-- Prevent overlapping bookings without application-level checks
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+CREATE TABLE room_bookings (
+    id       SERIAL PRIMARY KEY,
+    room_id  INTEGER NOT NULL,
+    during   TSTZRANGE NOT NULL,  -- time range
+    EXCLUDE USING GIST (room_id WITH =, during WITH &&)
+    -- "no two rows with the same room_id can have overlapping 'during' ranges"
+);
+
+INSERT INTO room_bookings (room_id, during)
+VALUES (1, '[2024-06-01 09:00, 2024-06-01 10:00)');
+
+INSERT INTO room_bookings (room_id, during)
+VALUES (1, '[2024-06-01 09:30, 2024-06-01 11:00)');
+-- ERROR: conflicting key value violates exclusion constraint "room_bookings_room_id_during_excl"
+-- PostgreSQL prevents the overlapping booking automatically
 ```
 
 ---
@@ -3822,1004 +3909,128 @@ COMMIT; -- trigger fires HERE, both updates visible, constraint satisfied
 #### Error 1: Event triggers blocking schema migrations
 
 ```sql
--- If you have an event trigger that validates DDL,
--- it can block your migration scripts in development and production
-
--- Temporarily disable event triggers for a migration:
-ALTER EVENT TRIGGER trg_log_ddl DISABLE;
+-- If your event trigger validates DDL, it blocks migration scripts
+-- Temporarily disable before running migrations:
+ALTER EVENT TRIGGER trg_ddl_audit DISABLE;
 -- Run migration
-ALTER EVENT TRIGGER trg_log_ddl ENABLE;
+ALTER EVENT TRIGGER trg_ddl_audit ENABLE;
 ```
 
-#### Error 2: Trigger on a partitioned table not firing on partitions
+#### Error 2: LATERAL with correlated function creating N+1 in disguise
 
 ```sql
--- Triggers defined on the parent table fire on the parent table's rows
--- In declarative partitioning, rows go to partition tables
--- The trigger must be created on EACH partition (or the parent if supported in PG13+)
+-- This looks like one query but executes the function once per customer
+SELECT c.id, (SELECT sum(total) FROM orders WHERE customer_id = c.id) AS ltv
+FROM customers c;
+-- 100,000 customers = 100,000 subquery executions
 
--- PG13+: triggers on the partitioned table automatically apply to partitions
--- Pre-PG13: you must create triggers on each partition individually
+-- Fix: aggregate once with a JOIN
+SELECT c.id, COALESCE(o.ltv, 0) AS ltv
+FROM customers c
+LEFT JOIN (
+    SELECT customer_id, sum(total) AS ltv
+    FROM orders GROUP BY customer_id
+) o ON o.customer_id = c.id;
+```
+
+#### Error 3: Not using ROWS hint on set-returning functions for planner accuracy
+
+```sql
+-- Planner defaults to estimating 1000 rows from set-returning functions
+-- If your function returns 10 or 10,000,000, the plan will be suboptimal
+
+CREATE OR REPLACE FUNCTION get_large_dataset()
+RETURNS SETOF orders
+ROWS 500000  -- tell the planner to expect ~500,000 rows
+AS $$
+    SELECT * FROM orders WHERE status = 'archived';
+$$ LANGUAGE SQL STABLE;
 ```
 
 ---
 
-## Indexes
+## 📋 Quick Reference Card
 
-### Beginner
+### Data Types Cheat Sheet
 
-An index is a separate data structure that allows PostgreSQL to find rows matching a condition without scanning the entire table.
+| Use Case | Recommended Type | Avoid |
+|---|---|---|
+| Auto-incrementing ID | `BIGSERIAL` or `IDENTITY` | `SERIAL` (32-bit overflow risk) |
+| Money / Prices | `NUMERIC(p,s)` | `FLOAT8`, `REAL` (rounding errors) |
+| Free-form text | `TEXT` | `VARCHAR(255)` as a habit |
+| Timestamp with timezone | `TIMESTAMPTZ` | `TIMESTAMP` (no tz = silent bugs) |
+| UUID | `UUID` | `TEXT` (wastes space, no validation) |
+| Structured data | `JSONB` | `JSON` (not indexed, slower) |
+| Boolean | `BOOLEAN` | `SMALLINT` or `CHAR(1)` |
 
-```sql
--- Basic B-tree index (default, suitable for =, <, >, BETWEEN, IN)
-CREATE INDEX idx_orders_customer_id ON orders(customer_id);
+---
 
--- Unique index (also enforces uniqueness)
-CREATE UNIQUE INDEX idx_users_email ON users(email);
+### Transaction Isolation Anomaly Reference
 
--- Multi-column index
-CREATE INDEX idx_orders_customer_status ON orders(customer_id, status);
+| Anomaly | Description | READ COMMITTED | REPEATABLE READ | SERIALIZABLE |
+|---|---|---|---|---|
+| Dirty Read | See uncommitted changes | ✅ Prevented | ✅ Prevented | ✅ Prevented |
+| Non-Repeatable Read | Same SELECT returns different rows | ❌ Possible | ✅ Prevented | ✅ Prevented |
+| Phantom Read | New rows appear mid-transaction | ❌ Possible | ✅ Prevented (PG) | ✅ Prevented |
+| Write Skew | Two transactions make mutually invalid decisions | ❌ Possible | ❌ Possible | ✅ Prevented |
 
--- Descending index (useful if queries always sort DESC on this column)
-CREATE INDEX idx_events_created_desc ON events(created_at DESC);
+---
 
--- Check if a query uses your index
-EXPLAIN SELECT * FROM orders WHERE customer_id = 42;
--- Look for "Index Scan" or "Index Only Scan" in the output
-```
+### Index Type Selection
 
-#### When Indexes Help (and When They Don't)
-
-| Situation | Index helps? |
+| Condition | Recommended Index |
 |---|---|
-| `WHERE col = value` on high-cardinality column | Yes |
-| `WHERE col IN (...)` | Yes |
-| `ORDER BY col LIMIT n` | Yes (avoids sort) |
-| `WHERE col IS NULL` | Partial index needed |
-| `WHERE lower(col) = 'x'` | Only with expression index |
-| Low-cardinality column (boolean, status with 3 values) | Often not worth it |
-| Very small table (< ~1000 rows) | Often not worth it |
-| `LIKE '%text%'` (leading wildcard) | No (unless trigram) |
+| `=`, `<`, `>`, `BETWEEN`, `IN`, `ORDER BY`, `LIKE 'prefix%'` | B-tree (default) |
+| Exact match only, very high cardinality | Hash |
+| `JSONB @>`, `JSONB ?`, full-text `@@`, `LIKE '%text%'` | GIN |
+| Ranges, geometric types | GiST |
+| Huge append-only tables, time-series | BRIN |
+| Only a subset of rows (e.g. `WHERE active = true`) | Partial index |
+| Query uses `lower(col)` or other expression | Expression index |
+| All needed columns in one index | Covering index with `INCLUDE` |
 
 ---
 
-### ⚠️ Beginner — Common Errors
+### Lock Mode Compatibility (abbreviated)
 
-#### Error 1: Over-indexing
-
-```sql
--- Creating an index "just in case" on every column
--- Every index slows down INSERT, UPDATE, DELETE
--- And must be maintained by VACUUM
--- Indexes also consume disk space and memory (shared_buffers)
-
--- Rule of thumb: create indexes based on EXPLAIN analysis of actual queries
--- not speculatively
-```
-
-#### Error 2: Multi-column index with wrong column order
-
-```sql
--- Index on (status, customer_id)
-CREATE INDEX idx_wrong ON orders(status, customer_id);
-
--- This index CANNOT efficiently answer:
-SELECT * FROM orders WHERE customer_id = 42; -- must scan all statuses
-
--- This index CAN answer:
-SELECT * FROM orders WHERE status = 'new';
-SELECT * FROM orders WHERE status = 'new' AND customer_id = 42;
-
--- Fix: put high-selectivity columns first for range queries,
--- or put equality-filter columns first
-CREATE INDEX idx_correct ON orders(customer_id, status);
--- Can answer: WHERE customer_id = 42
---             WHERE customer_id = 42 AND status = 'new'
-```
-
-#### Error 3: Building index without CONCURRENTLY in production
-
-```sql
--- Blocks all writes while building
-CREATE INDEX idx_orders_created ON orders(created_at);
-
--- Non-blocking (takes longer but doesn't block writes):
-CREATE INDEX CONCURRENTLY idx_orders_created ON orders(created_at);
-```
+| Held \ Requested | ACCESS SHARE (SELECT) | ROW EXCLUSIVE (INSERT/UPDATE/DELETE) | SHARE (CREATE INDEX) | ACCESS EXCLUSIVE (ALTER/DROP/TRUNCATE) |
+|---|---|---|---|---|
+| ACCESS SHARE | ✅ | ✅ | ✅ | ❌ |
+| ROW EXCLUSIVE | ✅ | ✅ | ❌ | ❌ |
+| SHARE | ✅ | ❌ | ✅ | ❌ |
+| ACCESS EXCLUSIVE | ❌ | ❌ | ❌ | ❌ |
 
 ---
-
-### Intermediate
-
-```sql
--- Partial index (only indexes rows matching a condition — smaller, faster)
-CREATE INDEX idx_pending_orders ON orders(customer_id, created_at)
-WHERE status = 'pending';
--- Only useful for queries that also filter WHERE status = 'pending'
-
--- Expression index
-CREATE INDEX idx_users_lower_email ON users(lower(email));
--- Enables: WHERE lower(email) = lower('Alice@EXAMPLE.com')
-
--- GIN index for JSONB
-CREATE INDEX idx_events_payload ON events USING GIN (payload);
--- Enables: WHERE payload @> '{"type": "click"}'
--- Enables: WHERE payload ? 'user_id'
-
--- GIN index for full-text search
-CREATE INDEX idx_articles_fts ON articles
-USING GIN (to_tsvector('english', title || ' ' || body));
-
--- Trigram index for LIKE/ILIKE with wildcards
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-CREATE INDEX idx_products_name_trgm ON products USING GIN (name gin_trgm_ops);
--- Enables: WHERE name ILIKE '%widget%'
-
--- BRIN index (Block Range INdex) for very large tables with naturally ordered data
-CREATE INDEX idx_logs_created_brin ON event_log USING BRIN (created_at);
--- Extremely small, very fast to build, good for time-series data
--- Not suitable for random access patterns
-```
-
-#### Index Maintenance
-
-```sql
--- Check index usage statistics
-SELECT schemaname, tablename, indexname, idx_scan, idx_tup_read, idx_tup_fetch
-FROM pg_stat_user_indexes
-ORDER BY idx_scan ASC; -- indexes with 0 or very few scans may be unused
-
--- Unused indexes (waste space and slow down writes)
-SELECT schemaname, tablename, indexname, pg_size_pretty(pg_relation_size(indexrelid))
-FROM pg_stat_user_indexes
-WHERE idx_scan = 0
-  AND schemaname NOT IN ('pg_catalog')
-ORDER BY pg_relation_size(indexrelid) DESC;
-
--- Rebuild a bloated index (blocks)
-REINDEX INDEX idx_orders_customer_id;
-
--- Non-blocking rebuild (PG12+)
-REINDEX INDEX CONCURRENTLY idx_orders_customer_id;
-```
-
----
-
-### ⚠️ Intermediate — Common Errors
-
-#### Error 1: Index not used due to implicit cast
-
-```sql
--- Column is INTEGER, query uses string
-SELECT * FROM products WHERE id = '42'; -- implicit cast may prevent index use
--- In practice PostgreSQL handles int ↔ text for primary keys, but
--- VARCHAR vs TEXT or DATE vs TIMESTAMPTZ can cause issues
-
--- Always match literal types to column types
-SELECT * FROM products WHERE id = 42;
-SELECT * FROM logs WHERE created_at >= '2024-01-01'::TIMESTAMPTZ;
-```
-
-#### Error 2: Index not used when planner estimates full scan is cheaper
-
-```sql
--- If the query returns >5-10% of the table, seq scan is often faster than index scan
--- This is correct behaviour, not a bug
--- Force index for testing:
-SET enable_seqscan = OFF;
-EXPLAIN SELECT * FROM orders WHERE status = 'completed'; -- status has low cardinality
--- Even with the index, planner may choose seq scan for 50% of rows
-```
-
-#### Error 3: Partial index condition must match query condition exactly
-
-```sql
-CREATE INDEX idx_active ON products(name) WHERE is_active = true;
-
--- This WILL use the index:
-SELECT * FROM products WHERE name = 'Widget' AND is_active = true;
-
--- This will NOT use the index (condition not present):
-SELECT * FROM products WHERE name = 'Widget';
-SELECT * FROM products WHERE name = 'Widget' AND is_active IS TRUE; -- might not match
-```
-
----
-
-### Advanced
-
-```sql
--- Covering index with INCLUDE (index-only scan without visiting heap)
-CREATE INDEX idx_orders_cover ON orders(customer_id)
-INCLUDE (total, status, created_at);
--- Query can be answered from index alone if all needed columns are in INCLUDE
-SELECT customer_id, total, status FROM orders WHERE customer_id = 42;
-
--- Hash index (O(1) equality lookups, but no range scans, not WAL-safe pre-PG10)
-CREATE INDEX idx_sessions_token ON sessions USING HASH (token);
--- Only useful for exact equality: WHERE token = 'abc123'
-
--- SP-GiST index (for non-balanced tree structures)
-CREATE INDEX idx_points_spgist ON locations USING SPGIST (point);
--- Good for: geometric types, IP ranges, phone numbers, hierarchical data
-
--- GiST index (generalised search tree)
-CREATE INDEX idx_products_price_range ON price_history USING GIST (price_range);
--- Good for: ranges, geometric types, full-text (though GIN usually better for FTS)
-```
-
-#### Understanding EXPLAIN for Index Decisions
-
-```sql
-EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
-SELECT * FROM orders WHERE customer_id = 42 AND status = 'pending';
-
--- Key metrics to read:
--- "Index Scan" / "Index Only Scan" → index being used
--- "Seq Scan" → full table scan
--- rows=X (estimated) vs actual rows=Y → if far apart, run ANALYZE
--- Buffers: shared hit=X read=Y → hit = from cache, read = from disk
--- cost=X..Y → X is startup cost, Y is total cost
--- actual time=X..Y → actual milliseconds
-
--- If "Seq Scan" and table is large:
--- 1. Check if appropriate index exists
--- 2. Check if query is filtering on indexed columns
--- 3. Check table statistics are current (run ANALYZE)
-```
-
----
-
-### ⚠️ Advanced — Common Errors
-
-#### Error 1: Index bloat degrading performance silently
-
-```sql
--- B-tree indexes can become bloated after heavy INSERT/UPDATE/DELETE workloads
--- Unlike tables, indexes do not benefit from HOT updates
--- Bloated indexes grow large, cache less efficiently
-
--- Detect index bloat:
-SELECT
-    indexname,
-    pg_size_pretty(pg_relation_size(indexrelid)) AS index_size,
-    idx_scan
-FROM pg_stat_user_indexes
-JOIN pg_class ON pg_class.oid = indexrelid
-WHERE pg_class.relkind = 'i'
-ORDER BY pg_relation_size(indexrelid) DESC;
-
--- Rebuild concurrently when bloat detected:
-REINDEX INDEX CONCURRENTLY idx_orders_customer_id;
-```
-
-#### Error 2: CONCURRENT index creation leaving invalid index on failure
-
-```sql
-CREATE INDEX CONCURRENTLY idx_large_table_col ON large_table(col);
--- If this fails midway (connection drop, OOM, etc.):
--- The index remains in pg_class with indisvalid = false
--- It still slows down writes but is never used for reads
-
--- Check for invalid indexes:
-SELECT indexname, tablename FROM pg_indexes
-WHERE NOT EXISTS (
-    SELECT 1 FROM pg_index
-    WHERE indexrelid = (indexname::regclass) AND indisvalid
-);
-
--- Fix:
-DROP INDEX CONCURRENTLY idx_large_table_col; -- drop the invalid index
--- Then retry the creation
-```
-
----
-
-## VACUUM & Bloat
-
-### Beginner
-
-VACUUM is PostgreSQL's mechanism to reclaim storage occupied by dead tuples — rows that have been updated or deleted but are still physically present on disk due to MVCC.
-
-#### Why VACUUM is Needed
-
-1. **MVCC creates dead tuples** on every UPDATE and DELETE
-2. **Dead tuples waste disk space** and slow down sequential scans
-3. **VACUUM reclaims this space** and makes it available for new data
-4. **VACUUM also updates visibility maps** which enables index-only scans
-5. **VACUUM prevents transaction ID wraparound** (a critical safety mechanism)
-
-```sql
--- Manual VACUUM (reclaims dead tuple space, marks it reusable)
-VACUUM orders;
-
--- VACUUM ANALYZE (vacuum + update statistics for query planner)
-VACUUM ANALYZE orders;
-
--- VACUUM FULL (compacts the table, reclaims space to OS — requires exclusive lock)
-VACUUM FULL orders;
--- WARNING: VACUUM FULL holds ACCESS EXCLUSIVE lock — all reads/writes blocked
-
--- Check last vacuum time
-SELECT relname, last_vacuum, last_autovacuum, last_analyze, last_autoanalyze,
-       n_dead_tup, n_live_tup
-FROM pg_stat_user_tables
-ORDER BY n_dead_tup DESC;
-```
-
----
-
-### ⚠️ Beginner — Common Errors
-
-#### Error 1: Running VACUUM FULL in production without planning
-
-```sql
-VACUUM FULL large_important_table;
--- Holds ACCESS EXCLUSIVE lock for potentially hours on a large table
--- All application queries queue up behind it
--- Application appears down
-```
-
-**Fix:** Use `pg_repack` extension for non-blocking table compaction:
-```bash
-pg_repack -t large_important_table -d mydb
-```
-
-Or, if you must VACUUM FULL, do it during a maintenance window.
-
-#### Error 2: Disabling autovacuum on a table
-
-```sql
--- Developer disables autovacuum because it "causes random slowness"
-ALTER TABLE orders SET (autovacuum_enabled = false);
--- Orders table now accumulates dead tuples indefinitely
--- Queries progressively slow down
--- Eventually reaches XID wraparound threshold → database shuts down writes
-```
-
-**Fix:** Never disable autovacuum. Tune its aggressiveness instead.
-
----
-
-### Intermediate
-
-#### Bloat
-
-Bloat is the accumulated wasted space in tables and indexes due to dead tuples. It causes:
-- Larger tables than necessary (more I/O, less cache efficiency)
-- Index degradation (bloated B-tree indexes have lower fill ratio)
-
-```sql
--- Estimate table bloat (simplified)
-SELECT
-    schemaname,
-    tablename,
-    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS total_size,
-    pg_size_pretty(pg_relation_size(schemaname||'.'||tablename)) AS table_size,
-    n_dead_tup,
-    n_live_tup,
-    round(100 * n_dead_tup::numeric / NULLIF(n_live_tup + n_dead_tup, 0), 1) AS dead_pct
-FROM pg_stat_user_tables
-WHERE n_dead_tup > 1000
-ORDER BY n_dead_tup DESC;
-```
-
-#### Autovacuum Tuning (per table)
-
-```sql
--- Aggressive autovacuum for a high-churn table
-ALTER TABLE sessions SET (
-    autovacuum_vacuum_scale_factor = 0.01,   -- vacuum when 1% rows are dead (default 20%)
-    autovacuum_analyze_scale_factor = 0.005, -- analyze when 0.5% rows changed
-    autovacuum_vacuum_cost_delay = 2         -- reduce IO throttling (ms)
-);
-
--- For large tables, scale factor alone triggers too late (1% of 1B rows = 10M dead tuples)
--- Use autovacuum_vacuum_threshold for large tables:
-ALTER TABLE large_events SET (
-    autovacuum_vacuum_scale_factor = 0,     -- disable scale-based trigger
-    autovacuum_vacuum_threshold = 50000     -- vacuum when 50,000 dead tuples exist
-);
-```
-
----
-
-### ⚠️ Intermediate — Common Errors
-
-#### Error 1: Long transactions blocking VACUUM
-
-```sql
--- Session A: SELECT * FROM products; -- very long running query (hours)
--- VACUUM cannot reclaim dead tuples older than Session A's snapshot
--- Dead tuples accumulate even though autovacuum is running
-
--- Detection:
-SELECT pid, now() - backend_xmin AS bloat_horizon_age, query
-FROM pg_stat_activity
-WHERE backend_xmin IS NOT NULL
-ORDER BY bloat_horizon_age DESC;
-
--- Solution: set idle_in_transaction_session_timeout
-ALTER SYSTEM SET idle_in_transaction_session_timeout = '10min';
-SELECT pg_reload_conf();
-```
-
-#### Error 2: XID Wraparound emergency
-
-```sql
--- Check all databases for wraparound risk
-SELECT datname, age(datfrozenxid) AS xid_age
-FROM pg_database
-ORDER BY xid_age DESC;
--- If age > 1,500,000,000 → WARNING: schedule VACUUM FREEZE immediately
--- If age > 2,000,000,000 → DATABASE WILL REFUSE WRITES
-
--- Emergency manual freeze:
-VACUUM FREEZE ANALYZE critical_table;
--- Or: VACUUM FREEZE; -- on all tables in current database
-```
-
----
-
-### Advanced
-
-#### VACUUM Internals — What Actually Happens
-
-1. **Phase 1 — Heap scan:** VACUUM scans all heap pages, identifies dead tuples (xmax is a committed transaction in all active snapshots)
-2. **Phase 2 — Index vacuuming:** For each index, removes entries pointing to dead tuples
-3. **Phase 3 — Heap cleanup:** Marks dead tuple space as free in the Free Space Map (FSM)
-4. **Phase 4 — Truncation (optional):** If the last N pages are entirely free, truncates the file
-5. **Visibility Map update:** Marks pages where all tuples are visible to all transactions (enables index-only scans and speeds up future vacuums)
-6. **Freeze:** Updates xmin of old tuples to FrozenXID to prevent wraparound
-
-```sql
--- Monitor vacuum progress in real-time (PG9.6+)
-SELECT
-    p.pid,
-    p.relid::regclass AS table,
-    p.phase,
-    p.heap_blks_scanned,
-    p.heap_blks_total,
-    round(100.0 * p.heap_blks_scanned / NULLIF(p.heap_blks_total, 0), 1) AS pct,
-    p.dead_tuple_count
-FROM pg_stat_progress_vacuum p;
-```
-
-#### pg_repack — Non-blocking VACUUM FULL Alternative
-
-```sql
--- pg_repack rebuilds tables/indexes without holding ACCESS EXCLUSIVE lock
--- Requires pg_repack extension to be installed
-
--- Repack a single table (similar to VACUUM FULL, but online)
--- Run from command line:
--- pg_repack -d mydb -t bloated_table
-
--- Or with options:
--- pg_repack -d mydb -t orders --no-order  -- rebuild without physical ordering
--- pg_repack -d mydb -t orders --order-by id  -- rebuild in PK order
-
--- Check if pg_repack is available:
-SELECT * FROM pg_available_extensions WHERE name = 'pg_repack';
-```
-
----
-
-### ⚠️ Advanced — Common Errors
-
-#### Error 1: VACUUM skipping pages due to cost-delay throttling
-
-```sql
--- Autovacuum is throttled to avoid I/O impact
--- On high-traffic tables, it falls behind faster than it can clean
-
--- Temporarily boost autovacuum for one table:
-ALTER TABLE hot_table SET (autovacuum_vacuum_cost_delay = 0);
--- Be careful: removing throttling may impact query performance
-
--- For emergency manual vacuum without throttling:
-SET vacuum_cost_delay = 0;
-VACUUM hot_table;
-```
-
-#### Error 2: Not running VACUUM after bulk DELETE/UPDATE
-
-```sql
--- Deleting 80% of a table leaves 80% dead tuples
-DELETE FROM archive_data WHERE year < 2020; -- millions of rows
-
--- Table still occupies same disk space
--- All queries now scan through dead tuples
-
--- Immediately run VACUUM (or VACUUM FULL if space reclamation to OS is needed):
-VACUUM ANALYZE archive_data;
-```
-
----
-
-## Window Functions
-
-### Beginner
-
-Window functions perform calculations across a set of rows related to the current row, without collapsing them into a single result (unlike GROUP BY).
-
-```sql
--- ROW_NUMBER: assign sequential number within partition
-SELECT
-    customer_id,
-    order_id,
-    total,
-    row_number() OVER (PARTITION BY customer_id ORDER BY created_at) AS order_sequence
-FROM orders;
-
--- RANK and DENSE_RANK
-SELECT
-    product_id,
-    category_id,
-    revenue,
-    rank()       OVER (PARTITION BY category_id ORDER BY revenue DESC) AS rank,
-    dense_rank() OVER (PARTITION BY category_id ORDER BY revenue DESC) AS dense_rank
-    -- rank(): gaps after ties (1, 2, 2, 4)
-    -- dense_rank(): no gaps (1, 2, 2, 3)
-FROM product_sales;
-
--- Running total
-SELECT
-    order_id,
-    total,
-    sum(total) OVER (ORDER BY created_at) AS running_total
-FROM orders;
-
--- Moving average (last 7 days)
-SELECT
-    date,
-    daily_sales,
-    avg(daily_sales) OVER (ORDER BY date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS moving_avg_7d
-FROM daily_stats;
-```
-
----
-
-### ⚠️ Beginner — Common Errors
-
-#### Error 1: Trying to use window function in WHERE
-
-```sql
--- ERROR: window functions not allowed in WHERE
-SELECT * FROM orders WHERE row_number() OVER (ORDER BY created_at) <= 5;
-```
-
-**Fix:** Use a subquery or CTE:
-```sql
-SELECT * FROM (
-    SELECT *, row_number() OVER (ORDER BY created_at) AS rn FROM orders
-) sub
-WHERE rn <= 5;
-```
-
-#### Error 2: Confusing PARTITION BY and GROUP BY
-
-```sql
--- GROUP BY: collapses rows, returns one row per group
-SELECT customer_id, sum(total) FROM orders GROUP BY customer_id;
-
--- PARTITION BY: computes per group but KEEPS all original rows
-SELECT customer_id, total, sum(total) OVER (PARTITION BY customer_id) AS customer_total
-FROM orders;
--- Returns ALL order rows, each with the customer's total appended
-```
-
----
-
-### Intermediate
-
-```sql
--- LAG and LEAD: access previous/next rows
-SELECT
-    date,
-    revenue,
-    lag(revenue, 1) OVER (ORDER BY date) AS prev_day_revenue,
-    lead(revenue, 1) OVER (ORDER BY date) AS next_day_revenue,
-    revenue - lag(revenue, 1) OVER (ORDER BY date) AS day_over_day_change
-FROM daily_revenue;
-
--- FIRST_VALUE, LAST_VALUE, NTH_VALUE
-SELECT
-    product_id,
-    category_id,
-    price,
-    first_value(price) OVER (PARTITION BY category_id ORDER BY price) AS cheapest,
-    last_value(price) OVER (
-        PARTITION BY category_id ORDER BY price
-        ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-    ) AS most_expensive
-FROM products;
-
--- NTILE: divide rows into N equal buckets
-SELECT
-    customer_id,
-    lifetime_value,
-    ntile(4) OVER (ORDER BY lifetime_value) AS quartile
-    -- 1=bottom 25%, 4=top 25%
-FROM customer_stats;
-
--- Cumulative distribution
-SELECT
-    score,
-    cume_dist() OVER (ORDER BY score) AS cumulative_pct,
-    percent_rank() OVER (ORDER BY score) AS percent_rank
-FROM test_results;
-```
-
----
-
-### ⚠️ Intermediate — Common Errors
-
-#### Error 1: LAST_VALUE returning unexpected results
-
-```sql
--- By default, window frame is ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
--- LAST_VALUE of this frame = current row's value, NOT the last in the partition!
-SELECT price, last_value(price) OVER (PARTITION BY category_id ORDER BY price)
--- Returns the price itself, not the max price
-
--- Fix: explicitly set the frame
-SELECT price, last_value(price) OVER (
-    PARTITION BY category_id ORDER BY price
-    ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-) AS max_price
-FROM products;
-```
-
-#### Error 2: Performance issues from redundant window definitions
-
-```sql
--- Repeating the same OVER clause is verbose but also processed separately per occurrence
-SELECT
-    id,
-    sum(total) OVER (PARTITION BY customer_id ORDER BY created_at),
-    avg(total) OVER (PARTITION BY customer_id ORDER BY created_at),
-    count(*)   OVER (PARTITION BY customer_id ORDER BY created_at)
-FROM orders;
-
--- Use WINDOW clause to name and reuse:
-SELECT
-    id,
-    sum(total)  OVER cw,
-    avg(total)  OVER cw,
-    count(*)    OVER cw
-FROM orders
-WINDOW cw AS (PARTITION BY customer_id ORDER BY created_at);
-```
-
----
-
-### Advanced
-
-```sql
--- Top-N per group (more efficient than LATERAL for simple cases)
-SELECT * FROM (
-    SELECT *,
-        row_number() OVER (PARTITION BY category_id ORDER BY sales DESC) AS rn
-    FROM product_sales
-) ranked
-WHERE rn <= 3; -- top 3 products per category
-
--- Year-over-year comparison
-SELECT
-    year,
-    revenue,
-    lag(revenue) OVER (ORDER BY year) AS prev_year,
-    round(100.0 * (revenue - lag(revenue) OVER (ORDER BY year))
-          / NULLIF(lag(revenue) OVER (ORDER BY year), 0), 1) AS yoy_pct
-FROM annual_revenue;
-
--- Gaps and islands: find consecutive date ranges
-SELECT
-    user_id,
-    min(login_date) AS period_start,
-    max(login_date) AS period_end,
-    count(*) AS consecutive_days
-FROM (
-    SELECT
-        user_id,
-        login_date,
-        login_date - (row_number() OVER (PARTITION BY user_id ORDER BY login_date))::INTEGER AS grp
-    FROM daily_logins
-) g
-GROUP BY user_id, grp
-ORDER BY user_id, period_start;
-```
-
----
-
-### ⚠️ Advanced — Common Errors
-
-#### Error 1: Window function evaluated before HAVING
-
-```sql
--- Window functions cannot reference GROUP BY aggregates directly in one pass
--- This requires nesting
-SELECT customer_id, order_count, total_spent,
-       rank() OVER (ORDER BY total_spent DESC) AS spending_rank
-FROM (
-    SELECT customer_id, count(*) AS order_count, sum(total) AS total_spent
-    FROM orders
-    GROUP BY customer_id
-    HAVING count(*) >= 3
-) grouped;
-```
-
----
-
-## EXPLAIN & Query Planning
-
-### Beginner
-
-`EXPLAIN` shows the query execution plan without actually running the query. `EXPLAIN ANALYZE` runs the query and shows actual timing.
-
-```sql
--- Show execution plan (no execution)
-EXPLAIN SELECT * FROM orders WHERE customer_id = 42;
-
--- Show plan with actual execution time and row counts
-EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 42;
-
--- Full detail with buffer usage (most useful for performance work)
-EXPLAIN (ANALYZE, BUFFERS, VERBOSE, FORMAT TEXT)
-SELECT o.*, c.name
-FROM orders o
-JOIN customers c ON c.id = o.customer_id
-WHERE o.status = 'pending';
-```
-
-#### Reading a Simple Plan
-
-```
-Index Scan using idx_orders_customer on orders  (cost=0.43..8.45 rows=1 width=52)
-  (actual time=0.025..0.027 rows=1 loops=1)
-  Index Cond: (customer_id = 42)
-```
-
-| Component | Meaning |
-|---|---|
-| `Index Scan` | Scan type used |
-| `cost=0.43..8.45` | Estimated startup..total cost (arbitrary units) |
-| `rows=1` | Estimated row count |
-| `actual time=0.025..0.027` | Actual milliseconds (start..finish) |
-| `actual rows=1` | Actual rows returned |
-| `loops=1` | How many times this node executed |
-
----
-
-### ⚠️ Beginner — Common Errors
-
-#### Error 1: Running EXPLAIN ANALYZE on a destructive query
-
-```sql
--- This actually executes the DELETE!
-EXPLAIN ANALYZE DELETE FROM orders WHERE status = 'old';
--- Wraps in a transaction automatically? No, it executes for real!
-```
-
-**Fix:** Wrap in a transaction you'll roll back:
-```sql
-BEGIN;
-EXPLAIN ANALYZE DELETE FROM orders WHERE status = 'old';
-ROLLBACK;
-```
-
-#### Error 2: Trusting EXPLAIN cost numbers as milliseconds
-
-```sql
--- cost=0.00..50000 does NOT mean 50000 milliseconds
--- Cost units are abstract and relative, not wall-clock time
--- Use "actual time=X..Y" from EXPLAIN ANALYZE for real timing
-```
-
----
-
-### Intermediate
-
-#### Scan Types
-
-| Scan Type | When Used |
-|---|---|
-| **Seq Scan** | Full table scan — no usable index, or index not selective enough |
-| **Index Scan** | Selective index lookup + heap access for full row data |
-| **Index Only Scan** | All needed columns in the index (no heap access) |
-| **Bitmap Heap Scan** | Large-ish range via index, then batch heap access (efficient for 1-10% of table) |
-| **TID Scan** | Direct heap access by physical row location |
-
-```sql
--- Force a specific scan for testing (not for production)
-SET enable_seqscan = off;
-SET enable_indexscan = off;
-SET enable_bitmapscan = off;
-
--- Always reset after testing:
-RESET enable_seqscan;
-RESET enable_indexscan;
-RESET enable_bitmapscan;
-```
-
-#### Identifying Stale Statistics
-
-```sql
--- If estimated rows >> actual rows, statistics are stale
-EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 42;
--- rows=1 (estimate) vs actual rows=1542 → stale statistics!
-
--- Fix: update statistics
-ANALYZE orders;
-ANALYZE orders(customer_id); -- just this column
-
--- Increase statistics target for columns with many distinct values
-ALTER TABLE orders ALTER COLUMN customer_id SET STATISTICS 500;
-ANALYZE orders;
--- Default is 100 histogram buckets; increase for more accurate estimates
-```
-
----
-
-### ⚠️ Intermediate — Common Errors
-
-#### Error 1: Not understanding nested loop cost multiplication
-
-```sql
--- loops=N means the cost and time shown is PER LOOP
--- Total cost = shown cost × loops
-
--- Example:
---   Hash Join  (cost=100..200 rows=500)
---     → Seq Scan on small_table  (cost=0..5 rows=100, loops=1)
---     → Index Scan on big_table  (cost=0.4..2.1 rows=1, loops=100)
---         actual time=0.010..0.012  rows=1  loops=100
--- Total time for Index Scan node: 0.012ms × 100 = 1.2ms
-```
-
-#### Error 2: Assuming EXPLAIN plans are deterministic
-
-```sql
--- The planner may choose different plans at different data sizes
--- or with different parameter values (parameter sniffing)
-
--- Use generic_plan to see the plan for a prepared statement:
-EXPLAIN (GENERIC_PLAN)
-SELECT * FROM orders WHERE customer_id = $1;
-```
-
----
-
-### Advanced
-
-```sql
--- pg_stat_statements: track most expensive queries across sessions
--- (requires the extension to be loaded)
-CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
-
-SELECT
-    round(total_exec_time::numeric, 2) AS total_ms,
-    calls,
-    round((total_exec_time / calls)::numeric, 2) AS avg_ms,
-    round(stddev_exec_time::numeric, 2) AS stddev_ms,
-    rows,
-    query
-FROM pg_stat_statements
-ORDER BY total_exec_time DESC
-LIMIT 20;
-
--- Reset stats
-SELECT pg_stat_statements_reset();
-
--- auto_explain: automatically log plans for slow queries
--- Add to postgresql.conf:
--- shared_preload_libraries = 'auto_explain'
--- auto_explain.log_min_duration = '1s'
--- auto_explain.log_analyze = true
--- auto_explain.log_buffers = true
-```
-
-#### Parallel Query
-
-```sql
--- PostgreSQL can use parallel workers for large scans and joins
--- Check if parallel query is being used:
-EXPLAIN SELECT count(*) FROM large_table;
--- Look for "Gather" or "Gather Merge" nodes — these coordinate parallel workers
-
--- Control parallelism per session
-SET max_parallel_workers_per_gather = 4;
-SET parallel_tuple_cost = 0.1;
-SET parallel_setup_cost = 1000;
-
--- Disable for a specific query (e.g. to reduce resource usage)
-SET max_parallel_workers_per_gather = 0;
-EXPLAIN SELECT count(*) FROM large_table; -- now uses single worker
-RESET max_parallel_workers_per_gather;
-```
-
----
-
-### ⚠️ Advanced — Common Errors
-
-#### Error 1: JIT compilation adding startup overhead for short queries
-
-```sql
--- PostgreSQL JIT can slow down simple queries due to compilation overhead
--- EXPLAIN ANALYZE shows: "JIT: Functions: 3 Options: Inlining true..."
-
--- Disable for OLTP workloads where queries are fast and simple:
-SET jit = off;
--- Or globally: jit = off in postgresql.conf
--- Or per cost threshold: jit_above_cost = 100000 (default)
-```
-
-#### Error 2: Not using EXPLAIN for query performance regression detection
-
-```sql
--- Scheduled process to catch regressions:
--- 1. Capture plans for key queries regularly with EXPLAIN (FORMAT JSON)
--- 2. Compare estimated costs and scan types over time
--- 3. Alert on plan changes (Seq Scan appearing where Index Scan was expected)
-
--- Save a plan as JSON for comparison:
-SELECT jsonb_pretty(
-    (EXPLAIN (FORMAT JSON) SELECT * FROM orders WHERE customer_id = 42)::jsonb
-);
-```
-
----
-
-*End of PostgreSQL Developer Guide*
-
----
-
-## Quick Reference Card
-
-### Transaction Isolation Anomalies
-
-| Anomaly | READ COMMITTED | REPEATABLE READ | SERIALIZABLE |
-|---|---|---|---|
-| Dirty Read | ✅ Prevented | ✅ Prevented | ✅ Prevented |
-| Non-Repeatable Read | ❌ Possible | ✅ Prevented | ✅ Prevented |
-| Phantom Read | ❌ Possible | ✅ Prevented (PG) | ✅ Prevented |
-| Write Skew | ❌ Possible | ❌ Possible | ✅ Prevented |
-| Serialization Anomaly | ❌ Possible | ❌ Possible | ✅ Prevented |
-
-### Lock Compatibility Matrix (abbreviated)
-
-| | ACCESS SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCL | SHARE | ACCESS EXCLUSIVE |
-|---|---|---|---|---|---|
-| ACCESS SHARE | ✅ | ✅ | ✅ | ✅ | ❌ |
-| ROW EXCLUSIVE | ✅ | ✅ | ❌ | ❌ | ❌ |
-| SHARE UPDATE EXCL | ✅ | ❌ | ❌ | ❌ | ❌ |
-| ACCESS EXCLUSIVE | ❌ | ❌ | ❌ | ❌ | ❌ |
-
-### Index Type Cheat Sheet
-
-| Index Type | Use Case |
-|---|---|
-| B-tree (default) | =, <, >, BETWEEN, IN, ORDER BY, LIKE 'prefix%' |
-| Hash | Equality only (=), faster than B-tree for exact match |
-| GIN | JSONB, arrays, full-text search, trigrams |
-| GiST | Ranges, geometric types, full-text (alternative to GIN) |
-| BRIN | Very large tables with naturally ordered data (time-series) |
-| SP-GiST | IP ranges, hierarchical data, phone numbers |
 
 ### Common Error Quick Lookup
 
-| Error Message | Likely Cause |
+| Error Message | Likely Cause | Section |
+|---|---|---|
+| `column must appear in GROUP BY or be used in aggregate` | Non-aggregated column in SELECT with GROUP BY | §11 |
+| `more than one row returned by a subquery` | Scalar subquery returned multiple rows | §12 |
+| `could not serialize access` | SERIALIZABLE conflict — retry the transaction | §21, §24 |
+| `deadlock detected` | Circular lock dependency — fix lock ordering | §15 |
+| `current transaction is aborted` | Error occurred — must ROLLBACK before continuing | §14 |
+| `insert or update violates foreign key constraint` | Referenced row does not exist | §9 |
+| `duplicate key value violates unique constraint` | Unique or PK violation — use ON CONFLICT | §6 |
+| `operator does not exist: integer = text` | Type mismatch — cast explicitly | §4 |
+| `no partition of relation found for row` | No matching or default partition | §23 |
+| `division by zero` | Use `NULLIF(denominator, 0)` | §3 |
+| `value too long for type character varying(N)` | Input exceeds column length limit | §1 |
+| `permission denied for table` | Missing `GRANT` on the table | §16 |
+| `relation already exists` | Object already created — use `IF NOT EXISTS` | §1 |
+| `idle in transaction session timeout` | Transaction open too long without activity | §14, §22 |
+
+---
+
+### VACUUM Decision Guide
+
+| Situation | Action |
 |---|---|
-| `could not serialize access` | SERIALIZABLE conflict — retry |
-| `deadlock detected` | Circular lock dependency — fix lock ordering |
-| `current transaction is aborted` | Error occurred; need ROLLBACK |
-| `more than one row returned by a subquery` | Scalar subquery returned multiple rows |
-| `column must appear in GROUP BY or aggregate` | Non-aggregated column in SELECT with GROUP BY |
-| `operator does not exist: integer = text` | Type mismatch in comparison |
-| `permission denied for table` | Missing GRANT |
-| `relation already exists` | Object name collision — use IF NOT EXISTS |
-| `insert or update violates foreign key constraint` | Referenced row does not exist |
-| `duplicate key value violates unique constraint` | Unique/PK constraint violation |
-| `value too long for type character varying(N)` | String exceeds column limit |
-| `division by zero` | Divisor is 0 — use NULLIF(denominator, 0) |
+| Routine dead tuple cleanup | Autovacuum handles it automatically |
+| High-churn table with bloat | Tune `autovacuum_vacuum_scale_factor` per table |
+| After large bulk DELETE/UPDATE | `VACUUM ANALYZE table_name` |
+| Need to reclaim disk space to OS, low traffic | `VACUUM FULL table_name` (blocks all access) |
+| Need to reclaim disk space without downtime | `pg_repack -t table_name` |
+| XID wraparound risk (`age > 1.5B`) | `VACUUM FREEZE ANALYZE table_name` |
+| Long transaction blocking VACUUM | Kill the long transaction; set `idle_in_transaction_session_timeout` |
