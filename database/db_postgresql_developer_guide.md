@@ -145,6 +145,40 @@ DROP TABLE IF EXISTS products;
 
 ---
 
+
+---
+
+### 💡 Beginner — Best Practices
+
+- **Always name columns explicitly** — never rely on implicit column ordering in inserts or select *.
+- **Use `TIMESTAMPTZ` instead of `TIMESTAMP`** — storing timestamps without timezone information is a common source of subtle bugs in multi-region applications.
+- **Use `NUMERIC` for money** — never `FLOAT` or `REAL`; floating-point types accumulate rounding errors.
+- **Use `TEXT` for open-ended strings** — reserve `VARCHAR(n)` only for columns with a genuine maximum-length business rule.
+- **Prefer `BIGSERIAL` over `SERIAL`** — 32-bit integer IDs can overflow on busy tables; the cost is negligible.
+- **Define `NOT NULL` constraints at the database level** — do not rely on application code alone to prevent nulls.
+- **Add `DEFAULT` values for operational columns** — `created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()` and `updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()` should be on every entity table.
+- **Choose meaningful, consistent names** — use `snake_case`, avoid reserved words, be explicit (`customer_id` not `id2`).
+- **Document non-obvious columns** with `COMMENT ON COLUMN table.col IS 'description'`.
+
+```sql
+-- A well-structured table example
+CREATE TABLE products (
+    id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    sku         TEXT NOT NULL,
+    name        TEXT NOT NULL,
+    price       NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
+    stock       INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
+    is_active   BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_products_sku UNIQUE (sku)
+);
+
+COMMENT ON COLUMN products.sku IS 'Stock-keeping unit — must match the warehouse system code';
+```
+
+---
+
 ### ⚠️ Beginner — Common Errors
 
 #### Error 1: Using FLOAT for monetary values
@@ -274,6 +308,30 @@ CREATE TABLE events (
 
 ---
 
+
+---
+
+### 💡 Beginner — Best Practices
+
+- **Use `BIGINT GENERATED ALWAYS AS IDENTITY`** for new tables — it is the SQL standard, cleaner than `SERIAL`, and avoids ownership confusion with sequences.
+- **Default to BIGINT, not INT** — 32-bit overflow is a real production incident waiting to happen on any high-volume table.
+- **Never expose sequential integer IDs in public APIs or URLs** — they reveal business volume and enable enumeration attacks; use a UUID for external-facing identifiers.
+- **Keep surrogate keys dumb** — the primary key should carry no business meaning; business identifiers (SKU, email) should live in separate, uniquely-constrained columns.
+- **Use composite PKs only when the combination is the natural identity** — for example `(order_id, product_id)` in an order_items table. Avoid composites with more than 2–3 columns.
+- **Prefer `UUID` PKs for distributed or microservice architectures** — IDs generated across services are guaranteed not to collide.
+
+```sql
+-- Good: BIGINT IDENTITY for internal tables
+CREATE TABLE invoices (
+    id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    public_ref  UUID NOT NULL DEFAULT gen_random_uuid() UNIQUE, -- for external use
+    customer_id BIGINT NOT NULL,
+    total       NUMERIC(10,2) NOT NULL
+);
+```
+
+---
+
 ### ⚠️ Beginner — Common Errors
 
 #### Error 1: Assuming primary key values are consecutive
@@ -379,6 +437,37 @@ SELECT
         ELSE 'Unknown'
     END AS status_label
 FROM orders;
+```
+
+---
+
+
+---
+
+### 💡 Beginner — Best Practices
+
+- **Always name columns explicitly** in application queries — `SELECT *` is fine for ad-hoc exploration, never for production code.
+- **Use aliases to make output self-documenting** — `count(*) AS order_count` is easier to consume than an unnamed column.
+- **Prefer keyset pagination over OFFSET** for any table that could grow large — `WHERE id > :last_seen_id LIMIT n` is always fast.
+- **Normalise case at write time** rather than applying `lower()` at query time — querying `WHERE lower(email) = ...` prevents index use unless you create an expression index.
+- **Use `COALESCE` to handle NULLs gracefully** in display columns so application code does not need null-checks for every field.
+- **Use `NULLIF` to prevent division-by-zero** rather than wrapping divisions in CASE expressions.
+- **Limit rows on exploratory queries** — always add `LIMIT` when scanning unknown tables to avoid accidentally returning millions of rows.
+
+```sql
+-- Good: explicit columns, alias, coalesce, limit
+SELECT
+    u.id                                          AS user_id,
+    COALESCE(u.display_name, u.email)             AS name,
+    u.created_at,
+    count(o.id)                                   AS order_count,
+    COALESCE(sum(o.total), 0)                     AS lifetime_value
+FROM users u
+LEFT JOIN orders o ON o.user_id = u.id
+WHERE u.is_active = TRUE
+GROUP BY u.id, u.display_name, u.email, u.created_at
+ORDER BY lifetime_value DESC
+LIMIT 100;
 ```
 
 ---
@@ -493,6 +582,38 @@ SELECT * FROM orders WHERE shipped_at IS NOT NULL;    -- shipped orders
 
 ---
 
+
+---
+
+### 💡 Beginner — Best Practices
+
+- **Always use `IS NULL` / `IS NOT NULL`** — never compare to `NULL` with `=` or `<>`.
+- **Prefer `NOT EXISTS` over `NOT IN`** for subquery-based exclusion — `NOT IN` silently returns an empty set when the subquery produces any `NULL`.
+- **Use exclusive upper bounds on timestamp ranges** — `created_at < '2025-01-01'` instead of `<= '2024-12-31'` captures all times within the day correctly.
+- **Match literal types to column types** — passing a string where an integer is expected can prevent index use and cause implicit cast overhead.
+- **Use partial indexes for frequently-filtered subsets** — a partial index on `WHERE status = 'active'` is smaller and faster than a full index on the `status` column.
+- **Create `pg_trgm` GIN indexes before deploying substring search (`LIKE '%text%'`)** — without them, every such query is a full table scan.
+- **Keep filter predicates sargable** — avoid wrapping the indexed column in a function (`WHERE date_trunc('day', created_at) = ...`) unless you have a matching expression index.
+
+```sql
+-- Good: timestamp range with exclusive upper bound
+SELECT * FROM orders
+WHERE created_at >= '2024-01-01'
+  AND created_at <  '2025-01-01';
+
+-- Good: NOT EXISTS instead of NOT IN (safe with NULLs)
+SELECT * FROM products p
+WHERE NOT EXISTS (
+    SELECT 1 FROM discontinued d WHERE d.product_id = p.id
+);
+
+-- Good: expression index to support case-insensitive search
+CREATE INDEX idx_users_lower_email ON users (lower(email));
+SELECT * FROM users WHERE lower(email) = lower(:input);
+```
+
+---
+
 ### ⚠️ Beginner — Common Errors
 
 #### Error 1: Comparing to NULL with = instead of IS NULL
@@ -592,6 +713,32 @@ SELECT * FROM users ORDER BY last_login ASC  NULLS FIRST;  -- NULLs at the top
 
 ---
 
+
+---
+
+### 💡 Beginner — Best Practices
+
+- **Always specify `ORDER BY` when row order matters** — PostgreSQL never guarantees order without it, even on small tables.
+- **Use column names, not positional numbers** — `ORDER BY price DESC` is refactor-safe; `ORDER BY 2 DESC` breaks silently when columns are reordered.
+- **Handle NULLs explicitly** — decide whether `NULL` should sort first or last and write `NULLS FIRST` / `NULLS LAST` to avoid surprises across different PostgreSQL versions.
+- **Pair `ORDER BY` with `LIMIT`** when you only need the top-N rows — PostgreSQL can use an index to retrieve them without sorting the entire table.
+- **Add indexes on commonly sorted columns** — an index on `created_at DESC` allows `ORDER BY created_at DESC LIMIT n` to be served as an index scan with no sort step.
+- **Use consistent sort orders in paginated APIs** — keyset pagination only works correctly if the sort order is stable and unique (add `id` as a tiebreaker).
+
+```sql
+-- Good: indexed sort with LIMIT, stable tiebreaker
+CREATE INDEX idx_orders_created_desc ON orders (created_at DESC, id DESC);
+
+SELECT id, total, created_at
+FROM orders
+WHERE created_at < :last_seen_created_at
+   OR (created_at = :last_seen_created_at AND id < :last_seen_id)
+ORDER BY created_at DESC, id DESC
+LIMIT 20;
+```
+
+---
+
 ### ⚠️ Beginner — Common Errors
 
 #### Error 1: Assuming result order without ORDER BY
@@ -681,6 +828,36 @@ INSERT INTO inventory (product_id, quantity)
 VALUES (1, 50)
 ON CONFLICT (product_id) DO UPDATE
     SET quantity = inventory.quantity + EXCLUDED.quantity;
+```
+
+---
+
+
+---
+
+### 💡 Beginner — Best Practices
+
+- **Always use `RETURNING`** when you need the generated ID or other server-side computed values — it eliminates a second round-trip and avoids race conditions.
+- **Use multi-row `INSERT` or `COPY` for bulk loads** — single-row inserts inside a loop are 10–100× slower.
+- **Name every column explicitly** — `INSERT INTO t (col1, col2) VALUES (...)` is robust to future schema changes; `INSERT INTO t VALUES (...)` breaks when columns are added or reordered.
+- **Use `ON CONFLICT DO UPDATE` (upsert) rather than SELECT-then-INSERT** — the two-step pattern has a race condition; the single-statement upsert is atomic.
+- **Be precise about what `ON CONFLICT DO UPDATE` sets** — update only the columns that should change; leave `created_at`, audit columns, and immutable fields out of the `SET` clause.
+- **Wrap large batch inserts in transactions** — thousands of individual auto-committed inserts each flush the WAL separately; a single transaction commits once.
+- **Use `COPY` for initial data loads and ETL** — it is the fastest ingestion path and bypasses the overhead of the query parser for each row.
+
+```sql
+-- Good: explicit columns + RETURNING
+INSERT INTO orders (customer_id, total, status)
+VALUES (:cid, :total, 'new')
+RETURNING id, created_at;
+
+-- Good: upsert that only touches what changed
+INSERT INTO product_prices (product_id, price, updated_at)
+VALUES (:pid, :price, NOW())
+ON CONFLICT (product_id) DO UPDATE
+    SET price      = EXCLUDED.price,
+        updated_at = EXCLUDED.updated_at;
+-- created_at is intentionally absent — never overwritten
 ```
 
 ---
@@ -790,6 +967,40 @@ SET price = p.price * c.discount_rate
 FROM promotions c
 WHERE c.category_id = p.category_id
   AND c.is_active = true;
+```
+
+---
+
+
+---
+
+### 💡 Beginner — Best Practices
+
+- **Verify with SELECT before UPDATE** — run `SELECT count(*) FROM ... WHERE <your condition>` first to confirm the scope, then execute the UPDATE.
+- **Use atomic SQL expressions for calculations** — `SET balance = balance - 100` is safer than reading the value in the application and writing it back.
+- **Use `RETURNING`** to confirm what was actually changed, and to feed the result to the next step without a second query.
+- **Batch mass updates** — updating millions of rows in one statement creates millions of dead tuples at once and can stall autovacuum; process in chunks of 10,000–50,000 rows.
+- **Use optimistic locking (`version` column) for concurrent edits** — detect conflicts at write time instead of locking rows at read time.
+- **Ensure the `FROM` source is unique per target row** — when using `UPDATE ... FROM`, ambiguous joins produce non-deterministic results with no error.
+- **Index the `WHERE` columns** — an `UPDATE` without an index on the filter column forces a sequential scan even for a single-row change.
+
+```sql
+-- Good: atomic expression + RETURNING
+UPDATE accounts
+SET balance    = balance - :amount,
+    updated_at = NOW()
+WHERE id = :account_id
+  AND balance >= :amount    -- guard against going negative
+RETURNING id, balance;
+
+-- Good: optimistic locking
+UPDATE documents
+SET content = :new_content,
+    version = version + 1,
+    updated_at = NOW()
+WHERE id = :doc_id
+  AND version = :expected_version;
+-- Check affected rows in application; 0 rows = conflict
 ```
 
 ---
@@ -953,6 +1164,48 @@ UPDATE users SET deleted_at = NULL WHERE id = 42;
 
 ---
 
+
+---
+
+### 💡 Beginner — Best Practices
+
+- **Verify with SELECT before DELETE** — run `SELECT count(*) WHERE <condition>` first to confirm what will be removed.
+- **Prefer soft-delete over hard-delete for business data** — add a `deleted_at TIMESTAMPTZ` column and update it instead; preserves history and allows recovery.
+- **Use `RETURNING` with DELETE** — capture what was deleted for audit logs or to feed the result to another operation (e.g. archiving).
+- **Batch large deletes** — deleting millions of rows in one statement creates a huge transaction and cascades of dead tuples; process in chunks with brief pauses.
+- **Use partition `DROP` or `DETACH` for bulk historical data purges** — dropping a partition is instant with no dead tuples; row-by-row DELETE on a date range can take hours.
+- **Prefer `DELETE` over `TRUNCATE` on live production tables** — `TRUNCATE` acquires `ACCESS EXCLUSIVE` and blocks all reads; `DELETE` uses row-level locks.
+- **Create a statement-level `AFTER TRUNCATE` trigger** if you need audit coverage — row-level triggers do not fire on `TRUNCATE`.
+
+```sql
+-- Good: soft delete
+UPDATE users SET deleted_at = NOW() WHERE id = :user_id;
+
+-- Good: DELETE with RETURNING for audit
+DELETE FROM sessions
+WHERE expires_at < NOW()
+RETURNING id, user_id, created_at;
+
+-- Good: batch delete with pause
+DO $$
+DECLARE deleted INT;
+BEGIN
+    LOOP
+        DELETE FROM event_log
+        WHERE id IN (
+            SELECT id FROM event_log
+            WHERE created_at < NOW() - INTERVAL '2 years'
+            LIMIT 50000
+        );
+        GET DIAGNOSTICS deleted = ROW_COUNT;
+        EXIT WHEN deleted = 0;
+        PERFORM pg_sleep(0.1);
+    END LOOP;
+END $$;
+```
+
+---
+
 ### ⚠️ Beginner — Common Errors
 
 #### Error 1: DELETE without WHERE
@@ -1079,6 +1332,34 @@ CREATE INDEX idx_order_items_product_id ON order_items(product_id);
 
 ---
 
+
+---
+
+### 💡 Beginner — Best Practices
+
+- **Always index FK columns on the referencing (child) side** — PostgreSQL indexes the referenced (parent) PK automatically but never indexes the child FK column; an unindexed FK causes full table scans on every join and every cascade operation.
+- **Choose `ON DELETE` actions deliberately** — use `RESTRICT` for business-critical parent records, `CASCADE` only when child rows are meaningless without the parent (e.g. order_items without the order), and `SET NULL` for optional relationships.
+- **Use `NOT VALID` + `VALIDATE CONSTRAINT` when adding FKs to large tables** — the two-step approach avoids a prolonged lock during the validation scan.
+- **Never use `ON DELETE CASCADE` as a substitute for application-level delete logic on important data** — cascades are silent and irreversible.
+- **Keep FK columns `NOT NULL` when the relationship is mandatory** — a nullable FK with no `SET NULL` action creates ambiguity about whether NULL means "no relationship" or "unknown".
+- **Prefer surrogate integer keys as FK targets** — joining on integers is faster than joining on wide natural keys.
+
+```sql
+-- Good: properly indexed FK, explicit ON DELETE action
+CREATE TABLE order_items (
+    id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    order_id   BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    quantity   INTEGER NOT NULL CHECK (quantity > 0),
+    unit_price NUMERIC(10,2) NOT NULL
+);
+
+CREATE INDEX idx_order_items_order_id   ON order_items (order_id);
+CREATE INDEX idx_order_items_product_id ON order_items (product_id);
+```
+
+---
+
 ### ⚠️ Beginner — Common Errors
 
 #### Error 1: CASCADE deletes going further than expected
@@ -1197,6 +1478,36 @@ SELECT * FROM customers c
 WHERE NOT EXISTS (
     SELECT 1 FROM orders o WHERE o.customer_id = c.id
 );
+```
+
+---
+
+
+---
+
+### 💡 Beginner — Best Practices
+
+- **Always use explicit `JOIN ... ON` syntax** — never the implicit comma syntax (`FROM a, b`) which creates accidental cross joins when `WHERE` conditions are missing.
+- **Index all JOIN columns** — joining on unindexed columns forces at least one full table scan per join; the FK indexing rule from §9 covers the most common case.
+- **Use `LEFT JOIN` when the child side may have no rows**, and check for NULLs rather than switching to INNER JOIN to "fix" empty results.
+- **Filter in `ON` not `WHERE` for outer joins** — a `WHERE` clause applied to the right side of a `LEFT JOIN` silently converts it to an INNER JOIN.
+- **Use `EXISTS` / `NOT EXISTS` for semi-joins and anti-joins** — they stop scanning as soon as the first match is found; `IN` and `NOT IN` with subqueries scan everything.
+- **Be aware of row multiplication** — a JOIN to a one-to-many relationship multiplies rows; aggregate intentionally rather than adding DISTINCT to hide the problem.
+- **Alias all tables** in multi-table queries — it removes ambiguity and makes query intent clear.
+
+```sql
+-- Good: explicit alias, index-friendly JOIN, filter in ON for LEFT JOIN
+SELECT
+    c.id         AS customer_id,
+    c.name,
+    o.id         AS order_id,
+    o.total
+FROM customers c
+LEFT JOIN orders o
+    ON  o.customer_id = c.id
+    AND o.status = 'completed'   -- filter here, not in WHERE, to keep all customers
+WHERE c.is_active = TRUE
+ORDER BY c.name, o.created_at DESC;
 ```
 
 ---
@@ -1328,6 +1639,39 @@ SELECT
     sum(total) FILTER (WHERE status = 'completed') AS completed_revenue,
     sum(total) FILTER (WHERE status = 'cancelled') AS cancelled_revenue
 FROM orders;
+```
+
+---
+
+
+---
+
+### 💡 Beginner — Best Practices
+
+- **Use `count(*)` to count rows, `count(column)` to count non-null values** — be intentional about which you need.
+- **Use `FILTER (WHERE ...)` instead of `CASE` inside aggregates** — it is cleaner, more readable, and equally efficient.
+- **Apply `WHERE` before `GROUP BY`** — filter rows as early as possible to reduce the amount of data being aggregated.
+- **Use `HAVING` only for conditions on aggregate results** — conditions on non-aggregated columns belong in `WHERE`.
+- **Always add `ORDER BY` after `GROUP BY`** if the ordering of groups matters — `GROUP BY` does not imply any sort order.
+- **Alias aggregate results** — `count(*) AS order_count` is far more useful than an unnamed column in application code.
+- **Index `GROUP BY` columns** for large tables — a B-tree index on the grouping column allows a GroupAggregate plan (streaming) rather than a HashAggregate plan (materialises everything).
+- **Consider partial indexes or partitioning** when you repeatedly aggregate over a fixed subset (e.g. the last 30 days of events).
+
+```sql
+-- Good: WHERE first, FILTER for conditions, clear aliases, ORDER BY
+SELECT
+    c.id                                                        AS customer_id,
+    c.name,
+    count(*)                                                    AS total_orders,
+    count(*) FILTER (WHERE o.status = 'completed')             AS completed_orders,
+    COALESCE(sum(o.total) FILTER (WHERE o.status = 'completed'), 0) AS completed_revenue,
+    max(o.created_at)                                          AS last_order_date
+FROM customers c
+JOIN orders o ON o.customer_id = c.id
+WHERE c.is_active = TRUE                -- filter before grouping
+GROUP BY c.id, c.name
+HAVING count(*) >= 1
+ORDER BY completed_revenue DESC;
 ```
 
 ---
@@ -1501,6 +1845,40 @@ WITH expired AS (
 INSERT INTO session_archive (session_id, user_id, session_created, archived_at)
 SELECT id, user_id, created_at, NOW()
 FROM expired;
+```
+
+---
+
+
+---
+
+### 💡 Intermediate — Best Practices
+
+- **Use CTEs for readability on complex queries** — break a multi-step query into named, readable steps rather than nesting subqueries three levels deep.
+- **Prefer `EXISTS` over `IN` for subquery-based filters** — `EXISTS` short-circuits on the first match; `IN` materialises the full subquery result.
+- **Prefer `NOT EXISTS` over `NOT IN`** — `NOT IN` returns nothing when the subquery contains any `NULL`; `NOT EXISTS` is always correct.
+- **Use writable CTEs to chain DML operations** — delete-then-insert or update-then-insert in one atomic statement reduces round-trips and keeps the logic together.
+- **Avoid deep correlated subqueries** — if a subquery references a column from the outer query and runs once per outer row, rewrite it as a JOIN.
+- **Add cycle detection to recursive CTEs** — any recursive CTE over user-supplied hierarchical data must guard against circular references.
+- **Be aware of the PostgreSQL 12 CTE inlining change** — use `MATERIALIZED` explicitly when you need the pre-PG12 isolation behaviour (e.g. to prevent the planner from pushing predicates inside the CTE).
+
+```sql
+-- Good: readable multi-step CTE, writable CTE for atomic DML
+WITH
+qualified_customers AS (
+    SELECT id FROM customers
+    WHERE is_active = TRUE AND created_at < NOW() - INTERVAL '1 year'
+),
+expired_orders AS (
+    DELETE FROM orders
+    WHERE customer_id IN (SELECT id FROM qualified_customers)
+      AND status = 'abandoned'
+      AND created_at < NOW() - INTERVAL '6 months'
+    RETURNING id, customer_id, total, created_at
+)
+INSERT INTO orders_archive (order_id, customer_id, total, original_created_at, archived_at)
+SELECT id, customer_id, total, created_at, NOW()
+FROM expired_orders;
 ```
 
 ---
@@ -1683,6 +2061,35 @@ EXPLAIN SELECT * FROM orders WHERE customer_id = 42;
 
 ---
 
+
+---
+
+### 💡 Intermediate — Best Practices
+
+- **Create indexes based on real query patterns** — use `EXPLAIN ANALYZE` and `pg_stat_statements` to find slow queries; do not create indexes speculatively.
+- **Always use `CREATE INDEX CONCURRENTLY`** on production tables — the non-concurrent form blocks all writes during the build.
+- **Index every foreign key column** on the referencing side — PostgreSQL does not do this automatically and an unindexed FK causes full scans and lock cascades.
+- **Put equality-filter columns first in multi-column indexes**, range-filter or `ORDER BY` columns last — `(customer_id, created_at)` is better than `(created_at, customer_id)` for `WHERE customer_id = ? ORDER BY created_at`.
+- **Use partial indexes for high-frequency, narrow-subset queries** — `WHERE status = 'pending'` on a partial index is smaller and faster than an index on the full `status` column.
+- **Use expression indexes when queries filter on a function** — if you always query `lower(email)`, create `CREATE INDEX ON users (lower(email))`.
+- **Audit and drop unused indexes regularly** — every index adds write overhead; use `pg_stat_user_indexes WHERE idx_scan = 0` to find candidates.
+- **Use `INCLUDE` to create covering indexes for hot read paths** — eliminates heap access for index-only scans.
+- **Rebuild bloated indexes with `REINDEX CONCURRENTLY`** after heavy write periods.
+
+```sql
+-- Good: CONCURRENTLY, multi-column with right order, partial
+CREATE INDEX CONCURRENTLY idx_orders_customer_pending
+    ON orders (customer_id, created_at DESC)
+    WHERE status = 'pending';
+
+-- Good: covering index for a high-frequency read
+CREATE INDEX CONCURRENTLY idx_orders_lookup
+    ON orders (customer_id)
+    INCLUDE (total, status, created_at);
+```
+
+---
+
 ### ⚠️ Intermediate — Common Errors
 
 #### Error 1: Wrong column order in a multi-column index
@@ -1821,6 +2228,35 @@ COMMIT;
 BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
     -- see Advanced section for full detail
 COMMIT;
+```
+
+---
+
+
+---
+
+### 💡 Intermediate — Best Practices
+
+- **Keep transactions as short as possible** — long transactions hold locks, block VACUUM, and consume connection resources; move slow computation before `BEGIN` or after `COMMIT`.
+- **Never perform external side effects inside a transaction** — send emails, call APIs, or publish to a queue only after the transaction commits successfully.
+- **Use `SAVEPOINT` for partial rollback inside a complex transaction** — it avoids aborting the entire transaction when one optional step fails.
+- **Set `idle_in_transaction_session_timeout`** — prevents forgotten open transactions from holding locks and blocking VACUUM indefinitely.
+- **Choose the minimum isolation level your workload needs** — each step up in isolation increases the likelihood of serialization conflicts and retries.
+- **Always implement retry logic for `SERIALIZABLE` transactions** — serialization failures are expected, not exceptional, and must be handled by the application.
+- **Use DDL inside transactions** for schema migrations — roll back the migration cleanly if a later step fails.
+- **Use `BEGIN` / `COMMIT` to wrap bulk DML** — many auto-committed small statements flush the WAL individually; one transaction commits once.
+
+```sql
+-- Good: short focused transaction, external side effect AFTER commit
+BEGIN;
+    INSERT INTO orders (customer_id, total) VALUES (:cid, :total) RETURNING id INTO v_order_id;
+    INSERT INTO order_items (order_id, product_id, qty) VALUES (v_order_id, :pid, :qty);
+COMMIT;
+-- Email sent ONLY after successful commit:
+-- send_confirmation_email(v_order_id)
+
+-- Good: idle in transaction timeout set at session or config level
+SET idle_in_transaction_session_timeout = '30s';
 ```
 
 ---
@@ -1986,6 +2422,41 @@ BEGIN
         RAISE NOTICE 'Another worker is already running this job, skipping';
     END IF;
 END $$;
+```
+
+---
+
+
+---
+
+### 💡 Intermediate — Best Practices
+
+- **Set `lock_timeout` before any DDL in production** — prevents an `ALTER TABLE` from silently queuing and blocking all reads for minutes while waiting for an idle lock.
+- **Always lock rows in a consistent order** — when multiple transactions modify several rows, always acquire locks in the same sequence (e.g. lowest ID first) to prevent deadlocks.
+- **Use `FOR UPDATE SKIP LOCKED` for job queues** — it is the correct, race-condition-free pattern for concurrent workers claiming tasks from a table.
+- **Use `FOR UPDATE OF table` when joining** to lock only the rows in the specific table you intend to modify, not every joined table.
+- **Use transaction-level advisory locks** (`pg_advisory_xact_lock`) rather than session-level ones — they are released automatically on COMMIT/ROLLBACK and cannot be leaked by connection pooling.
+- **Monitor lock waits actively** — query `pg_stat_activity` and `pg_blocking_pids()` to detect contention before it becomes an incident.
+- **Avoid `LOCK TABLE` with broad modes** — `FOR UPDATE` on specific rows is almost always sufficient; table-level locks block every concurrent reader or writer.
+
+```sql
+-- Good: lock_timeout before DDL
+SET lock_timeout = '3s';
+ALTER TABLE users ADD COLUMN preferences JSONB;
+
+-- Good: consistent lock ordering (lower id first)
+BEGIN;
+UPDATE accounts SET balance = balance - :amount WHERE id = LEAST(:from_id, :to_id);
+UPDATE accounts SET balance = balance + :amount WHERE id = GREATEST(:from_id, :to_id);
+COMMIT;
+
+-- Good: job queue with SKIP LOCKED
+SELECT id, payload
+FROM jobs
+WHERE status = 'pending'
+ORDER BY priority DESC, created_at ASC
+LIMIT 1
+FOR UPDATE SKIP LOCKED;
 ```
 
 ---
@@ -2212,6 +2683,36 @@ CALL batch_apply_price_increase(5.0); -- 5% price increase for all products
 
 ---
 
+
+---
+
+### 💡 Intermediate — Best Practices
+
+- **Annotate volatility correctly** — mark functions `IMMUTABLE` only if they are pure (no table reads, no side effects); use `STABLE` for read-only table access; use `VOLATILE` for anything that writes or calls non-deterministic built-ins.
+- **Always specify `SET search_path = public, pg_catalog`** in `SECURITY DEFINER` functions to prevent search-path injection attacks.
+- **Never silently swallow exceptions** — at minimum log with `RAISE WARNING`; prefer re-raising with `RAISE` so callers know something went wrong.
+- **Use `OUT` parameters or `RETURNS TABLE`** instead of building result strings — it gives the planner type information and makes the interface composable.
+- **Use `LANGUAGE SQL`** for simple one-expression functions — the planner can inline SQL functions; PL/pgSQL functions are always opaque.
+- **Document function contracts** with `COMMENT ON FUNCTION` — note preconditions, postconditions, and side effects.
+- **Use stored procedures (`CALL`) for long-running batch jobs** that need intermediate commits — functions cannot `COMMIT` inside their body.
+
+```sql
+-- Good: correct volatility, SET search_path, documented
+CREATE OR REPLACE FUNCTION net_price(gross NUMERIC, vat_rate NUMERIC)
+RETURNS NUMERIC
+LANGUAGE SQL
+IMMUTABLE
+PARALLEL SAFE
+AS $$
+    SELECT round(gross / (1 + vat_rate / 100.0), 2);
+$$;
+
+COMMENT ON FUNCTION net_price(NUMERIC, NUMERIC) IS
+    'Returns the net price from a gross amount and a VAT rate percentage. Pure: no side effects.';
+```
+
+---
+
 ### ⚠️ Intermediate — Common Errors
 
 #### Error 1: Marking a function IMMUTABLE when it reads from a table
@@ -2398,6 +2899,37 @@ EXECUTE FUNCTION log_bulk_change();
 
 ---
 
+
+---
+
+### 💡 Intermediate — Best Practices
+
+- **Always `RETURN NEW` (or `RETURN OLD` for DELETE) in `BEFORE` triggers** — omitting the return value silently suppresses the row operation.
+- **Use `BEFORE` triggers to modify the row**, `AFTER` triggers for side effects** — this is the natural separation: transform data before the write, react after the write.
+- **Add `WHEN (OLD.col IS DISTINCT FROM NEW.col)`** to `UPDATE` triggers — prevents the trigger from firing when the relevant column did not actually change, especially important for expensive side effects.
+- **Keep trigger functions small and fast** — triggers block the statement that fired them; any I/O or heavy logic inside a trigger adds latency to every write.
+- **Prefer `pg_notify` + async workers over synchronous HTTP calls inside triggers** — a network call inside a trigger can hold row locks for seconds.
+- **Use a single generic trigger function reused across multiple tables** — reduces duplication for audit logs and `updated_at` maintenance.
+- **Name triggers with a consistent convention** — e.g. `trg_<table>_<timing>_<action>` makes them easy to find and reason about.
+
+```sql
+-- Good: single reusable function + WHEN clause to avoid unnecessary firing
+CREATE OR REPLACE FUNCTION maintain_updated_at() RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at := NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_products_before_update
+    BEFORE UPDATE ON products
+    FOR EACH ROW
+    WHEN (OLD IS DISTINCT FROM NEW)  -- skip no-op updates
+    EXECUTE FUNCTION maintain_updated_at();
+```
+
+---
+
 ### ⚠️ Intermediate — Common Errors
 
 #### Error 1: Forgetting RETURN NEW in a BEFORE trigger
@@ -2576,6 +3108,42 @@ LIMIT 20;
 ```bash
 # pg_repack: non-blocking table compaction (runs concurrently with reads/writes)
 pg_repack -d mydb -t bloated_table
+```
+
+---
+
+
+---
+
+### 💡 Intermediate — Best Practices
+
+- **Never disable autovacuum** — tune its aggressiveness per table instead; a completely unvacuumed table eventually causes XID wraparound and a full database outage.
+- **Tune autovacuum thresholds per table** — the default 20% scale factor is too lenient for large or high-churn tables; set a fixed `autovacuum_vacuum_threshold` for tables with hundreds of millions of rows.
+- **Use `pg_repack` instead of `VACUUM FULL` on live production tables** — `VACUUM FULL` holds `ACCESS EXCLUSIVE`; `pg_repack` runs concurrently.
+- **Run `VACUUM ANALYZE` manually after large bulk DELETE or UPDATE** — autovacuum may not trigger fast enough, leaving stale statistics and dead-tuple overhead.
+- **Monitor `age(datfrozenxid)`** per database — alert when any database exceeds 1.5 billion transactions; schedule `VACUUM FREEZE` before it reaches 2 billion.
+- **Keep transactions short** — long open transactions are the most common reason autovacuum cannot reclaim space; set `idle_in_transaction_session_timeout`.
+- **Use `fillfactor`** on tables with heavy `UPDATE` workloads — reserving 20–30% free space per page enables HOT updates and reduces index churn.
+
+```sql
+-- Good: per-table autovacuum tuning for a high-churn table
+ALTER TABLE sessions SET (
+    autovacuum_vacuum_scale_factor  = 0.01,  -- vacuum when 1% rows dead
+    autovacuum_analyze_scale_factor = 0.005,
+    autovacuum_vacuum_cost_delay    = 2       -- less throttling
+);
+
+-- Good: monitor wraparound risk
+SELECT datname, age(datfrozenxid) AS xid_age
+FROM pg_database
+ORDER BY xid_age DESC;
+
+-- Good: check dead tuple levels
+SELECT relname, n_dead_tup, n_live_tup,
+    round(100.0 * n_dead_tup / NULLIF(n_live_tup + n_dead_tup, 0), 1) AS dead_pct
+FROM pg_stat_user_tables
+WHERE n_dead_tup > 10000
+ORDER BY dead_pct DESC;
 ```
 
 ---
@@ -2807,6 +3375,35 @@ ORDER BY user_id, streak_start;
 
 ---
 
+
+---
+
+### 💡 Advanced — Best Practices
+
+- **Name repeated window definitions** with the `WINDOW` clause — reusing the same `OVER (PARTITION BY ... ORDER BY ...)` clause multiple times in one query is verbose and error-prone; define it once with `WINDOW cw AS (...)`.
+- **Set the frame explicitly for `LAST_VALUE`, `NTH_VALUE`** — the default frame ends at the current row, which makes `LAST_VALUE` return the current row's own value, not the partition maximum.
+- **Filter window function results in a subquery or CTE** — window functions cannot appear in `WHERE` or `HAVING`; wrap the query and filter the outer layer.
+- **Use `ROW_NUMBER()` over `rank()` for deduplication** — `rank()` assigns the same number to ties, leaving multiple rows with rank 1; `ROW_NUMBER()` always gives a unique sequence.
+- **Use `LAG`/`LEAD` with a default value** (third argument) to avoid `NULL` for the first/last row in a partition.
+- **Prefer window functions over self-joins for running totals and rankings** — window functions are computed in a single pass; self-joins are quadratic.
+- **Index `PARTITION BY` and `ORDER BY` columns** for large result sets — the engine must sort or hash the data for each window; indexes reduce that cost.
+
+```sql
+-- Good: named window, explicit frame, default for LAG
+SELECT
+    date,
+    revenue,
+    lag(revenue, 1, 0)  OVER w                          AS prev_revenue,
+    sum(revenue)        OVER w                          AS running_total,
+    avg(revenue)        OVER (w ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS moving_avg_7d,
+    first_value(revenue) OVER (w ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS period_min
+FROM daily_revenue
+WINDOW w AS (ORDER BY date)
+ORDER BY date;
+```
+
+---
+
 ### ⚠️ Advanced — Common Errors
 
 #### Error 1: Window functions not allowed in WHERE — must wrap in subquery
@@ -2998,6 +3595,43 @@ SELECT pg_stat_statements_reset();
 
 ---
 
+
+---
+
+### 💡 Advanced — Best Practices
+
+- **Always use `EXPLAIN (ANALYZE, BUFFERS)`** for performance investigations — `EXPLAIN` alone shows estimates; `BUFFERS` reveals whether the bottleneck is cache misses.
+- **Run `EXPLAIN ANALYZE` inside a rolled-back transaction** for destructive statements — the statement executes (so timings are real) but changes are discarded.
+- **Compare estimated rows vs actual rows** — a large discrepancy means stale statistics; run `ANALYZE` on the table and consider increasing `ALTER TABLE ... ALTER COLUMN ... SET STATISTICS`.
+- **Check `loops`** — `actual time` in the plan is per loop, not cumulative; multiply by `loops` to get the total cost of a node.
+- **Watch for `Batches > 1` in Hash Join** — it means the hash spilled to disk because `work_mem` is too small; increase it for the session and re-test.
+- **Use `pg_stat_statements`** to find the queries with the highest cumulative execution time across all sessions — those are your optimisation targets.
+- **Increase `statistics` on high-cardinality columns** used in joins or filters when estimates are consistently wrong.
+- **Disable JIT for OLTP workloads** — `SET jit = off` for queries under ~10ms where compilation overhead exceeds execution time.
+
+```sql
+-- Good: full diagnostic EXPLAIN
+EXPLAIN (ANALYZE, BUFFERS, VERBOSE, FORMAT TEXT)
+SELECT o.id, c.name, sum(oi.quantity * oi.unit_price) AS total
+FROM orders o
+JOIN customers c    ON c.id = o.customer_id
+JOIN order_items oi ON oi.order_id = o.id
+WHERE o.status = 'pending'
+GROUP BY o.id, c.name;
+
+-- Good: find top 10 most expensive queries
+SELECT calls,
+       round(total_exec_time::numeric / calls, 2) AS avg_ms,
+       round(total_exec_time::numeric, 0)         AS total_ms,
+       left(query, 100)                           AS query
+FROM pg_stat_statements
+WHERE calls > 50
+ORDER BY total_exec_time DESC
+LIMIT 10;
+```
+
+---
+
 ### ⚠️ Advanced — Common Errors
 
 #### Error 1: Reading cost numbers as milliseconds
@@ -3155,6 +3789,37 @@ ROLLBACK PREPARED 'txn_transfer_001';
 -- Orphaned prepared transactions hold locks and block VACUUM:
 SELECT gid, prepared, owner FROM pg_prepared_xacts; -- check for stuck transactions
 ROLLBACK PREPARED 'txn_transfer_001'; -- clean up manually if coordinator died
+```
+
+---
+
+
+---
+
+### 💡 Advanced — Best Practices
+
+- **Use the minimum isolation level required** — `READ COMMITTED` is correct for most OLTP workloads; only step up to `REPEATABLE READ` or `SERIALIZABLE` when the anomaly would cause a real business problem.
+- **Always implement retry logic for `SERIALIZABLE` transactions** — serialization failures (`SQLSTATE 40001`) are a normal, expected outcome; the application must catch and retry them.
+- **Use `SELECT ... FOR UPDATE` under `READ COMMITTED` when read-then-write atomicity is needed** — it locks the rows between the read and the write without escalating the entire transaction to `SERIALIZABLE`.
+- **Never rely on ACID to compensate for incorrect logic** — ACID guarantees that wrong SQL executes atomically and durably, not that it is correct.
+- **Clean up orphaned prepared transactions immediately** — prepared transactions hold locks and block VACUUM; monitor `pg_prepared_xacts` and alert if any row is older than a few seconds.
+- **Keep transactions short** — every additional millisecond a transaction is open increases contention and VACUUM lag.
+- **Test failure paths explicitly** — inject errors mid-transaction in tests to verify that your application rolls back correctly and leaves the database in a consistent state.
+
+```sql
+-- Good: SELECT FOR UPDATE to prevent lost updates under READ COMMITTED
+BEGIN;
+SELECT id, stock FROM inventory WHERE product_id = :pid FOR UPDATE;
+-- No other transaction can change this row until we COMMIT
+UPDATE inventory
+SET stock = stock - :qty
+WHERE product_id = :pid AND stock >= :qty;
+COMMIT;
+
+-- Good: monitor orphaned prepared transactions
+SELECT gid, prepared, owner, database
+FROM pg_prepared_xacts
+WHERE prepared < NOW() - INTERVAL '1 minute';
 ```
 
 ---
@@ -3341,6 +4006,40 @@ ORDER BY n_tup_upd DESC;
 
 ---
 
+
+---
+
+### 💡 Advanced — Best Practices
+
+- **Monitor `age(datfrozenxid)` on all databases** as a first-class operational metric — alert at 1 billion, act urgently at 1.5 billion.
+- **Keep transactions short** — the single most effective action for MVCC health; long transactions prevent VACUUM from reclaiming dead tuples across every table in the database.
+- **Set `idle_in_transaction_session_timeout`** — prevents forgotten open transactions from blocking VACUUM indefinitely.
+- **Design tables for HOT updates** — use a lower `fillfactor` (e.g. 70–80) on tables where rows are frequently updated, so new versions can be written to the same page without index entry creation.
+- **Avoid updating indexed columns frequently** — every update to an indexed column creates a new index entry; updates to non-indexed columns can use cheaper HOT updates.
+- **Use `pg_stat_user_tables.n_tup_hot_upd`** to measure HOT update efficiency — a low ratio means high index-update overhead.
+- **Schedule `VACUUM FREEZE`** on tables that have not been vacuumed recently and have a high `age(relfrozenxid)`.
+
+```sql
+-- Good: low fillfactor on a heavily updated table
+CREATE TABLE user_sessions (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id    BIGINT NOT NULL,
+    data       JSONB,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+) WITH (fillfactor = 70);  -- 30% of each page reserved for in-place HOT updates
+
+-- Good: HOT update ratio monitoring
+SELECT relname,
+       n_tup_upd,
+       n_tup_hot_upd,
+       round(100.0 * n_tup_hot_upd / NULLIF(n_tup_upd, 0), 1) AS hot_pct
+FROM pg_stat_user_tables
+WHERE n_tup_upd > 1000
+ORDER BY hot_pct ASC;  -- low values = too many index updates
+```
+
+---
+
 ### ⚠️ Advanced — Common Errors
 
 #### Error 1: Long transactions blocking VACUUM and causing bloat
@@ -3523,6 +4222,36 @@ END;
 $$;
 
 CALL create_monthly_partition('orders', '2026-04-01');
+```
+
+---
+
+
+---
+
+### 💡 Advanced — Best Practices
+
+- **Always create a default partition** — rows that do not match any range/list partition cause an error without a default; the default partition also catches unexpected data for monitoring.
+- **Include the partition key in the primary key** — PostgreSQL requires this for declarative partitioning; design your PK with this in mind from the start.
+- **Prefer range partitioning by time** for event and log data — it enables dropping entire old partitions instantly (no dead tuples, no bloat) instead of deleting millions of rows.
+- **Create partitions ahead of time** — automating monthly partition creation with a scheduled procedure avoids inserts failing because the next period's partition does not exist yet.
+- **Use direct column comparisons on the partition key in queries** — avoid wrapping the partition key in functions (`date_trunc(...)`) or the planner cannot prune partitions.
+- **Create indexes on the parent table** — they propagate automatically to all existing and future partitions (PostgreSQL 11+).
+- **Monitor the default partition** — unexpected rows there signal a missing partition or a data quality issue.
+- **Use `DETACH PARTITION ... CONCURRENTLY`** (PostgreSQL 14+) to detach a partition without blocking reads and writes.
+
+```sql
+-- Good: pre-create next partition with a scheduled procedure
+CALL create_monthly_partition('orders', date_trunc('month', NOW() + INTERVAL '1 month'));
+
+-- Good: partition-pruning-friendly query
+SELECT * FROM orders
+WHERE created_at >= '2025-01-01'
+  AND created_at <  '2025-02-01';  -- direct range on partition key → prunes all other partitions
+
+-- Good: monitor default partition for unexpected data
+SELECT count(*), min(created_at), max(created_at)
+FROM orders_default;
 ```
 
 ---
@@ -3733,6 +4462,35 @@ COMMIT; -- ERROR: could not serialize access — one of these must abort
 
 ---
 
+
+---
+
+### 💡 Advanced — Best Practices
+
+- **Use optimistic locking for low-contention concurrent edits** — a `version` column costs almost nothing and eliminates the need for explicit `SELECT FOR UPDATE` on most read-then-write patterns.
+- **Use `SKIP LOCKED` for all job queue implementations** — it is the only correct, race-condition-free, PostgreSQL-native pattern for concurrent task processing.
+- **Use `pg_notify` + a listener process instead of polling** — `LISTEN/NOTIFY` delivers events in milliseconds with zero database load compared to repeated `SELECT ... WHERE status = 'pending'`.
+- **Always use transaction-level advisory locks** (`pg_advisory_xact_lock`) in connection-pooled environments — session-level locks can be leaked when connections are recycled.
+- **Implement exponential back-off in retry loops** for serialization failures — immediate retries under high concurrency amplify contention.
+- **Log serialization failure rates** — a rising rate indicates a design that needs rethinking (e.g. coarser-grained data or a queue-based architecture).
+- **Test concurrency scenarios explicitly** — use `pgbench` or concurrent integration tests to exercise lock ordering, queue draining, and conflict resolution paths before production.
+
+```sql
+-- Good: optimistic locking with version column
+UPDATE documents
+SET content    = :new_content,
+    version    = version + 1,
+    updated_at = NOW()
+WHERE id = :doc_id
+  AND version  = :expected_version;
+-- 0 rows updated = conflict: reload and retry in application
+
+-- Good: NOTIFY on change, subscriber reacts immediately
+SELECT pg_notify('job_queue', json_build_object('job_id', NEW.id)::text);
+```
+
+---
+
 ### ⚠️ Advanced — Common Errors
 
 #### Error 1: Advisory locks not released on connection pool recycling
@@ -3900,6 +4658,40 @@ INSERT INTO room_bookings (room_id, during)
 VALUES (1, '[2024-06-01 09:30, 2024-06-01 11:00)');
 -- ERROR: conflicting key value violates exclusion constraint "room_bookings_room_id_during_excl"
 -- PostgreSQL prevents the overlapping booking automatically
+```
+
+---
+
+
+---
+
+### 💡 Advanced — Best Practices
+
+- **Use polymorphic types (`ANYELEMENT`, `ANYARRAY`)** when writing utility functions that should work across data types — avoids creating N near-identical overloads.
+- **Annotate set-returning functions with `ROWS n`** to give the planner an accurate row estimate — the default is 1,000 rows, which produces bad join plans when the real count is very different.
+- **Always disable event triggers before running schema migrations** and re-enable them immediately after — an event trigger that validates DDL will block your migration scripts.
+- **Use exclusion constraints with GiST indexes** for scheduling, booking, and reservation problems — they enforce non-overlap at the database level without application-level gap-lock logic.
+- **Test `SECURITY DEFINER` functions under a restricted role** — verify the function does exactly what it should and nothing more when called by a low-privilege user.
+- **Keep extension usage minimal and documented** — extensions add upgrade complexity; prefer a pure-SQL solution when one is available.
+
+```sql
+-- Good: ROWS hint for set-returning function
+CREATE OR REPLACE FUNCTION active_orders_for_region(p_region TEXT)
+RETURNS SETOF orders
+ROWS 5000   -- realistic estimate for the planner
+LANGUAGE SQL STABLE AS $$
+    SELECT * FROM orders WHERE region = p_region AND status != 'closed';
+$$;
+
+-- Good: exclusion constraint for non-overlapping bookings
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+CREATE TABLE bookings (
+    id       BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    room_id  INTEGER NOT NULL,
+    during   TSTZRANGE NOT NULL,
+    EXCLUDE USING GIST (room_id WITH =, during WITH &&)
+);
 ```
 
 ---
