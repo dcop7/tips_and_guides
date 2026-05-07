@@ -1,35 +1,60 @@
 # 🧠 Personal Productivity System (Todoist + Notion + Notebook)
 
-A simple, low-friction system to manage:
-
-* tasks
-* knowledge
-* daily focus
-
-Built around three tools:
+A simple, low-friction system to manage tasks, knowledge, and daily focus — built around three tools:
 
 * 📝 **Notebook** → thinking & focus
 * ✅ **Todoist** → tasks
-* 🧱 **Notion** → memory
+* 🧱 **Notion** → memory & context
 
 ---
 
-# 🎯 Philosophy
+# 📑 Table of Contents
 
-Most productivity systems fail because:
+1. [Methodology](#methodology)
+2. [The 3 Components](#the-3-components)
+3. [The Rule](#the-rule)
+4. [Notion Structure](#notion-structure)
+   - [Inbox](#inbox)
+   - [Operations](#operations)
+   - [Projects → Topics](#projects--topics-db)
+   - [Knowledge Base](#knowledge-base)
+   - [Archive](#archive)
+5. [How the System Works](#how-the-system-works-end-to-end)
+6. [Practical Examples](#practical-examples)
+7. [Todoist Setup](#todoist-setup-free-tier)
+8. [Daily Routine](#daily-routine)
+9. [Common Mistakes](#common-mistakes)
+10. [System Summary](#system-summary)
 
-* too much structure
-* too many tools doing the same thing
-* high friction to capture tasks
+---
 
-This system is based on:
+# 🎯 Methodology
 
-> **Capture fast → Process later → Focus simply**
+Most productivity systems fail not because people lack discipline, but because the system itself creates friction. When capturing a task takes 30 seconds of thinking about where it belongs, you stop capturing. When your notes are scattered across tools, you stop trusting the system. When Notion becomes a task manager, it slows you down.
 
-Inspired by:
+This system is built around a single principle:
 
-* *Getting Things Done (GTD)*
-* real-world usage (low overhead)
+> **Every tool does one thing. No tool does everything.**
+
+## The three roles
+
+**Capture** happens in Todoist — fast, frictionless, available everywhere. The moment something appears, it goes in. No organising, no thinking, no deciding where it belongs yet.
+
+**Focus** happens in the Notebook — a physical or digital scratchpad where you decide what matters today. The Big 3 (2–3 tasks maximum) gives the day a shape. Raw meeting notes live here too, unprocessed and messy. That is fine.
+
+**Memory** lives in Notion — structured, linked, and built to last. Decisions, processed meeting notes, active initiatives, and reference knowledge all have a defined place. You go to Notion to remember and to understand context, not to manage tasks.
+
+## Why this works
+
+The system is inspired by *Getting Things Done (GTD)* but stripped down to its core loop:
+
+```
+Capture → Process → Work → Store
+```
+
+Capture anything immediately (Todoist or Notebook). Process it at a defined moment — not in the moment. Work from a short, deliberate list (Notebook Big 3). Store what matters for future reference (Notion).
+
+The result: a clear mind during the day, a trusted place for everything, and no cognitive overhead about where things live.
 
 ---
 
@@ -39,447 +64,418 @@ Inspired by:
 
 👉 **Daily focus & thinking**
 
-* Big 3 (2–3 tasks for the day)
-* quick notes / meetings
-* ideas (parking lot)
+* Write the Big 3 each morning — the 2–3 tasks that matter today
+* Take raw notes during meetings — messy is fine, it gets processed later
+* Park ideas quickly without context-switching
 
-❗ no details, no long lists
+❗ Not a task manager. Not a knowledge base. Just today.
 
 ---
 
-## ✅ Todoist
+## ✅ Todoist (Free)
 
-👉 **Source of truth for tasks**
+👉 **Source of truth for all tasks**
 
-* all tasks
-* deadlines
-* reminders
-* checklists
+* Every task, regardless of context, goes here first
+* Due dates for time-sensitive work (free tier: date only, no time)
+* Priorities (P1–P4) to triage without labels
 
-❗ don’t work directly from it during the day
+❗ Don't work directly from Todoist during the day — use the Notebook Big 3 instead.
+
+**Free tier limitations and workarounds:**
+
+| Limitation | Workaround |
+|------------|------------|
+| No reminders | Use phone calendar for time-critical events |
+| No deadline field (separate from due date) | Add to task title: `Fix login bug [by 15 May]` |
+| No labels or filters | Keep to 2 projects max — context goes in the task title |
 
 ---
 
 ## 🧱 Notion
 
-👉 **Memory & knowledge**
+👉 **Memory, context & knowledge**
 
-* decisions
-* processed meeting notes
-* important information
+* Active initiatives tracked as Topics with status, dates, and risk
+* Meeting notes processed and linked to the right Topic
+* Long-form notes and documents stored with full context
+* Reference knowledge that doesn't expire
+
+❗ Not for tasks. Not for quick capture. Go here to remember, not to decide.
 
 ---
 
-# ⭐ Final Rule
+# ⭐ The Rule
 
-```id="7uzs4p"
+```
 Notebook → what I do now
-Todoist → everything I need to do
-Notion → what I need to remember
+Todoist  → everything I need to do
+Notion   → what I need to remember
+```
+
+If something doesn't fit cleanly into one of these, it's a sign the system is being misused — not that the system needs more complexity.
+
+---
+
+# 🧱 Notion Structure
+
+## Overview
+
+```
+Inbox
+
+▾ Operations
+    Meetings (DB)
+    Notes (DB)
+    1to1 Meetings (DB)
+    Major Events
+
+▾ Projects
+    Topics (DB)
+
+▾ Knowledge Base
+    Techs & Scope
+    Processes
+    Templates
+
+Archive
 ```
 
 ---
 
-# 🔁 How the system works (end-to-end)
+## Inbox
 
-## Step 1 — Capture instantly (Todoist)
+Quick capture inside Notion — ideas, half-formed thoughts, anything without a clear home yet.
 
-Whenever something appears:
+Process regularly (daily or every other day): move each item to the right place — a Topic, a Knowledge Base page — or discard it. The Inbox should never be a permanent home for anything.
 
-* “Need to fix login bug”
-* “Schedule meeting with team”
-* “Idea: improve onboarding”
+---
 
-👉 Add it immediately to Todoist
+## Operations
 
-### Example
+### Meetings (DB)
 
-```text
-Fix login timeout issue
-Call supplier tomorrow 10am
-Idea: simplify signup flow
+One database for all work meetings. Each meeting is a row.
+
+**Properties:**
+* `Meeting Date` (date)
+* `Topic` (relation → Topics DB)
+* `Type` (select: Recurrent | On Demand)
+
+**Views:**
+* `Recurrent` → filter: Type = Recurrent — your standing meetings
+* `By Topic` → group by: Topic — all meetings per initiative
+
+**Inside each meeting row:**
+* Notes taken during or after the meeting
+* Action items (checklist)
+* Decisions made
+
+❗ Recurrent meetings with no project context (weeklies, standups) leave the Topic field empty.
+
+---
+
+### Notes (DB)
+
+A database for notes that are too long or too structured for inline text, but belong to a specific Topic.
+
+**Properties:**
+* `Note Date` (date)
+* `Topic` (relation → Topics DB)
+
+**Inside each note row:**
+* Full content — no length limit
+* Sub-pages for documents with their own structure
+
+The distinction from inline notes: if a note has a title, multiple sections, or will be referenced again, it belongs here as a row. If it is 1–3 lines of context or a quick thought, it stays inline in the Topic scratchpad.
+
+---
+
+### 1to1 Meetings (DB)
+
+Separate from general meetings — 1to1s belong to people, not to projects or initiatives.
+
+**Properties:**
+* `Person` (select)
+* `Date` (date)
+
+**Inside each row:**
+* Topics discussed
+* Action items
+* Follow-up notes
+
+---
+
+### Major Events
+
+A simple page (not a database) for conferences, company events, and offsites. Log what happened and any relevant takeaways.
+
+---
+
+## Projects → Topics (DB)
+
+The central database. A Topic is any initiative, project, or area of active work — it can be a technical migration, a process improvement, a vendor evaluation, anything with a beginning, an end, and things to track along the way.
+
+**Properties:**
+* `Status` (select: In Progress | To Do | Done | On Hold)
+* `Date` (date range: start → end)
+* `Start` (formula)
+* `End` (formula)
+* `Risk` (select: 🟢 🟠 🔴)
+* `Tracker` (URL — external issue tracker link, if applicable)
+
+**Start formula:**
+```
+if(dateBetween(dateStart(prop("Date")), now(), "days") < 0,
+   "Ongoing",
+   if(dateBetween(dateStart(prop("Date")), now(), "days") == 0,
+      "Starts today",
+      "Starts in " + format(dateBetween(dateStart(prop("Date")), now(), "days")) + "d"))
 ```
 
-✔ No thinking
-✔ No organising
-✔ No friction
-
----
-
-## Why Todoist works here
-
-Todoist is ideal for capture because:
-
-* very fast input (seconds)
-* natural language (e.g. “tomorrow 10am”)
-* available everywhere (phone, desktop)
-
-👉 This is critical for GTD:
-
-> “Your brain is for having ideas, not holding them”
-
----
-
-# Step 2 — Process tasks (later, not immediately)
-
-At a defined moment (e.g. morning or evening):
-
-Go through Todoist and decide:
-
-### For each task:
-
-#### 1) Is it actionable?
-
-* ❌ No → delete or move to Notion (idea/knowledge)
-* ✅ Yes → keep in Todoist
-
----
-
-#### 2) Is it clear?
-
-* ❌ “Fix API”
-  👉 Rewrite:
-* ✅ “Investigate API timeout issue”
-
----
-
-#### 3) Does it need structure?
-
-Add:
-
-* due date
-* priority
-* project
-
----
-
-### Example transformation
-
-Before:
-
-```text
-API problem
+**End formula:**
+```
+if(dateBetween(dateEnd(prop("Date")), now(), "days") < 0,
+   "Ended " + format(abs(dateBetween(dateEnd(prop("Date")), now(), "days"))) + "d ago",
+   "Ends in " + format(dateBetween(dateEnd(prop("Date")), now(), "days")) + "d")
 ```
 
-After:
+**Views:**
+* `Topics` → main working view, all active initiatives
+* `Board status` → kanban grouped by Status
 
-```text
-Investigate API timeout issue @Backend P2 tomorrow
+---
+
+### Inside each Topic row
+
+The body of every Topic row has two toggle sections and an inline scratchpad at the bottom:
+
+```
+▶ 📅 Meetings
+    └── linked view of Meetings DB
+        filter: Topic = this Topic
+
+▶ 📝 Notes (DB)
+    └── linked view of Notes DB
+        filter: Topic = this Topic
+
+---
+💬 Scratchpad
+2026-05-07 — quick thought or observation
+2026-05-08 — another short note
 ```
 
----
+Opening a Topic gives the full picture — all meetings, all structured notes, and all quick thoughts, without navigating anywhere else.
 
-# Step 3 — Use Notebook during the day
+**Where does a note go?**
 
-## Morning setup
-
-Write:
-
-### Big 3
-
-* Fix login timeout
-* Prepare team meeting
-* Review PRs
+| Note type | Where |
+|-----------|-------|
+| 1–3 lines, no structure | Inline scratchpad — date prefix, append over time |
+| Longer, structured, has a title | Row in Notes DB, linked to this Topic |
+| Full document with multiple sections | Sub-page inside the Notes DB row |
 
 ---
 
-## During the day
+## Knowledge Base
 
-Use notebook for:
+Long-term reference material. Nothing actionable here — if it has a next step, it belongs in a Topic or Todoist.
 
-* quick notes
-* meeting scribbles
-* thoughts
-
----
-
-## Important rule
-
-❗ Do NOT manage tasks from notebook
-
-👉 It’s for:
-
-* focus
-* thinking
+* `Techs & Scope` — technologies in use, architectural scope, technical context
+* `Processes` — how things are done: runbooks, retro formats, recurring workflows
+* `Templates` — reusable page structures for Topics, meetings, notes
 
 ---
 
-# Step 4 — Move important info to Notion
+## Archive
 
-After meetings or work:
-
-Ask:
-
-> “Is this something I need to remember?”
+Completed Topics, past events, outdated documents. Move here instead of deleting — out of sight, but recoverable.
 
 ---
 
-## If YES → move to Notion
+# 🔁 How the System Works (end-to-end)
 
-Examples:
+## Step 1 — Capture instantly
 
-* decision taken
-* architecture note
-* meeting summary
+The moment something appears — a task, an idea, a thing to remember — capture it without thinking about where it belongs.
+
+| What | Where |
+|------|-------|
+| Task or action | Todoist |
+| Quick idea or thought | Notion Inbox or Notebook |
+| Notes during a meeting | Notebook |
+
+✔ No organising. ✔ No deciding. ✔ No friction.
 
 ---
 
-## If NO → ignore / discard
+## Step 2 — Process (once or twice a day)
 
-👉 Not everything needs to be stored
+At a defined moment — morning or end of day, not in the moment — go through what was captured.
+
+**Todoist inbox:**
+* Actionable → keep, add due date and priority
+* Worth remembering but not actionable → move to Notion
+* Neither → delete
+
+**Notion inbox:**
+* Belongs to a Topic → move to that Topic's scratchpad or Notes DB
+* Is reference knowledge → move to Knowledge Base
+* Neither → discard
+
+**Notebook notes from meetings:**
+* Extract tasks → Todoist
+* Extract decisions and context → relevant Topic in Notion
 
 ---
 
-## Example
+## Step 3 — Work during the day
 
-### Raw (Notebook)
+* Pick the Big 3 in the morning and write them in the Notebook
+* Work from the Notebook — not from Todoist, not from Notion
+* Capture anything new in Todoist as it appears
+* Take raw meeting notes in the Notebook
 
-```text
-Discussed API issues
-maybe cache?
-john to check logs
+---
+
+## Step 4 — After meetings
+
+Ask: *"Is this something I need to act on or remember?"*
+
+* **Act on** → create task in Todoist
+* **Remember** → process into the relevant Topic in Notion
+
+### Transformation example
+
+**Raw (Notebook, during meeting):**
+```
+DB is slow under load
+maybe indexes?
+check slow query log → Sara
 ```
 
----
-
-### Processed (Notion)
-
-**Title:** API performance discussion
-
-* Problem: high latency under load
-* Decision: introduce caching layer
-* Next step: analyse logs (John)
-
----
-
-👉 This is the key transformation:
-
-> raw → structured → useful
-
----
-
-# 📊 Practical examples
-
-## Example 1 — Work task
-
-### Capture (Todoist)
-
-```text
-Improve dashboard performance
+**Processed (Notion → Topic → scratchpad):**
+```
+2026-05-07 — DB performance sync
+  Problem: high latency under load
+  Decision: add indexes on most queried fields
+  Next step: Sara checks slow query log
 ```
 
----
-
-### Process
-
-```text
-Investigate dashboard slow queries @Frontend P2
+**Tasks (Todoist):**
 ```
-
----
-
-### Execution
-
-* Do the work
-* Take notes in notebook
-
----
-
-### Store (Notion)
-
-* Document performance improvements
-
----
-
-## Example 2 — Meeting
-
-### During meeting (Notebook)
-
-```text
-users complaining about onboarding
-too many steps
-idea: simplify flow
-```
-
----
-
-### After meeting (Notion)
-
-* Theme: Improve onboarding
-* Notes:
-
-  * issue: too many steps
-  * idea: reduce fields
-
----
-
-### Tasks (Todoist)
-
-```text
-Analyse onboarding drop-off
+Follow up with Sara on slow query log P2
 ```
 
 ---
 
-# ⚙️ How to structure Todoist (simple setup)
+# 📊 Practical Examples
 
-## Projects (keep minimal)
+## Example 1 — New initiative appears
 
+A decision comes down to migrate the app to a different database engine.
+
+1. Create a row in Topics DB: `DB engine migration`
+2. Fill: Status = To Do, Date range, Tracker URL if available
+3. Schedule a kick-off → create row in Meetings DB, link Topic = `DB engine migration`
+4. Initial notes and context → inline scratchpad of the Topic
+
+---
+
+## Example 2 — Recurring meeting with project context
+
+Weekly sync on an ongoing API redesign.
+
+1. Raw notes in Notebook during the meeting
+2. After: open the meeting row in Meetings DB (Type = Recurrent, Topic = `API redesign`)
+3. Write processed notes inside the meeting row
+4. Tasks extracted → Todoist: `Update auth endpoint documentation P2`
+5. Decisions → Topic scratchpad: `2026-05-07 — agreed to deprecate v1 endpoints by end of Q2`
+
+---
+
+## Example 3 — Note or idea mid-work
+
+Working on a CI/CD pipeline improvement, something comes to mind.
+
+* Short thought → scratchpad: `2026-05-07 — consider splitting build and deploy stages`
+* Longer analysis → Notes DB row: `Build vs deploy separation — options and trade-offs`
+* Full technical doc → sub-page inside that Notes DB row
+
+---
+
+# ⚙️ Todoist Setup (Free tier)
+
+**Projects (2 max):**
 * Work
 * Personal
 
----
+❗ Don't create a project per Topic — use the task title for context instead:
+`[API redesign] Update auth endpoint docs` tells you everything without a dedicated project.
 
-## Labels (optional)
+**Priorities:**
+* P1 → urgent, must do today
+* P2 → important, do this week
+* P3 → nice to have, no deadline pressure
+* P4 → someday / maybe
 
-* @backend
-* @frontend
-* @meeting
+**Due dates:**
+* Free tier gives date only — no time
+* For time-critical appointments, use the phone calendar instead
 
----
-
-## Priorities
-
-* P1 → urgent
-* P2 → important
-* P3 → optional
-
----
-
-👉 Keep it simple — avoid over-organisation
+**Deadlines:**
+* No separate deadline field on free — encode it in the title:
+  `Submit architecture proposal [by 20 May]`
 
 ---
 
-# 🧠 How Notion complements Todoist
-
-## Todoist = short-term
-
-* what to do
-* when to do it
-
----
-
-## Notion = long-term
-
-* what we learned
-* what we decided
-* what matters
-
----
-
-## Key difference
-
-| Tool    | Purpose   |
-| ------- | --------- |
-| Todoist | Execution |
-| Notion  | Knowledge |
-
----
-
-# 📓 Why Notebook is still important
-
-Even with digital tools:
-
-Notebook gives:
-
-* zero friction
-* better thinking
-* focus
-
----
-
-## What NOT to do
-
-* ❌ Don’t copy everything to Notion
-* ❌ Don’t store tasks in notebook
-* ❌ Don’t skip processing
-
----
-
-# 🔁 Daily routine (simple)
+# 📓 Daily Routine
 
 ## Morning
+* Review Todoist — scan what's due and overdue
+* Pick the Big 3 — write them in the Notebook
+* Glance at the Topics DB — anything ending soon? (End formula)
 
-* Review Todoist
-* Pick Big 3 → write in notebook
-
----
-
-## During day
-
-* Work from notebook
-* Capture new tasks in Todoist
-
----
+## During the day
+* Work from the Notebook Big 3
+* Capture new tasks immediately in Todoist
+* Take raw meeting notes in the Notebook
 
 ## End of day
-
-* Process Todoist
-* Move important info to Notion
-
----
-
-# ⚠️ Common mistakes
-
-## ❌ Using Notion for tasks
-
-* too heavy
-* too slow
+* Process the Todoist inbox — triage anything captured during the day
+* Process Notebook meeting notes → extract tasks to Todoist, context to Notion
+* Clear the Notion Inbox — move items to the right place or discard
 
 ---
 
-## ❌ Over-organising Todoist
+# ⚠️ Common Mistakes
 
-* too many projects/labels
-* slows capture
-
----
-
-## ❌ Not processing tasks
-
-* inbox grows
-* system breaks
-
----
-
-## ❌ Mixing everything
-
-* tasks + notes + ideas in one place
-
-👉 Leads to confusion
+| Mistake | Why it breaks |
+|---------|---------------|
+| Using Notion for task management | Too slow for daily task work — use Todoist |
+| Working directly from Todoist during the day | Too many tasks visible — use the Notebook Big 3 |
+| Creating meeting rows without linking to a Topic | Notes become orphaned and unsearchable |
+| Writing long structured notes in the inline scratchpad | Hard to navigate — use the Notes DB |
+| Storing everything in Notion | Notion becomes a dump, not a memory system |
+| Creating a Todoist project per Topic | Hits free tier limits and adds friction |
+| Skipping the processing step | Inbox grows, system stops being trusted |
 
 ---
 
-# 🧩 System summary
+# 🧩 System Summary
 
-```id="qk3m8s"
-Capture → Todoist
-Focus → Notebook
-Remember → Notion
+```
+Capture  → Todoist (tasks) + Notion Inbox (ideas) + Notebook (during meetings)
+Focus    → Notebook (Big 3)
+Remember → Notion Topics + Knowledge Base
 ```
 
 ---
 
-# ✅ Final result
+# 📌 Final Principle
 
-You get:
+> Keep capture fast.
+> Keep execution simple.
+> Keep knowledge structured.
 
-* clear mind (everything captured)
-* focused days (notebook)
-* long-term memory (Notion)
-
----
-
-# 📌 Final principle
-
-> Keep capture fast
-> Keep execution simple
-> Keep knowledge structured
-
----
-
-# ⭐ If this helped
-
-Adapt it to your workflow and keep it simple.
-
-The system only works if you actually use it daily.
+The system only works if you use it every day. Start with the minimum — one week of consistent use — before adding anything new.
