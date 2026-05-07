@@ -15,16 +15,16 @@ A simple, low-friction system to manage tasks, knowledge, and daily focus — bu
 3. [The Rule](#the-rule)
 4. [Notion Structure](#notion-structure)
    - [Inbox](#inbox)
-   - [Operations](#operations)
-   - [Projects → Topics](#projects--topics-db)
+   - [Operations](#operations)   - [Projects → Topics](#projects--topics-db)
    - [Knowledge Base](#knowledge-base)
    - [Archive](#archive)
 5. [How the System Works](#how-the-system-works-end-to-end)
 6. [Practical Examples](#practical-examples)
 7. [Todoist Setup](#todoist-setup-free-tier)
 8. [Daily Routine](#daily-routine)
-9. [Common Mistakes](#common-mistakes)
-10. [System Summary](#system-summary)
+9. [Weekly Review](#weekly-review)
+10. [Common Mistakes](#common-mistakes)
+11. [System Summary](#system-summary)
 
 ---
 
@@ -126,19 +126,19 @@ Inbox
 
 ▾ Operations
     Meetings (DB)
-    Notes (DB)
-    1to1 Meetings (DB)
-    Major Events
+    ... (additional meeting types or event logs as needed)
 
 ▾ Projects
     Topics (DB)
 
 ▾ Knowledge Base
-    Techs & Scope
+    Tech Reference
     Processes
     Templates
 
 Archive
+    2025
+    2026
 ```
 
 ---
@@ -147,7 +147,17 @@ Archive
 
 Quick capture inside Notion — ideas, half-formed thoughts, anything without a clear home yet.
 
-Process regularly (daily or every other day): move each item to the right place — a Topic, a Knowledge Base page — or discard it. The Inbox should never be a permanent home for anything.
+Process regularly (daily or every other day): move each item to the right place or discard it. The Inbox should never be a permanent home for anything.
+
+**Where things go when processed:**
+
+| Note type | Where |
+|-----------|-------|
+| Belongs to an active Topic | Topic scratchpad or sub-page |
+| Technical reference, no Topic | Knowledge Base → Tech Reference |
+| Process or workflow | Knowledge Base → Processes |
+| No context yet | Leave in Inbox until context is clear |
+| Not worth keeping | Discard |
 
 ---
 
@@ -163,58 +173,32 @@ One database for all work meetings. Each meeting is a row.
 * `Type` (select: Recurrent | On Demand)
 
 **Views:**
-* `Recurrent` → filter: Type = Recurrent — your standing meetings
-* `By Topic` → group by: Topic — all meetings per initiative
+* `Recurrent` → filter: Type = Recurrent
+* `By Topic` → group by: Topic
 
 **Inside each meeting row:**
 * Notes taken during or after the meeting
 * Action items (checklist)
 * Decisions made
 
-❗ Recurrent meetings with no project context (weeklies, standups) leave the Topic field empty.
+❗ Recurrent meetings with no project context leave the Topic field empty.
 
 ---
 
-### Notes (DB)
+### Additional Meeting Types
 
-A database for notes that are too long or too structured for inline text, but belong to a specific Topic.
+Not all meetings belong in the main Meetings DB. Some have a different cadence or audience that warrants a separate structure. Common examples:
 
-**Properties:**
-* `Note Date` (date)
-* `Topic` (relation → Topics DB)
+* **1to1 Meetings** — belong to people, not initiatives. A separate DB with `Person` and `Date` works better than mixing them with project meetings.
+* **Event logs** — conferences, offsites, company events. A simple page per event is enough; no DB needed.
 
-**Inside each note row:**
-* Full content — no length limit
-* Sub-pages for documents with their own structure
-
-The distinction from inline notes: if a note has a title, multiple sections, or will be referenced again, it belongs here as a row. If it is 1–3 lines of context or a quick thought, it stays inline in the Topic scratchpad.
-
----
-
-### 1to1 Meetings (DB)
-
-Separate from general meetings — 1to1s belong to people, not to projects or initiatives.
-
-**Properties:**
-* `Person` (select)
-* `Date` (date)
-
-**Inside each row:**
-* Topics discussed
-* Action items
-* Follow-up notes
-
----
-
-### Major Events
-
-A simple page (not a database) for conferences, company events, and offsites. Log what happened and any relevant takeaways.
+The pattern is the same: if a meeting type has a distinct audience or purpose that doesn't fit the `Topic` relation, give it its own space rather than forcing it into the main Meetings DB.
 
 ---
 
 ## Projects → Topics (DB)
 
-The central database. A Topic is any initiative, project, or area of active work — it can be a technical migration, a process improvement, a vendor evaluation, anything with a beginning, an end, and things to track along the way.
+The central database. A Topic is any initiative, project, or area of active work.
 
 **Properties:**
 * `Status` (select: In Progress | To Do | Done | On Hold)
@@ -222,7 +206,7 @@ The central database. A Topic is any initiative, project, or area of active work
 * `Start` (formula)
 * `End` (formula)
 * `Risk` (select: 🟢 🟠 🔴)
-* `Tracker` (URL — external issue tracker link, if applicable)
+* `Tracker` (URL — external issue tracker, if applicable)
 
 **Start formula:**
 ```
@@ -241,23 +225,25 @@ if(dateBetween(dateEnd(prop("Date")), now(), "days") < 0,
 ```
 
 **Views:**
-* `Topics` → main working view, all active initiatives
+* `Topics` → main view, filter: Status ≠ Done — active work only
 * `Board status` → kanban grouped by Status
+* `All` → no filter, full history including Done
+
+Topics with Status = Done are never physically moved or deleted — they stay in the database. The `Topics` view filters them out automatically, keeping the working view clean while preserving all history, links, and meeting relations.
 
 ---
 
 ### Inside each Topic row
 
-The body of every Topic row has two toggle sections and an inline scratchpad at the bottom:
+The body of every Topic row has two toggle sections and an inline scratchpad:
 
 ```
 ▶ 📅 Meetings
     └── linked view of Meetings DB
         filter: Topic = this Topic
 
-▶ 📝 Notes (DB)
-    └── linked view of Notes DB
-        filter: Topic = this Topic
+▶ 📝 Notes
+    └── sub-pages for long or structured notes
 
 ---
 💬 Scratchpad
@@ -265,23 +251,22 @@ The body of every Topic row has two toggle sections and an inline scratchpad at 
 2026-05-08 — another short note
 ```
 
-Opening a Topic gives the full picture — all meetings, all structured notes, and all quick thoughts, without navigating anywhere else.
+Opening a Topic gives the full picture — all meetings, all notes, and all quick thoughts in one place.
 
 **Where does a note go?**
 
 | Note type | Where |
 |-----------|-------|
 | 1–3 lines, no structure | Inline scratchpad — date prefix, append over time |
-| Longer, structured, has a title | Row in Notes DB, linked to this Topic |
-| Full document with multiple sections | Sub-page inside the Notes DB row |
+| Longer, structured, has a title | Sub-page inside the Topic row |
 
 ---
 
 ## Knowledge Base
 
-Long-term reference material. Nothing actionable here — if it has a next step, it belongs in a Topic or Todoist.
+Long-term reference material. Nothing actionable here.
 
-* `Techs & Scope` — technologies in use, architectural scope, technical context
+* `Tech Reference` — technologies in use, architectural decisions, technical context
 * `Processes` — how things are done: runbooks, retro formats, recurring workflows
 * `Templates` — reusable page structures for Topics, meetings, notes
 
@@ -289,7 +274,17 @@ Long-term reference material. Nothing actionable here — if it has a next step,
 
 ## Archive
 
-Completed Topics, past events, outdated documents. Move here instead of deleting — out of sight, but recoverable.
+For loose pages, old events, and documents that are no longer active — organised by year.
+
+```
+Archive
+    2025
+    2026
+```
+
+Move here: completed Major Events, outdated Knowledge Base pages, loose documents without a home.
+
+**Topics are not moved to Archive** — they stay in the Topics DB with Status = Done, hidden from the main view by the filter. This preserves all meeting links and history.
 
 ---
 
@@ -311,7 +306,7 @@ The moment something appears — a task, an idea, a thing to remember — captur
 
 ## Step 2 — Process (once or twice a day)
 
-At a defined moment — morning or end of day, not in the moment — go through what was captured.
+At a defined moment — morning or end of day — go through what was captured.
 
 **Todoist inbox:**
 * Actionable → keep, add due date and priority
@@ -319,8 +314,8 @@ At a defined moment — morning or end of day, not in the moment — go through 
 * Neither → delete
 
 **Notion inbox:**
-* Belongs to a Topic → move to that Topic's scratchpad or Notes DB
-* Is reference knowledge → move to Knowledge Base
+* Belongs to a Topic → Topic scratchpad or sub-page
+* Is reference knowledge → Knowledge Base
 * Neither → discard
 
 **Notebook notes from meetings:**
@@ -377,8 +372,8 @@ A decision comes down to migrate the app to a different database engine.
 
 1. Create a row in Topics DB: `DB engine migration`
 2. Fill: Status = To Do, Date range, Tracker URL if available
-3. Schedule a kick-off → create row in Meetings DB, link Topic = `DB engine migration`
-4. Initial notes and context → inline scratchpad of the Topic
+3. First meeting → create row in Meetings DB, link Topic = `DB engine migration`
+4. Initial notes → inline scratchpad of the Topic
 
 ---
 
@@ -399,8 +394,7 @@ Weekly sync on an ongoing API redesign.
 Working on a CI/CD pipeline improvement, something comes to mind.
 
 * Short thought → scratchpad: `2026-05-07 — consider splitting build and deploy stages`
-* Longer analysis → Notes DB row: `Build vs deploy separation — options and trade-offs`
-* Full technical doc → sub-page inside that Notes DB row
+* Longer analysis with structure → sub-page inside the Topic row: `Build vs deploy separation — options and trade-offs`
 
 ---
 
@@ -410,7 +404,7 @@ Working on a CI/CD pipeline improvement, something comes to mind.
 * Work
 * Personal
 
-❗ Don't create a project per Topic — use the task title for context instead:
+❗ Don't create a project per Topic — use the task title for context:
 `[API redesign] Update auth endpoint docs` tells you everything without a dedicated project.
 
 **Priorities:**
@@ -420,8 +414,8 @@ Working on a CI/CD pipeline improvement, something comes to mind.
 * P4 → someday / maybe
 
 **Due dates:**
-* Free tier gives date only — no time
-* For time-critical appointments, use the phone calendar instead
+* Free tier: date only, no time
+* For time-critical appointments → use phone calendar instead
 
 **Deadlines:**
 * No separate deadline field on free — encode it in the title:
@@ -434,7 +428,7 @@ Working on a CI/CD pipeline improvement, something comes to mind.
 ## Morning
 * Review Todoist — scan what's due and overdue
 * Pick the Big 3 — write them in the Notebook
-* Glance at the Topics DB — anything ending soon? (End formula)
+* Glance at Topics DB — anything ending soon? (End formula)
 
 ## During the day
 * Work from the Notebook Big 3
@@ -442,9 +436,23 @@ Working on a CI/CD pipeline improvement, something comes to mind.
 * Take raw meeting notes in the Notebook
 
 ## End of day
-* Process the Todoist inbox — triage anything captured during the day
+* Process the Todoist inbox
 * Process Notebook meeting notes → extract tasks to Todoist, context to Notion
-* Clear the Notion Inbox — move items to the right place or discard
+* Clear the Notion Inbox
+
+---
+
+# 🔁 Weekly Review
+
+Once a week — Friday or Monday — go through the system:
+
+* **Topics DB** — any Topic with Status = Done for more than 2 weeks? Mark it Done and confirm it's filtered out of the main view
+* **On Hold Topics** — still relevant? Resume or mark Done
+* **Notion Inbox** — anything left unprocessed from the week?
+* **Todoist** — any P3/P4 tasks that have been sitting too long? Delete or reschedule
+* **Archive** — move any loose old pages or events to the correct year folder
+
+This is the step that prevents entropy. Without it, the system slowly fills with stale content and stops being trustworthy.
 
 ---
 
@@ -455,7 +463,8 @@ Working on a CI/CD pipeline improvement, something comes to mind.
 | Using Notion for task management | Too slow for daily task work — use Todoist |
 | Working directly from Todoist during the day | Too many tasks visible — use the Notebook Big 3 |
 | Creating meeting rows without linking to a Topic | Notes become orphaned and unsearchable |
-| Writing long structured notes in the inline scratchpad | Hard to navigate — use the Notes DB |
+| Writing long structured notes in the inline scratchpad | Hard to navigate — use a sub-page instead |
+| Moving Done Topics to Archive as pages | Breaks all meeting and note relations — keep them in the DB |
 | Storing everything in Notion | Notion becomes a dump, not a memory system |
 | Creating a Todoist project per Topic | Hits free tier limits and adds friction |
 | Skipping the processing step | Inbox grows, system stops being trusted |
