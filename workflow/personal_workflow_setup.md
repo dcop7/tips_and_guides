@@ -9,14 +9,15 @@
 1. [Methodology](#methodology)
 2. [The 3 Components](#the-3-components)
 3. [The Rule](#the-rule)
-4. [Notion Structure](#notion-structure)
+4. [Notion — Work Space](#notion-work-space)
    - [Inbox](#inbox)
    - [Operations](#operations)
    - [Projects → Topics](#projects--topics-db)
    - [Knowledge Base](#knowledge-base)
    - [Archive](#archive)
-5. [Todoist Setup](#todoist-setup-free-tier)
-6. [Common Mistakes](#common-mistakes)
+5. [Notion — Personal Space](#notion-personal-space)
+6. [Todoist Setup](#todoist-setup-free-tier)
+7. [Common Mistakes](#common-mistakes)
 
 ---
 
@@ -101,7 +102,7 @@ If something doesn't fit cleanly into one of these, it's a sign the system is be
 
 ---
 
-# 🧱 Notion Structure
+# 🧱 Notion — Work Space
 
 ## Overview
 
@@ -247,7 +248,75 @@ Archive
 
 ---
 
-# ⚙️ Todoist Setup (Free tier)
+# 🏡 Notion — Personal Space
+
+A separate Notion space for personal life — not work. Simpler structure, no databases unless volume or filtering genuinely justifies one.
+
+## Overview
+
+```
+Inbox
+
+▾ Life Management
+    Family
+    Casa
+    Saúde
+    Cars
+
+▾ Food & Drinks
+    Restaurantes
+    Pratos para cozinhar
+    Take away
+    Café
+
+▾ Knowledge
+    Tech
+    AI
+    Photography
+    Management
+    Books
+
+▾ Reference
+    Websites úteis
+    Checklists
+    Viagens - o que levar
+
+Archive
+    2025
+    2026
+```
+
+---
+
+## When to use a database vs simple pages
+
+The default is simple pages. A database is only worth the setup overhead if at least one of these is true:
+
+* You have enough entries to need filtering or sorting (rough threshold: 10+)
+* You need to relate entries to each other or to another database
+* You need properties beyond a title and free text
+
+For small, stable collections — 4 family members, a handful of restaurants, a few saved recipes — simple pages are faster to create, faster to read, and require zero maintenance.
+
+---
+
+## Section purposes
+
+**Life Management** — everything needed to manage real life and ongoing responsibilities. If this information disappeared, day-to-day life would be harder to run. Contacts, contracts, medical history, car records.
+*Not here: hobbies, learning, bookmarks, food.*
+
+**Food & Drinks** — culinary and gastronomic reference. Consulted regularly when deciding what to cook or where to eat.
+*Not here: nutrition articles, generic shopping lists.*
+
+**Knowledge** — knowledge acquired and worth retaining. Technical, professional, intellectual. Your personal reference library.
+*Not here: links not yet read, operational personal info, to-learn tasks.*
+
+**Reference** — utility information consulted occasionally that doesn't belong anywhere else. If it clearly belongs in another section, put it there instead.
+*Not here: knowledge → Knowledge, personal info → Life Management, food → Food & Drinks.*
+
+**Archive** — content no longer active but not worth deleting. Organised by year. If consulted in the last 3 months, it doesn't belong here.
+
+---
 
 **Projects (2 max):**
 * Work
