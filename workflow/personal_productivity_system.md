@@ -108,17 +108,18 @@ The notebook exists to answer one question: what am I focusing on *today*? There
 
 Three priorities, written each morning. Not a long list — three things that, if they happen, make the day a good one.
 
-### Symbols — kept to an absolute minimum
+### Symbols — kept to a minimum, but expressive enough
 
-The creator of the Bullet Journal method, Ryder Carroll, is explicit about this: *"keep custom bullets and signifiers to an absolute minimum — the more you invent, the more complex it is, and the slower you become."* This system uses exactly three:
+The creator of the Bullet Journal method, Ryder Carroll, is explicit about this: *"keep custom bullets and signifiers to an absolute minimum — the more you invent, the more complex it is, and the slower you become."* This system uses exactly four:
 
 | Symbol | Meaning | Written |
 |---|---|---|
-| `○` | Not done yet | In the morning, next to each Big 3 item |
-| `✓` | Done | In the evening, turning the `○` into a check |
-| `✕` | Didn't happen | In the evening, turning the `○` into a cross |
+| `□` | Not done yet | In the morning, next to each Big 3 item |
+| `✓` | Done | In the evening, turning the `□` into a check |
+| `→` | Still matters, just not today | In the evening, turning the `□` into an arrow |
+| `✕` | Cancelled — no longer needed | In the evening, turning the `□` into a cross |
 
-There is no dedicated symbol for "moved to Todoist." If something marked `✕` still matters, the task gets created in Todoist right then — the notebook never holds anything for more than a day; what survives is decided explicitly, tool by tool.
+The arrow and the cross exist to separate two different reasons a task doesn't get closed out, which look identical if you only have one "not done" symbol but mean very different things: `→` means the task is still worth doing, just not today — it gets pushed to tomorrow's draft line or promoted straight to Todoist. `✕` means it's consciously dropped — the meeting got cancelled, the need went away, it's simply no longer worth doing. The notebook never holds anything for more than a day either way; what survives, and where, is decided explicitly each evening.
 
 ### Two small additions
 
@@ -132,8 +133,8 @@ Friday, September 18
 ─────────────────────────────────────
 BIG 3
 ✓  Review vendor proposal
-✕  Draft roadmap slides (moved to Todoist)
-○  1:1 with a direct report — discuss promotion
+→  Draft roadmap slides (moved to Todoist)
+✕  Confirm attendance for offsite (event got cancelled)
 
 ┌─ PARKING LOT ──────────────────────┐
 │ "Ask about the connection pool fix" │
@@ -142,6 +143,8 @@ BIG 3
 - - - - - - - - - - - - - - - - - - -
 Tomorrow, maybe: review yesterday's interview feedback
 ```
+
+All three items started the morning as `□`. By evening, one is finished, one still matters but slipped to Todoist, and one simply isn't needed anymore — three different outcomes that would be indistinguishable with a single "not done" symbol.
 
 ---
 
@@ -339,7 +342,7 @@ flowchart LR
 |---|---|---|
 | **Morning** | 2 min | Open Todoist, filter by "Today." Pick the notebook's Big 3 — use yesterday's draft line if there is one. |
 | **During the day** | — | Notebook stays open. Symbols get marked as tasks close. Stray ideas go into the parking lot, never into the middle of the page. |
-| **End of day** | 2 min | Close out pending symbols (`✓` or `✕`). If a `✕` still matters, create the Todoist task right away. Process the parking lot: Todoist, Notion Inbox, or discard. Draft tomorrow's first item. |
+| **End of day** | 2 min | Close out pending symbols (`✓`, `→`, or `✕`). Anything marked `→` gets created in Todoist right away. Process the parking lot: Todoist, Notion Inbox, or discard. Draft tomorrow's first item. |
 | **Friday** | 15 min | Weekly Notion review: clear the Inbox → update the Status of every active Project → check one or two Service Catalog entries touched that week. |
 
 The weekly Notion review runs off a recurring Todoist task as its trigger — it never depends on memory or willpower alone.
