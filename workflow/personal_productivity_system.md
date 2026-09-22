@@ -195,6 +195,8 @@ Rule of thumb: two or more answers on the same side decide it. On a tie, default
 
 > **When to use a Relation instead of a Select:** only when you genuinely need a two-way link (seeing the connection from both sides) or when the same value would otherwise be duplicated across three or more databases, risking them drifting out of sync. Outside of that, a plain Select with a filtered view gives the same value with far less setup.
 
+> **Select vs. Multi-select (Tags):** a Select forces every row into exactly one value from a fixed list — good for a genuine single state (Status, Stage). A Multi-select ("Tags") lets a row carry none, one, or several values, and new ones get added on the fly without touching a schema. When the items don't share a clean, exclusive category but you still want to filter across them, Tags is the looser tool for the job — it adds a filter without forcing a shape.
+
 ---
 
 ## Part 5 — The Notion structure
@@ -219,16 +221,63 @@ graph TD
     Areas --> Teams[("⭐ Teams (DB)")]
     Areas --> Meetings[("⭐ Meetings (DB)")]
     Areas --> SC[("⭐ Service Catalog (DB)")]
+    Areas --> RM[("Roadmap (DB)")]
     PM --> Persons[("⭐ Persons (DB)")]
     PM --> OneOnOne[("⭐ 1:1 Meetings (DB)")]
 ```
 
-**Why Teams, Meetings, and Service Catalog sit directly in Areas, rather than inside one specific team:** none of the three has a single owning team — they all serve every team at once. A database that serves several teams doesn't fit physically "inside" any one of them without feeling out of place.
+**Why Teams, Meetings, Service Catalog, and Roadmap sit directly in Areas, rather than inside one specific team:** none of the four has a single owning team — they all serve every team at once. A database that serves several teams doesn't fit physically "inside" any one of them without feeling out of place.
 
 ### Resources and Archive
 
 - **Resources** — commands, guides, house rules, process notes. Reference material that doesn't expire and has no single owner.
 - **Archive** — whatever is no longer needed, grouped by year. It is never itself a database — always a destination.
+
+### A home for loose ideas: Someday/Maybe
+
+Not every thought fits Projects, Areas, or even Resources. A reorg idea, a "maybe worth trying someday" note, a stray thought that doesn't belong to any one team or system yet — none of these are a committed Project (no action decided), an Area (not an ongoing responsibility), or quite a Resource (Resources are things you already know are useful reference; this is closer to "might become useful, not sure yet"). GTD has a name for this: **Someday/Maybe** — things worth keeping without committing to act on them.
+
+**Where it lives:** a small database called "Someday / Ideas," inside Resources, with exactly two fields:
+
+| Field | Type | Notes |
+|---|---|---|
+| Name | Title | The idea, in a few words |
+| Tags | Multi-select | Freeform — invent a new tag on the spot, apply zero, one, or several |
+
+This looks like a contradiction of the golden rule at first — but it isn't. The rule warns against a rigid **Select** (a Category or Status forcing every idea into one exclusive bucket, before you even know what your buckets should be). **Tags are structurally different**: an idea can carry none, one, or five of them, new ones get created without touching a schema, and nothing is forced into a single category. It adds a filter, not a shape.
+
+The alternative — a single plain page listing ideas as bullets — genuinely can't give you this. A standalone Notion page can carry its own properties, but that only shows you its tags once you've already opened that one page; there's no view that gathers every idea tagged, say, "team," across separate pages. That kind of aggregate filtering is specifically what a database's table or board view does — it isn't available any other way. If filtering by tag matters, a database is the right tool, even a minimal one.
+
+**How to use it:**
+
+- Every idea is a row with a name, tagged if useful. Most stay a one-line page forever, at zero extra cost.
+- If an idea outgrows a line or two — more context, a few options worth weighing, some reasoning — write straight into that row's page body. Nothing has to be decided upfront; the row was always a full page underneath.
+- If the idea is really about something already tracked elsewhere — say, one specific team — skip this database and drop the note directly onto that team's own page in Teams instead. It already carries the right context; a generic ideas list shouldn't compete with a home that already exists.
+- No dedicated review ritual. Glance at it occasionally, filtered by tag if the list grows; an idea only leaves it when you decide to act on it, at which point it graduates into a Project.
+
+The database stays exactly as small as it needs to be — two fields, one of them as loose as a property can get — which is the same golden rule as everywhere else in this system, just satisfied with a database instead of a page once filtering by tag was the actual requirement.
+
+### Roadmaps: continuous, not a Project
+
+A roadmap looks, at first glance, like it might belong under Projects — "2027 roadmap" sounds like something with a natural year-long arc, an end date built into its own name. But look closer: the *activity* of maintaining a roadmap never actually ends. There's a 2027 one, then a 2028 one, then a 2029 one, indefinitely. That's the same shape already seen twice in this system — recurring Meetings and 1:1s — not a single event with a finish line, but an ongoing responsibility that keeps producing new instances of itself.
+
+The fix is the same one already used for both: don't create a new artifact every time it recurs. No "Roadmap 2027" and "Roadmap 2028" as separate pages or databases, each starting from zero — one database, accumulating roadmap items across every year, with a field distinguishing which year each one belongs to.
+
+Because a roadmap can span more than one team, it lives directly in Areas, alongside Meetings and Service Catalog, rather than being folded into any single team's page.
+
+**Roadmap**
+*Directly inside Areas. One database spanning every year — never recreated.*
+
+| Field | Type | Notes |
+|---|---|---|
+| Name | Title | The initiative or theme |
+| Year | Select | `2027` · `2028` · `2029` … — add one new option as each year starts |
+| Status | Select | `Planned` · `In Progress` · `Done` · `Cut` |
+| Theme | Select | Optional grouping, e.g. `Reliability`, `Developer Experience`, `Cost` |
+| Team | Relation → Teams | Optional — left blank for cross-team initiatives |
+| Related Project | Relation → Projects | Filled in once the item is actually committed and work begins |
+
+This is the actionability flow from Part 3 made concrete: a roadmap item starts out closer to a Resource — an idea with more weight behind it than Someday/Maybe, but nothing committed yet — and crosses into Projects the moment Status flips to `In Progress` and a Related Project gets linked. The Roadmap row doesn't disappear when that happens; it just sits there as the record of *when the idea became real work*, while the Project itself carries the week-to-week execution.
 
 ### Fast access without breaking the classification: Favorites
 
@@ -327,6 +376,18 @@ Usage rule: one row per recurring **series** (never per occurrence) — the page
 | Last Reviewed | Date | Flags stale entries |
 
 Page body, with four fixed sections: *Known Limitations*, *Common Issues & Fixes*, *Improvement Ideas*, *Useful Links*.
+
+### Roadmap
+*Directly inside Areas. One database spanning every year — see Part 5 for why this is never recreated per year.*
+
+| Field | Type | Notes |
+|---|---|---|
+| Name | Title | The initiative or theme |
+| Year | Select | `2027` · `2028` · `2029` … |
+| Status | Select | `Planned` · `In Progress` · `Done` · `Cut` |
+| Theme | Select | Optional grouping, e.g. `Reliability`, `Developer Experience`, `Cost` |
+| Team | Relation → Teams | Optional — blank for cross-team initiatives |
+| Related Project | Relation → Projects | Filled in once the item is committed and work begins |
 
 ---
 
