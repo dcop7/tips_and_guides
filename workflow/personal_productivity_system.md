@@ -4,6 +4,48 @@ This document describes a personal productivity system built on three tools, eac
 
 It is not a diagnosis or a changelog — it's a snapshot of a working system, detailed enough to be copied as-is.
 
+## Table of contents
+
+- [Overview](#overview)
+- [Part 1 — GTD in Todoist: capture with (almost) zero friction](#part-1--gtd-in-todoist-capture-with-almost-zero-friction)
+  - [What GTD actually says](#what-gtd-actually-says)
+  - [Capture: the step Todoist is built for](#capture-the-step-todoist-is-built-for)
+  - [Clarify: verb-first naming forces the decision at capture time](#clarify-verb-first-naming-forces-the-decision-at-capture-time)
+  - [Organize: Projects as tags, Labels as cross-cutting attributes](#organize-projects-as-tags-labels-as-cross-cutting-attributes)
+  - [Engage: three saved filters, pinned to the top](#engage-three-saved-filters-pinned-to-the-top)
+  - [Example](#example)
+- [Part 2 — The Notebook: today's focus, made disposable](#part-2--the-notebook-todays-focus-made-disposable)
+  - [Philosophy](#philosophy)
+  - [The "Big 3"](#the-big-3)
+  - [Symbols — kept to a minimum, but expressive enough](#symbols--kept-to-a-minimum-but-expressive-enough)
+  - [An optional addition: drafting tomorrow](#an-optional-addition-drafting-tomorrow)
+  - [Example page](#example-page)
+- [Part 3 — PARA in Notion: organizing by actionability, not topic](#part-3--para-in-notion-organizing-by-actionability-not-topic)
+  - [Origin, and how it relates to GTD](#origin-and-how-it-relates-to-gtd)
+  - [Four categories, ordered by actionability](#four-categories-ordered-by-actionability)
+  - [Why PARA fits Notion specifically](#why-para-fits-notion-specifically)
+  - [Closing things out: when "Archive" means a status, not a move](#closing-things-out-when-archive-means-a-status-not-a-move)
+- [Part 4 — Database or Page? A decision framework](#part-4--database-or-page-a-decision-framework)
+- [Part 5 — The Notion structure](#part-5--the-notion-structure)
+  - [Top level](#top-level)
+  - [Inside Areas](#inside-areas)
+  - [Resources and Archive](#resources-and-archive)
+  - [A home for loose ideas: Someday/Maybe](#a-home-for-loose-ideas-somedaymaybe)
+  - [Roadmaps: continuous, not a Project](#roadmaps-continuous-not-a-project)
+  - [Fast access without breaking the classification: Favorites](#fast-access-without-breaking-the-classification-favorites)
+- [Part 6 — The Teams database: a relational hub](#part-6--the-teams-database-a-relational-hub)
+- [Part 7 — Full database schemas](#part-7--full-database-schemas)
+  - [Projects](#projects)
+  - [Teams](#teams)
+  - [Persons](#persons)
+  - [1:1 Meetings](#11-meetings)
+  - [Meetings](#meetings)
+  - [Service Catalog](#service-catalog)
+  - [Roadmap](#roadmap)
+  - [Someday / Ideas](#someday--ideas)
+- [Part 8 — The daily and weekly ritual](#part-8--the-daily-and-weekly-ritual)
+- [Part 9 — General principles for structuring any new database](#part-9--general-principles-for-structuring-any-new-database)
+
 ---
 
 ## Overview
