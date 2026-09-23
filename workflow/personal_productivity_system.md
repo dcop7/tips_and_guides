@@ -185,7 +185,7 @@ The better move for anything backed by a database: **let a Status value do the a
 
 The physical Archive folder is still the right destination for things that *don't* have a Status field of their own to retire into — an Area that stops being relevant, a Resource page that goes stale, anything living as a plain page rather than a database row. For anything structured, the database itself is the archive; a view is just a lens on it.
 
-**Someday/Maybe follows a different rule, because it isn't meant to keep a record.** When an idea there gets acted on, it graduates into a Project — and the Project is now the permanent home for that work (its `Created time`, covered in Part 9, tells you how long it sat as "just an idea" first, if that's ever worth knowing). The Someday/Ideas row can simply be deleted at that point. Keeping resolved ideas around, tagged or not, would slowly turn a quick-glance list back into something that needs its own review ritual — exactly what it was built to avoid.
+**Someday/Maybe** (the lightweight database for still-uncommitted ideas, detailed in Part 5) **follows a different rule, because it isn't meant to keep a record.** When an idea there gets acted on, it graduates into a Project — and the Project is now the permanent home for that work (a glance at its Created time tells you how long it sat as "just an idea" first, if that's ever worth knowing). The Someday/Ideas row can simply be deleted at that point. Keeping resolved ideas around, tagged or not, would slowly turn a quick-glance list back into something that needs its own review ritual — exactly what it was built to avoid.
 
 ---
 
@@ -230,7 +230,7 @@ graph TD
     Areas --> Teams[("⭐ Teams (DB)")]
     Areas --> Meetings[("⭐ Meetings (DB)")]
     Areas --> SC[("⭐ Service Catalog (DB)")]
-    Areas --> RM[("Roadmap (DB)")]
+    Areas --> RM[("⭐ Roadmap (DB)")]
     PM --> Persons[("⭐ Persons (DB)")]
     PM --> OneOnOne[("⭐ 1:1 Meetings (DB)")]
 ```
@@ -246,13 +246,7 @@ graph TD
 
 Not every thought fits Projects, Areas, or even Resources. A reorg idea, a "maybe worth trying someday" note, a stray thought that doesn't belong to any one team or system yet — none of these are a committed Project (no action decided), an Area (not an ongoing responsibility), or quite a Resource (Resources are things you already know are useful reference; this is closer to "might become useful, not sure yet"). GTD has a name for this: **Someday/Maybe** — things worth keeping without committing to act on them.
 
-**Where it lives:** a small database called "Someday / Ideas," inside Resources, with exactly two fields:
-
-| Field | Type | Notes |
-|---|---|---|
-| Name | Title | The idea, in a few words |
-| Tags | Multi-select | Freeform — invent a new tag on the spot, apply zero, one, or several |
-| Created time | Built-in | Lets you sort by age — a quiet signal that an idea sitting for years probably isn't going anywhere |
+**Where it lives:** a small database called "Someday / Ideas," inside Resources, with exactly two fields plus a free timestamp (full schema in Part 7).
 
 This looks like a contradiction of the golden rule at first — but it isn't. The rule warns against a rigid **Select** (a Category or Status forcing every idea into one exclusive bucket, before you even know what your buckets should be). **Tags are structurally different**: an idea can carry none, one, or five of them, new ones get created without touching a schema, and nothing is forced into a single category. It adds a filter, not a shape.
 
@@ -273,33 +267,21 @@ A roadmap looks, at first glance, like it might belong under Projects — "2027 
 
 The fix is the same one already used for both: don't create a new artifact every time it recurs. No "Roadmap 2027" and "Roadmap 2028" as separate pages or databases, each starting from zero — one database, accumulating roadmap items across every year, with a field distinguishing which year each one belongs to.
 
-Because a roadmap can span more than one team, it lives directly in Areas, alongside Meetings and Service Catalog, rather than being folded into any single team's page.
-
-**Roadmap**
-*Directly inside Areas. One database spanning every year — never recreated.*
-
-| Field | Type | Notes |
-|---|---|---|
-| Name | Title | The initiative or theme |
-| Year | Select | `2027` · `2028` · `2029` … — add one new option as each year starts |
-| Status | Select | `Planned` · `In Progress` · `Done` · `Cut` |
-| Theme | Select | Optional grouping, e.g. `Reliability`, `Developer Experience`, `Cost` |
-| Team | Relation → Teams | Optional — left blank for cross-team initiatives |
-| Related Project | Relation → Projects | Filled in once the item is actually committed and work begins |
+Because a roadmap can span more than one team, it lives directly in Areas, alongside Meetings and Service Catalog, rather than being folded into any single team's page. Favorited, same as its Areas-mates. Full schema in Part 7.
 
 This is the actionability flow from Part 3 made concrete: a roadmap item starts out closer to a Resource — an idea with more weight behind it than Someday/Maybe, but nothing committed yet — and crosses into Projects the moment Status flips to `In Progress` and a Related Project gets linked. The Roadmap row doesn't disappear when that happens; it just sits there as the record of *when the idea became real work*, while the Project itself carries the week-to-week execution.
 
 ### Fast access without breaking the classification: Favorites
 
-Persons, 1:1 Meetings, Teams, Meetings, and Service Catalog all live correctly inside Areas — but each is also marked as a **Favorite** in Notion, which pins it to the top of the sidebar for one-click access without physically moving it out of its folder. Classification and access speed are two independent problems; you don't have to trade one for the other.
+Persons, 1:1 Meetings, Teams, Meetings, Service Catalog, and Roadmap all live correctly inside Areas — but each is also marked as a **Favorite** in Notion, which pins it to the top of the sidebar for one-click access without physically moving it out of its folder. Classification and access speed are two independent problems; you don't have to trade one for the other.
 
 ---
 
 ## Part 6 — The Teams database: a relational hub
 
-Persons, 1:1 Meetings, Service Catalog, Meetings, and Projects each need some notion of "which team." Without a dedicated database, that means the same short list of team names duplicated as a Select field in five different places — guaranteed to drift out of sync the moment a team is renamed or a new one appears.
+Persons, 1:1 Meetings, Service Catalog, Meetings, Projects, and Roadmap each need some notion of "which team." Without a dedicated database, that means the same short list of team names duplicated as a Select field in six different places — guaranteed to drift out of sync the moment a team is renamed or a new one appears.
 
-**Teams** solves this: it's the single place where team names actually exist. The other five databases point to it through a Relation. Renaming or adding a team happens once, not five times.
+**Teams** solves this: it's the single place where team names actually exist. The other six databases point to it through a Relation. Renaming or adding a team happens once, not six times.
 
 ```mermaid
 graph LR
@@ -309,10 +291,12 @@ graph LR
     SC["Service Catalog"] -->|Team| Teams
     Meetings["Meetings"] -->|"Team (blank = cross-team)"| Teams
     Projects["Projects"] -->|"Team (multi, optional)"| Teams
+    Roadmap["Roadmap"] -->|"Team (optional)"| Teams
     Meetings -.->|"Project (optional)"| Projects
+    Roadmap -.->|"Related Project (optional)"| Projects
 ```
 
-Each row in Teams (say, "Team A") is a complete page in its own right, and can hold freeform notes about that team — but the real value comes from **automatic rollups**: opening the "Team A" page shows every Meeting, every Service Catalog entry, and every Project linked to it, with no manually configured filtered view required.
+Each row in Teams (say, "Team A") is a complete page in its own right, and can hold freeform notes about that team — but the real value comes from **automatic rollups**: opening the "Team A" page shows every Meeting, every Service Catalog entry, every Project, and every Roadmap item linked to it, with no manually configured filtered view required.
 
 Projects that don't belong to any one team are simply left with the Team field empty — the project's own name usually makes that obvious without needing a category to say so too.
 
@@ -346,7 +330,7 @@ Projects that don't belong to any one team are simply left with the Team field e
 `On Hold` and `Done` aren't part of Bastow's original three-horizon model — they're practical additions for tracking real, individual work, where "paused because blocked" and "finished" both need to be visible states, not just implied by absence from the other three.
 
 ### Teams
-*Directly inside Areas — the relational hub described in Part 6.*
+*Directly inside Areas. Favorited — the relational hub described in Part 6.*
 
 | Field | Type | Notes |
 |---|---|---|
@@ -402,7 +386,7 @@ Usage rule: one row per recurring **series** (never per occurrence) — the page
 Page body, with four fixed sections: *Known Limitations*, *Common Issues & Fixes*, *Improvement Ideas*, *Useful Links*.
 
 ### Roadmap
-*Directly inside Areas. One database spanning every year — see Part 5 for why this is never recreated per year.*
+*Directly inside Areas. Favorited. One database spanning every year — see Part 5 for why this is never recreated per year.*
 
 | Field | Type | Notes |
 |---|---|---|
@@ -413,6 +397,15 @@ Page body, with four fixed sections: *Known Limitations*, *Common Issues & Fixes
 | Team | Relation → Teams | Optional — blank for cross-team initiatives |
 | Related Project | Relation → Projects | Filled in once the item is committed and work begins |
 | Created time | Built-in | How long an initiative has been on the radar before being planned |
+
+### Someday / Ideas
+*Inside Resources. Not favorited — this one is checked occasionally, by design. See Part 5 for the reasoning.*
+
+| Field | Type | Notes |
+|---|---|---|
+| Name | Title | The idea, in a few words |
+| Tags | Multi-select | Freeform — invent a new tag on the spot, apply zero, one, or several |
+| Created time | Built-in | Lets you sort by age — a quiet signal that an idea sitting for years probably isn't going anywhere |
 
 ---
 
