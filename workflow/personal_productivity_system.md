@@ -78,6 +78,8 @@ Todoist's "Projects" feature is used here as a simple top-level separator, not a
 - `@quick` — anything under two minutes, batched together and cleared in one pass
 - `@email` — anything that only needs an email to be sent
 
+Optional, add only if it earns its keep: `@deepwork` — anything that needs a real uninterrupted block of time, as a counterpart to `@quick`. Useful mainly if you tend to schedule focus blocks and want a filter that surfaces exactly what belongs in them; skip it if that distinction never actually changes what you do.
+
 ### Engage: three saved filters, pinned to the top
 
 - **Today** — everything due today
@@ -119,12 +121,11 @@ The creator of the Bullet Journal method, Ryder Carroll, is explicit about this:
 | `→` | Still matters, just not today | In the evening, turning the `□` into an arrow |
 | `✕` | Cancelled — no longer needed | In the evening, turning the `□` into a cross |
 
-The arrow and the cross exist to separate two different reasons a task doesn't get closed out, which look identical if you only have one "not done" symbol but mean very different things: `→` means the task is still worth doing, just not today — it gets pushed to tomorrow's draft line or promoted straight to Todoist. `✕` means it's consciously dropped — the meeting got cancelled, the need went away, it's simply no longer worth doing. The notebook never holds anything for more than a day either way; what survives, and where, is decided explicitly each evening.
+The arrow and the cross exist to separate two different reasons a task doesn't get closed out, which look identical if you only have one "not done" symbol but mean very different things: `→` means the task is still worth doing, just not today — it gets promoted straight to Todoist. `✕` means it's consciously dropped — the meeting got cancelled, the need went away, it's simply no longer worth doing. The notebook never holds anything for more than a day either way; what survives, and where, is decided explicitly each evening.
 
-### Two small additions
+### An optional addition: drafting tomorrow
 
-1. **A "parking lot" box** — a fixed square in a corner of the page. Any stray idea or distraction that shows up mid-day gets written there instead of interrupting whatever you're doing. At day's end, each item is processed: Todoist, Notion Inbox, or discarded.
-2. **One line drafting tomorrow** — at the end of the day, write one likely item for tomorrow's Big 3. It removes the "blank page" friction the next morning, for a cost of about ten seconds.
+**One line drafting tomorrow** — at the end of the day, optionally write one likely item for tomorrow's Big 3. It removes the "blank page" friction the next morning, for a cost of about ten seconds. This isn't a core habit like the symbols — skip it on any day it doesn't come naturally; the only thing that matters is that today's page still dies at midnight either way.
 
 ### Example page
 
@@ -135,16 +136,11 @@ BIG 3
 ✓  Review vendor proposal
 →  Draft roadmap slides (moved to Todoist)
 ✕  Confirm attendance for offsite (event got cancelled)
-
-┌─ PARKING LOT ──────────────────────┐
-│ "Ask about the connection pool fix" │
-│ "Idea: record an onboarding video"  │
-└─────────────────────────────────────┘
 - - - - - - - - - - - - - - - - - - -
 Tomorrow, maybe: review yesterday's interview feedback
 ```
 
-All three items started the morning as `□`. By evening, one is finished, one still matters but slipped to Todoist, and one simply isn't needed anymore — three different outcomes that would be indistinguishable with a single "not done" symbol.
+All three items started the morning as `□`. By evening, one is finished, one still matters but slipped to Todoist, and one simply isn't needed anymore — three different outcomes that would be indistinguishable with a single "not done" symbol. The last line is the optional draft for tomorrow — present here, skippable on any other day.
 
 ---
 
@@ -177,6 +173,19 @@ Items **flow** between categories over time: a Resource can become a Project the
 ### Why PARA fits Notion specifically
 
 Notion has a quiet structural feature that makes it a very good fit for PARA: **every database row is, under the hood, a full page.** You are never forced to choose between "structured list" and "rich freeform content" — a row can have filterable properties *and* an open canvas of notes, exactly the two things PARA needs (structured Projects/Areas plus freeform pages for narrative and context).
+
+### Closing things out: when "Archive" means a status, not a move
+
+Forte's original model treats Archive as a place you move things to — a Project finishes, its page gets dragged into an Archive folder. That works for plain pages, but a *database* like Projects already has something a folder doesn't: a Status field that can represent "finished" on its own. Physically removing a completed row would throw away exactly the structure that makes it worth keeping — its Team, its history, its Tracker link, all still queryable.
+
+The better move for anything backed by a database: **let a Status value do the archiving, and split the view instead of moving the row.**
+
+- Projects already has a `Done` status. One view filters it out (`Status is not Done`) for the day-to-day list; a second view filters for it (`Status is Done`) as a running record of everything shipped — still filterable by Team, still sortable by date, still fully structured.
+- Service Catalog already works this way, without ever being framed as a rule: a system moves to `Deprecated` or `Being Phased Out` and disappears from the default "Active" view without ever leaving the database.
+
+The physical Archive folder is still the right destination for things that *don't* have a Status field of their own to retire into — an Area that stops being relevant, a Resource page that goes stale, anything living as a plain page rather than a database row. For anything structured, the database itself is the archive; a view is just a lens on it.
+
+**Someday/Maybe follows a different rule, because it isn't meant to keep a record.** When an idea there gets acted on, it graduates into a Project — and the Project is now the permanent home for that work (its `Created time`, covered in Part 9, tells you how long it sat as "just an idea" first, if that's ever worth knowing). The Someday/Ideas row can simply be deleted at that point. Keeping resolved ideas around, tagged or not, would slowly turn a quick-glance list back into something that needs its own review ritual — exactly what it was built to avoid.
 
 ---
 
@@ -243,6 +252,7 @@ Not every thought fits Projects, Areas, or even Resources. A reorg idea, a "mayb
 |---|---|---|
 | Name | Title | The idea, in a few words |
 | Tags | Multi-select | Freeform — invent a new tag on the spot, apply zero, one, or several |
+| Created time | Built-in | Lets you sort by age — a quiet signal that an idea sitting for years probably isn't going anywhere |
 
 This looks like a contradiction of the golden rule at first — but it isn't. The rule warns against a rigid **Select** (a Category or Status forcing every idea into one exclusive bucket, before you even know what your buckets should be). **Tags are structurally different**: an idea can carry none, one, or five of them, new ones get created without touching a schema, and nothing is forced into a single category. It adds a filter, not a shape.
 
@@ -316,11 +326,24 @@ Projects that don't belong to any one team are simply left with the Team field e
 | Field | Type | Notes |
 |---|---|---|
 | Name | Title | The initiative's name |
-| Status | Select | `Now` · `Next` · `Later` · `On Hold` · `Done` |
+| Status | Select | `Now` · `Next` · `Later` · `On Hold` · `Done` — see below |
 | Target Date | Date | Optional — only if there's a real deadline |
 | Risk | Select | 🟢 · 🟠 · 🔴 |
 | Team | Relation → Teams | Multi-relation for cross-team projects; left blank for team-agnostic ones |
 | Tracker | URL | Link to the ticketing system, if applicable |
+| Created time | Built-in | Free reference point — how long an idea sat before becoming a committed Project |
+
+**Where Status comes from, and what each value is for.** The three core values — Now, Next, Later — come from a product-management technique popularized by Janna Bastow (co-founder of ProdPad), usually called a **Now-Next-Later roadmap**. It exists as a deliberate alternative to date-based roadmaps: a specific ship date for something you haven't started yet is usually a guess wearing the costume of a fact, and treating it as one erodes trust the first time it slips. A horizon communicates honestly how confident you actually are — exactly what a personal Project list needs, for the same reason.
+
+| Value | Meaning |
+|---|---|
+| `Now` | Actively being worked on — this week's real priority |
+| `Next` | Reasonably well-defined, queued up to start once something in `Now` clears |
+| `Later` | On the radar, wanted eventually, but not yet defined or prioritized enough to commit to |
+| `On Hold` | Was moving, but is paused for a reason outside your control — blocked, waiting on someone, deliberately deprioritized for now |
+| `Done` | Finished — stays in the database as a structured record; see Part 3 for why it never moves to Archive |
+
+`On Hold` and `Done` aren't part of Bastow's original three-horizon model — they're practical additions for tracking real, individual work, where "paused because blocked" and "finished" both need to be visible states, not just implied by absence from the other three.
 
 ### Teams
 *Directly inside Areas — the relational hub described in Part 6.*
@@ -346,7 +369,7 @@ Projects that don't belong to any one team are simply left with the Team field e
 |---|---|---|
 | Person | Title | The person's name |
 | Team | Relation → Teams | |
-| Last Updated | Date | Updated every time a new log entry is added |
+| Last edited time | Built-in | Notion tracks this automatically — no manual field needed |
 
 Page body: a "Next" block at the top, followed by dated log entries — one per session. The page is never recreated, it only ever grows.
 
@@ -359,7 +382,7 @@ Page body: a "Next" block at the top, followed by dated log entries — one per 
 | Type | Select | `Recurring` · `On Demand` |
 | Project | Relation → Projects | Optional — links a one-off meeting to the relevant Project |
 | Team | Relation → Teams | Blank = cross-team |
-| Last Updated | Date | |
+| Last edited time | Built-in | Notion tracks this automatically — no manual field needed |
 
 Usage rule: one row per recurring **series** (never per occurrence) — the page body grows with one dated entry per session, exactly like 1:1 Meetings.
 
@@ -373,7 +396,8 @@ Usage rule: one row per recurring **series** (never per occurrence) — the page
 | Category | Select | e.g. `Database` · `Messaging` · `CI/CD` · `Cloud` · `Internal Tool` |
 | Criticality | Select | 🔴 Critical · 🟠 Important · 🟢 Low |
 | Status | Select | `Active` · `Deprecated` · `Being Phased Out` |
-| Last Reviewed | Date | Flags stale entries |
+| Last Reviewed | Date | Manual — means "a person confirmed this is accurate," not just "something changed" |
+| Last edited time | Built-in | Supplementary — a cheap automatic backstop; if both dates are old, the entry is almost certainly stale |
 
 Page body, with four fixed sections: *Known Limitations*, *Common Issues & Fixes*, *Improvement Ideas*, *Useful Links*.
 
@@ -388,6 +412,7 @@ Page body, with four fixed sections: *Known Limitations*, *Common Issues & Fixes
 | Theme | Select | Optional grouping, e.g. `Reliability`, `Developer Experience`, `Cost` |
 | Team | Relation → Teams | Optional — blank for cross-team initiatives |
 | Related Project | Relation → Projects | Filled in once the item is committed and work begins |
+| Created time | Built-in | How long an initiative has been on the radar before being planned |
 
 ---
 
@@ -395,15 +420,15 @@ Page body, with four fixed sections: *Known Limitations*, *Common Issues & Fixes
 
 ```mermaid
 flowchart LR
-    M["🌅 Morning — 2 min<br/>Todoist 'Today' filter →<br/>pick the notebook's Big 3"] --> D["☀️ During the day<br/>Notebook open,<br/>parking lot for stray ideas"] --> E["🌙 End of day — 2 min<br/>Close symbols, process<br/>parking lot, draft tomorrow"] --> F["📅 Friday — 15 min<br/>Weekly Notion review"]
+    M["🌅 Morning — 2 min<br/>Todoist 'Today' filter →<br/>pick the notebook's Big 3"] --> D["☀️ During the day<br/>Notebook open,<br/>symbols marked as tasks close"] --> E["🌙 End of day — 2 min<br/>Close symbols,<br/>optionally draft tomorrow"] --> F["📅 Friday — 15 min<br/>Weekly Notion review"]
     F -.-> M
 ```
 
 | Moment | Duration | What happens |
 |---|---|---|
 | **Morning** | 2 min | Open Todoist, filter by "Today." Pick the notebook's Big 3 — use yesterday's draft line if there is one. |
-| **During the day** | — | Notebook stays open. Symbols get marked as tasks close. Stray ideas go into the parking lot, never into the middle of the page. |
-| **End of day** | 2 min | Close out pending symbols (`✓`, `→`, or `✕`). Anything marked `→` gets created in Todoist right away. Process the parking lot: Todoist, Notion Inbox, or discard. Draft tomorrow's first item. |
+| **During the day** | — | Notebook stays open. Symbols get marked as tasks close. |
+| **End of day** | 2 min | Close out pending symbols (`✓`, `→`, or `✕`). Anything marked `→` gets created in Todoist right away. Optionally, draft tomorrow's first item. |
 | **Friday** | 15 min | Weekly Notion review: clear the Inbox → update the Status of every active Project → check one or two Service Catalog entries touched that week. |
 
 The weekly Notion review runs off a recurring Todoist task as its trigger — it never depends on memory or willpower alone.
@@ -417,5 +442,6 @@ The weekly Notion review runs off a recurring Todoist task as its trigger — it
 3. **The title identifies the row on its own** — without needing to open the page.
 4. **Rich content lives in the page body**, never in a property — properties are for filtering, not for narrating.
 5. **Two or three views cover almost everything** — one filtered for daily use, one grouped for a bird's-eye view, one unfiltered for the rare full audit.
+6. **Let Notion's built-in Created time and Last edited time do free work.** Both cost nothing to add and nothing to maintain — Notion fills them in automatically, with no discipline required. Add **Created time** wherever "how long has this existed" is useful context — Projects, Roadmap, and Someday/Ideas all benefit from it. Prefer **Last edited time** over a manual "Last updated" field whenever editing the page *is* the update, as with Meetings and 1:1 Meetings — a manual field there only duplicates what Notion already tracks for free. Reserve a manual date field for a signal Notion can't infer on its own, like Service Catalog's Last Reviewed, which means "a person deliberately confirmed this is still accurate," not just "something changed."
 
 If the rows in a database start needing very different fields from one another, that's a sign it should be two databases — or not a database at all.
