@@ -17,10 +17,11 @@ flowchart TD
 | If it's... | It goes to |
 |---|---|
 | Something to *do* | Todoist |
-| Today's top 3 focus | Notebook |
+| Today's top 3 focus | Notebook (shortlist from Todoist) |
 | Reference, history, or something to compare against others | Notion |
 | Not committed to yet, just an idea | Notion → Someday / Ideas |
-| Still matters but didn't happen today | Notebook `✕` → Todoist |
+| Didn't happen today, still open | Notebook `→` — stays in Todoist, no action |
+| No longer needed | Notebook `✕` — clear it from Todoist too |
 
 ---
 
@@ -28,26 +29,30 @@ flowchart TD
 
 | Element | Values |
 |---|---|
-| Projects (top-level tags) | `#Work` · `#Personal` |
-| Labels | `@waiting` · `@quick` · `@email` |
-| Optional label | `@deepwork` — only if it changes what you actually do |
-| Saved filters | `Today` · `Next 7 days` · `@waiting` |
+| Projects (simple containers) | `#Work` · `#Personal` |
+| Priority | `p1`/`p2`/`p3` — only when genuinely elevated; default (no flag) otherwise |
+| Saved filters | `Today` (query: `overdue \| today`) · `Due in 7 days` (query: `due before: in 7 days`) — both catch overdue |
 | Naming rule | **Always start with a verb** — "Schedule X," not "X" |
 
-GTD loop this maps to: **Capture** (quick-add) → **Clarify** (verb-first naming) → **Organize** (tags + labels) → **Reflect** (rituals) → **Engage** (saved filters).
+No Labels at all — `@waiting`/`@quick`/`@email` were cut for not earning their tagging cost. Todoist's "Projects" here just means a plain container (`#Work`/`#Personal`); it's not the same thing as a GTD/PARA Project, which lives in Notion (Part 7).
+
+**Type it all in one line:** `Schedule vendor meeting #work tomorrow at 8 p1` → task name + project + due date/time + priority, parsed from a single line, no extra clicks. Skip the date entirely when there isn't a real one — an undated task just sits on the list.
+
+GTD loop this maps to: **Capture** (quick-add) → **Clarify** (verb-first naming) → **Organize** (Projects as containers) → **Reflect** (rituals) → **Engage** (saved filters).
 
 ---
 
 ## Notebook
 
+Big 3 = a **shortlist pulled from Todoist**, not a second task system. The task still lives, and still gets completed, in Todoist.
+
 | Symbol | Meaning | When |
 |---|---|---|
-| `□` | Not done yet | Morning |
-| `✓` | Done | Evening |
-| `→` | Still matters, not today → goes to Todoist | Evening |
-| `✕` | Cancelled, no longer needed | Evening |
+| `□` | Picked from Todoist this morning | Morning |
+| `✓` | Done — check it off in Todoist too | Evening |
+| `→` | Still open — stays in Todoist as-is | Evening |
+| `✕` | No longer needed — clear it from Todoist too | Evening |
 
-- Big 3 only. Written each morning.
 - No index, no migration, no weekly review of old pages — every page dies at midnight.
 - Optional: one line drafting tomorrow's first item, at day's end. Skip it whenever it doesn't come naturally.
 
@@ -122,7 +127,7 @@ graph TD
 | **1:1 Meetings** | Areas → People Management | ✓ | Team | One row per person, log grows forever |
 | **Meetings** | Areas, direct | ✓ | Type, Project, Team | Recurring + one-off, together |
 | **Service Catalog** | Areas, direct | ✓ | Team, Criticality, Status, Last Reviewed | Living memory of systems you own |
-| **Roadmap** | Areas, direct | ✓ | Year, Status, Theme, Team | One DB, every year, never recreated |
+| **Roadmap** | Areas, direct | ✓ | Horizon, Year (optional), Status, Team | One DB, every year, never recreated |
 | **Someday / Ideas** | Resources | ✗ (checked occasionally, on purpose) | Tags | Loose ideas, not yet committed |
 
 ---
@@ -140,7 +145,7 @@ Rule: if it's in a database with a Status field, change the status — don't mov
 
 ---
 
-## Daily & weekly ritual
+## Daily, weekly & periodic rituals
 
 ```mermaid
 flowchart LR
@@ -150,10 +155,11 @@ flowchart LR
 
 | When | Do |
 |---|---|
-| Morning | Todoist "Today" filter → pick the notebook's Big 3 |
-| During the day | Mark symbols as tasks close |
-| End of day | Close symbols (`✓`/`→`/`✕`) · `→` items go to Todoist · optionally draft tomorrow |
-| Friday | Notion: clear Inbox → update Project statuses → check 1–2 Service Catalog entries |
+| Morning | Todoist "Due in 7 days" filter → pick the notebook's Big 3 |
+| During the day | Mark symbols as shortlisted items close |
+| End of day | Close symbols (`✓`/`→`/`✕`) · `✕` items get cleared from Todoist too · optionally draft tomorrow |
+| Friday (15 min) | Open "Due in 7 days" filter, nudge stalled/delegated items → update Project statuses. Nothing else. |
+| Every 4–6 weeks | Service Catalog (check oldest `Last Reviewed`) · Someday/Ideas (prune) · Roadmap (recheck Horizons) |
 
 ---
 
@@ -165,5 +171,6 @@ flowchart LR
 4. Rich content → page body, never a property.
 5. 2–3 views cover almost everything: filtered daily view, grouped overview, unfiltered audit.
 6. Use built-in Created/Last edited time before adding a manual date field.
+7. Before adding a DB, Relation, or property: name the concrete question it answers *today*. No answer → don't add it.
 
 If rows start needing very different fields from each other → split into two databases, or it shouldn't be a database at all.
