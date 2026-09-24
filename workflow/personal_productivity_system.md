@@ -11,8 +11,9 @@ It is not a diagnosis or a changelog — it's a snapshot of a working system, de
   - [What GTD actually says](#what-gtd-actually-says)
   - [Capture: the step Todoist is built for](#capture-the-step-todoist-is-built-for)
   - [Clarify: verb-first naming forces the decision at capture time](#clarify-verb-first-naming-forces-the-decision-at-capture-time)
-  - [Organize: Projects as tags, Labels as cross-cutting attributes](#organize-projects-as-tags-labels-as-cross-cutting-attributes)
-  - [Engage: three saved filters, pinned to the top](#engage-three-saved-filters-pinned-to-the-top)
+  - [Organize: Projects as containers, no Labels](#organize-projects-as-containers-no-labels)
+  - [Priority: only when it's actually true](#priority-only-when-its-actually-true)
+  - [Engage: two saved filters, pinned to the top](#engage-two-saved-filters-pinned-to-the-top)
   - [Example](#example)
 - [Part 2 — The Notebook: today's focus, made disposable](#part-2--the-notebook-todays-focus-made-disposable)
   - [Philosophy](#philosophy)
@@ -43,7 +44,7 @@ It is not a diagnosis or a changelog — it's a snapshot of a working system, de
   - [Service Catalog](#service-catalog)
   - [Roadmap](#roadmap)
   - [Someday / Ideas](#someday--ideas)
-- [Part 8 — The daily and weekly ritual](#part-8--the-daily-and-weekly-ritual)
+- [Part 8 — The daily, weekly, and periodic rituals](#part-8--the-daily-weekly-and-periodic-rituals)
 - [Part 9 — General principles for structuring any new database](#part-9--general-principles-for-structuring-any-new-database)
 
 ---
@@ -86,15 +87,17 @@ flowchart LR
 |---|---|---|
 | **Capture** | Collect everything that has your attention, immediately, without judging it | Todoist quick-add |
 | **Clarify** | Decide what each captured item actually means and what the next physical action is | Verb-first task naming (below) |
-| **Organize** | File the clarified item where it belongs | Projects-as-tags + Labels |
-| **Reflect** | Review the system regularly so you keep trusting it | Daily notebook ritual + weekly Notion review |
-| **Engage** | Choose what to do right now with confidence | Saved filters (Today / 7 days / Waiting) |
+| **Organize** | File the clarified item where it belongs | Projects as simple containers (`#Work` / `#Personal`) |
+| **Reflect** | Review the system regularly so you keep trusting it | Daily notebook ritual + weekly Todoist/Projects review |
+| **Engage** | Choose what to do right now with confidence | Saved filters (Today / Due in 7 days) |
 
 ### Capture: the step Todoist is built for
 
 The entire value of GTD's capture step depends on friction being close to zero. If jotting something down takes more than a few seconds, you stop trusting yourself to do it consistently — and the moment you stop trusting the capture step, the whole method quietly falls apart, because things start living in your head again.
 
-Todoist is used here purely as a capture-and-action engine: quick-add from any device, natural-language date parsing, reliable notifications. It deliberately does **not** try to hold knowledge, context, or history — that discipline is what keeps capture fast.
+Todoist is used here purely as a capture-and-action engine: quick-add from any device, reliable notifications. It deliberately does **not** try to hold knowledge, context, or history — that discipline is what keeps capture fast.
+
+**Smart Date Recognition** is what makes this concrete. Typing `Schedule vendor meeting #work tomorrow at 8` into the quick-add box in one go creates a task named "Schedule vendor meeting," filed under `#work`, due tomorrow at 8am — three fields filled from a single continuous line of typing, no extra clicks, no switching to a date picker mid-thought. The project and the date are both optional, not habitual: type `tomorrow at 8` only when there's a real time constraint, and leave it off otherwise — an undated task simply sits on the `#work` or `#personal` list until it's picked up during a normal pass through it. Forcing a due date onto something that doesn't have one yet would be the same false precision already avoided for Projects' Target Date and Roadmap's Year (Part 5) — just one level further down, on the individual task.
 
 ### Clarify: verb-first naming forces the decision at capture time
 
@@ -108,36 +111,35 @@ GTD defines a "next action" as a physical, visible activity — not a topic, not
 
 This single habit — always start with a verb — does most of the "Clarify" work for you, right at the moment of capture, so nothing sits half-formed on the list.
 
-### Organize: Projects as tags, Labels as cross-cutting attributes
+### Organize: Projects as containers, no Labels
 
-Todoist's "Projects" feature is used here as a simple top-level separator, not as GTD-style multi-step projects (that job belongs to Notion — see Part 4):
+Todoist's "Projects" feature just means a simple container here — a folder to file a task into, nothing more. That's different from "a Project" in the GTD or PARA sense (a multi-step initiative with a defined outcome and an end date), which lives in Notion instead (Part 7). The word never carries that heavier meaning inside Todoist — it's used exactly as Todoist itself uses it, a place to file things, not a methodology term:
 
-- `#Work` and `#Personal` — the only two top-level containers. No sub-projects, no nesting.
+- `#Work` and `#Personal` — the only two containers, both flat. No sub-projects, no nesting.
 
-**Labels**, applied while capturing or reviewing a task:
+No Labels are used at all. `@waiting`, `@quick`, and `@email` looked useful on paper, but asked for more tagging discipline at capture time than they paid back in practice; removing them applies the same rule as everywhere else in this system — structure that isn't earning its cost gets cut. The one real thing `@waiting` protected against — a delegated task quietly falling through the cracks — moves to the weekly review instead (Part 8): a single fast scan, done once a week, rather than a tag maintained on every task all week long.
 
-- `@waiting` — GTD's classic "Waiting For" list: things delegated to someone else, easy to lose track of
-- `@quick` — anything under two minutes, batched together and cleared in one pass
-- `@email` — anything that only needs an email to be sent
+### Priority: only when it's actually true
 
-Optional, add only if it earns its keep: `@deepwork` — anything that needs a real uninterrupted block of time, as a counterpart to `@quick`. Useful mainly if you tend to schedule focus blocks and want a filter that surfaces exactly what belongs in them; skip it if that distinction never actually changes what you do.
+Todoist has four priority levels, and `P4` — no flag at all — is the state every task starts in. It should stay that way for almost everything. Mark `P1`, `P2`, or `P3` only when something is genuinely more urgent than the rest of the list, typed inline the same way as a project tag or a date (`p1` while capturing sets it directly). Applied as a habit to every task, priority would just recreate the "everything is important" noise it exists to cut through — most days, nothing gets flagged, and that's the system working, not something missing.
 
-### Engage: three saved filters, pinned to the top
+This doesn't compete with the Big 3 (Part 2). Big 3 is which three things get today's attention, decided fresh each morning; Priority is a property on the task itself, useful the moment you're scanning a longer list — this week's "Due in 7 days," say — and want the genuinely urgent items to visually stand out from everything that's merely due.
 
-- **Today** — everything due today
-- **Next 7 days** — a week-ahead view for light planning
-- **@waiting** — everything currently pending on someone else
+### Engage: two saved filters, pinned to the top
 
-A saved filter trades a repeated mental query ("what did I delegate again?") for a single tap.
+- **Today** — query `overdue | today`. Includes anything overdue, not just what's freshly due — the morning pick (below) should never miss something that slipped.
+- **Due in 7 days** — query `due before: in 7 days`. This catches overdue items too, not just the week ahead: anything with a due date before "7 days from now" includes everything already late, since late is by definition earlier than that. A plain "next 7 days" filter would miss those — a task quietly slipping past its date shouldn't fall out of view.
+
+A saved filter trades a repeated mental query for a single tap.
 
 ### Example
 
 ```
-☐ Schedule vendor meeting                 #Work      @waiting
-☐ Update roadmap slides                   #Work      @quick
-☐ Send calendar invite for kickoff        #Work      @email
-☐ Book car service appointment            #Personal  @waiting
-☐ Confirm attendance for offsite          #Work      @quick
+☐ Schedule vendor meeting  (p1)           #Work
+☐ Update roadmap slides                   #Work
+☐ Send calendar invite for kickoff        #Work
+☐ Book car service appointment            #Personal
+☐ Confirm attendance for offsite          #Work
 ```
 
 ---
@@ -150,7 +152,7 @@ The notebook exists to answer one question: what am I focusing on *today*? There
 
 ### The "Big 3"
 
-Three priorities, written each morning. Not a long list — three things that, if they happen, make the day a good one.
+Three items, picked each morning straight from Todoist's Due in 7 days filter — which also surfaces anything overdue, so nothing that slipped gets missed — written down as today's focus. This is a **shortlist**, not a second place where tasks live: the task itself still exists, and still gets completed, in Todoist. The notebook just spotlights three of them so the day has a clear center of gravity instead of a scrolling list.
 
 ### Symbols — kept to a minimum, but expressive enough
 
@@ -158,12 +160,12 @@ The creator of the Bullet Journal method, Ryder Carroll, is explicit about this:
 
 | Symbol | Meaning | Written |
 |---|---|---|
-| `□` | Not done yet | In the morning, next to each Big 3 item |
-| `✓` | Done | In the evening, turning the `□` into a check |
-| `→` | Still matters, just not today | In the evening, turning the `□` into an arrow |
-| `✕` | Cancelled — no longer needed | In the evening, turning the `□` into a cross |
+| `□` | Picked from Todoist this morning, not resolved yet | Morning |
+| `✓` | Done — also checked off in Todoist | Evening |
+| `→` | Still open — stays in Todoist as-is, just not today | Evening |
+| `✕` | No longer needed — cleared from Todoist too | Evening |
 
-The arrow and the cross exist to separate two different reasons a task doesn't get closed out, which look identical if you only have one "not done" symbol but mean very different things: `→` means the task is still worth doing, just not today — it gets promoted straight to Todoist. `✕` means it's consciously dropped — the meeting got cancelled, the need went away, it's simply no longer worth doing. The notebook never holds anything for more than a day either way; what survives, and where, is decided explicitly each evening.
+The arrow and the cross separate two different reasons a shortlisted item doesn't close out. `→` means it's still a live Todoist task, simply not today's — there's nothing to *do*, it stays exactly where it already was and can get picked again tomorrow if it's still relevant. `✕` means the opposite: the task itself is done for, and that needs to be reflected back in Todoist too, or it'll keep resurfacing on a list it no longer belongs on. Either way, Todoist stays the single source of truth for which tasks exist — the notebook only ever tracks how today's chosen three went.
 
 ### An optional addition: drafting tomorrow
 
@@ -176,13 +178,13 @@ Friday, September 18
 ─────────────────────────────────────
 BIG 3
 ✓  Review vendor proposal
-→  Draft roadmap slides (moved to Todoist)
-✕  Confirm attendance for offsite (event got cancelled)
+→  Draft roadmap slides
+✕  Confirm attendance for offsite (event got cancelled — cleared from Todoist too)
 - - - - - - - - - - - - - - - - - - -
 Tomorrow, maybe: review yesterday's interview feedback
 ```
 
-All three items started the morning as `□`. By evening, one is finished, one still matters but slipped to Todoist, and one simply isn't needed anymore — three different outcomes that would be indistinguishable with a single "not done" symbol. The last line is the optional draft for tomorrow — present here, skippable on any other day.
+All three items started the morning as `□` — three tasks pulled straight from Todoist's Due in 7 days filter. By evening, one is finished (and checked off in Todoist too), one simply didn't happen and stays exactly where it already was, and one no longer applies at all, which gets cleared out of Todoist so it doesn't linger. The last line is the optional draft for tomorrow — present here, skippable on any other day.
 
 ---
 
@@ -299,7 +301,7 @@ The alternative — a single plain page listing ideas as bullets — genuinely c
 - Every idea is a row with a name, tagged if useful. Most stay a one-line page forever, at zero extra cost.
 - If an idea outgrows a line or two — more context, a few options worth weighing, some reasoning — write straight into that row's page body. Nothing has to be decided upfront; the row was always a full page underneath.
 - If the idea is really about something already tracked elsewhere — say, one specific team — skip this database and drop the note directly onto that team's own page in Teams instead. It already carries the right context; a generic ideas list shouldn't compete with a home that already exists.
-- No dedicated review ritual. Glance at it occasionally, filtered by tag if the list grows; an idea only leaves it when you decide to act on it, at which point it graduates into a Project.
+- A quarterly glance (Part 8) is the only ritual this gets — enough to stop it slowly turning into a graveyard of old ideas, without asking for more attention than these are worth week to week. An idea only leaves the list when you decide to act on it, at which point it graduates into a Project.
 
 The database stays exactly as small as it needs to be — two fields, one of them as loose as a property can get — which is the same golden rule as everywhere else in this system, just satisfied with a database instead of a page once filtering by tag was the actual requirement.
 
@@ -310,6 +312,8 @@ A roadmap looks, at first glance, like it might belong under Projects — "2027 
 The fix is the same one already used for both: don't create a new artifact every time it recurs. No "Roadmap 2027" and "Roadmap 2028" as separate pages or databases, each starting from zero — one database, accumulating roadmap items across every year, with a field distinguishing which year each one belongs to.
 
 Because a roadmap can span more than one team, it lives directly in Areas, alongside Meetings and Service Catalog, rather than being folded into any single team's page. Favorited, same as its Areas-mates. Full schema in Part 7.
+
+A specific year is also often less certain than it looks. Something aimed at "2028" is frequently really just *"later than next year, not worth pinning down further yet"* — forcing a firm Year onto it borrows the same false precision that Now/Next/Later already exists to avoid for Projects. The fix is the same one: a `Horizon` field (`This year` / `Next year` / `Someday`) carries the honest, low-confidence version by default, and `Year` only gets filled in once a specific year is a real decision, not a guess dressed up as one.
 
 This is the actionability flow from Part 3 made concrete: a roadmap item starts out closer to a Resource — an idea with more weight behind it than Someday/Maybe, but nothing committed yet — and crosses into Projects the moment Status flips to `In Progress` and a Related Project gets linked. The Roadmap row doesn't disappear when that happens; it just sits there as the record of *when the idea became real work*, while the Project itself carries the week-to-week execution.
 
@@ -433,7 +437,8 @@ Page body, with four fixed sections: *Known Limitations*, *Common Issues & Fixes
 | Field | Type | Notes |
 |---|---|---|
 | Name | Title | The initiative or theme |
-| Year | Select | `2027` · `2028` · `2029` … |
+| Horizon | Select | `This year` · `Next year` · `Someday` — the honest default; use until a specific year is a real decision |
+| Year | Select | `2027` · `2028` · `2029` … — optional, filled in only once genuinely committed |
 | Status | Select | `Planned` · `In Progress` · `Done` · `Cut` |
 | Theme | Select | Optional grouping, e.g. `Reliability`, `Developer Experience`, `Cost` |
 | Team | Relation → Teams | Optional — blank for cross-team initiatives |
@@ -451,22 +456,36 @@ Page body, with four fixed sections: *Known Limitations*, *Common Issues & Fixes
 
 ---
 
-## Part 8 — The daily and weekly ritual
+## Part 8 — The daily, weekly, and periodic rituals
+
+Not everything moves at the same speed. Todoist and active Projects change daily, so they get a weekly look. Service Catalog, Someday/Ideas, and Roadmap move far more slowly — reviewing them every week would either eat into the 15 minutes meant for the fast-moving stuff, or turn into a rushed glance that doesn't actually catch anything stale. Splitting the two keeps the weekly review honest and short, and gives the slower databases a check that's actually thorough when it happens.
 
 ```mermaid
 flowchart LR
-    M["🌅 Morning — 2 min<br/>Todoist 'Today' filter →<br/>pick the notebook's Big 3"] --> D["☀️ During the day<br/>Notebook open,<br/>symbols marked as tasks close"] --> E["🌙 End of day — 2 min<br/>Close symbols,<br/>optionally draft tomorrow"] --> F["📅 Friday — 15 min<br/>Weekly Notion review"]
+    M["🌅 Morning — 2 min"] --> D["☀️ During the day"] --> E["🌙 End of day — 2 min"] --> F["📅 Friday — 15 min<br/>Todoist + Projects"]
     F -.-> M
 ```
 
 | Moment | Duration | What happens |
 |---|---|---|
-| **Morning** | 2 min | Open Todoist, filter by "Today." Pick the notebook's Big 3 — use yesterday's draft line if there is one. |
-| **During the day** | — | Notebook stays open. Symbols get marked as tasks close. |
-| **End of day** | 2 min | Close out pending symbols (`✓`, `→`, or `✕`). Anything marked `→` gets created in Todoist right away. Optionally, draft tomorrow's first item. |
-| **Friday** | 15 min | Weekly Notion review: clear the Inbox → update the Status of every active Project → check one or two Service Catalog entries touched that week. |
+| **Morning** | 2 min | Open Todoist's "Due in 7 days" filter (overdue included). Pick the notebook's Big 3 — use yesterday's draft line if there is one. |
+| **During the day** | — | Notebook stays open. Symbols get marked as shortlisted items close. |
+| **End of day** | 2 min | Close out pending symbols (`✓`, `→`, or `✕`). Anything marked `✕` gets cleared from Todoist too. Optionally, draft tomorrow's first item. |
+| **Friday** | 15 min | Open the "Due in 7 days" filter — anything overdue jumps out immediately. Nudge whatever's stalled or delegated, then update the Status of every active Project. Nothing else — that's the whole point. |
 
-The weekly Notion review runs off a recurring Todoist task as its trigger — it never depends on memory or willpower alone.
+```mermaid
+flowchart LR
+    F["📅 Weekly review"] -.->|"every 4–6 weeks"| P["🗓️ Periodic review<br/>Service Catalog · Someday/Ideas · Roadmap"]
+    P -.-> F
+```
+
+| Database | Cadence | What happens |
+|---|---|---|
+| **Service Catalog** | Monthly-ish | Check `Last Reviewed` on a few entries, starting with the oldest. Update or flag anything stale. |
+| **Someday/Ideas** | Quarterly | Skim the list, sorted by `Created time`. Drop anything that's clearly not going anywhere; leave the rest. This is the one thing standing between the database and slowly becoming a graveyard of ideas nobody revisits. |
+| **Roadmap** | Quarterly | Recheck anything still sitting on a rough `Horizon` — does it still feel right, has anything become concrete enough to earn a real `Year`? |
+
+Both rituals run off a recurring Todoist task as their trigger — neither depends on memory or willpower alone.
 
 ---
 
@@ -478,5 +497,6 @@ The weekly Notion review runs off a recurring Todoist task as its trigger — it
 4. **Rich content lives in the page body**, never in a property — properties are for filtering, not for narrating.
 5. **Two or three views cover almost everything** — one filtered for daily use, one grouped for a bird's-eye view, one unfiltered for the rare full audit.
 6. **Let Notion's built-in Created time and Last edited time do free work.** Both cost nothing to add and nothing to maintain — Notion fills them in automatically, with no discipline required. Add **Created time** wherever "how long has this existed" is useful context — Projects, Roadmap, and Someday/Ideas all benefit from it. Prefer **Last edited time** over a manual "Last updated" field whenever editing the page *is* the update, as with Meetings and 1:1 Meetings — a manual field there only duplicates what Notion already tracks for free. Reserve a manual date field for a signal Notion can't infer on its own, like Service Catalog's Last Reviewed, which means "a person deliberately confirmed this is still accurate," not just "something changed."
+7. **Before adding anything — a database, a Relation, even a single property — name the concrete question it answers today.** Not a question you might have someday; one you actually have right now. If you can't name it, the thing you're about to add is decoration, not structure, no matter how small it looks. This is the golden rule from Part 3 applied one level down, to individual fields and not just whole databases — it's the same discipline that removed Todoist's `@waiting` label (Part 1) and keeps Roadmap's `Year` optional (Part 5) instead of forced.
 
 If the rows in a database start needing very different fields from one another, that's a sign it should be two databases — or not a database at all.
