@@ -357,7 +357,7 @@ Projects that don't belong to any one team are simply left with the Team field e
 |---|---|---|
 | Name | Title | The initiative's name |
 | Status | Select | `Now` · `Next` · `Later` · `On Hold` · `Done` — see below |
-| Target Date | Date | Optional — only if there's a real deadline |
+| Target | Text | Optional — use for a meaningful target or timeframe (e.g. "2027", "Q2 2027", "Dec 2026") |
 | Risk | Select | 🟢 · 🟠 · 🔴 |
 | Team | Relation → Teams | Multi-relation for cross-team projects; left blank for team-agnostic ones |
 | Tracker | URL | Link to the ticketing system, if applicable |
