@@ -495,10 +495,21 @@ Usage rule: one row per recurring **series** (never per occurrence) — the page
 |---|---|---|
 | Name | Title | The system or asset's name |
 | Team | Relation → Teams | |
-| Category | Select | e.g. `Database` · `Messaging` · `CI/CD` · `Cloud` · `Infra/Platform` (Kubernetes, Terraform, Ansible, Vault…) · `Provider` |
+| Category | Select | `Database` · `Messaging` · `CI/CD` · `Cloud` · `Infra/Platform` · `Provider` — see below |
 | Criticality | Select | 🔴 Critical · 🟠 Important · 🟢 Low |
 | Status | Select | `Active` · `Legacy` · `Deprecated` — see below |
 | Last edited time | Built-in | Free staleness signal — if it's old, the entry probably needs a look |
+
+| Category | Examples |
+|---|---|
+| `Database` | PostgreSQL, MySQL, MongoDB, Oracle DB |
+| `Messaging` | Kafka, RabbitMQ, Amazon SQS |
+| `CI/CD` | GitLab CI, Jenkins, GitHub Actions |
+| `Cloud` | AWS, GCP, Azure |
+| `Infra/Platform` | Kubernetes, Terraform, Ansible, HashiCorp Vault, Rundeck, Ansible AWX, Dollar Universe, IBM AS/400 |
+| `Provider` | Datadog, PagerDuty, Okta |
+
+Not a strict taxonomy — `Infra/Platform` in particular spans everything from a modern orchestrator (Kubernetes) to a decades-old midrange system (AS/400), and that's fine: the field only needs to answer "roughly what is this," not draw a precise line.
 
 | Value | Meaning |
 |---|---|
