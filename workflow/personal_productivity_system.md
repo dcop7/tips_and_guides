@@ -282,7 +282,7 @@ Forte's original model treats Archive as a place you move things to — a Projec
 The better move for anything backed by a database: **let a Status value do the archiving, and split the view instead of moving the row.**
 
 - Projects already has a `Done` status. One view filters it out (`Status is not Done`) for the day-to-day list; a second view filters for it (`Status is Done`) as a running record of everything shipped — still filterable by Team, still sortable by date, still fully structured.
-- Service Catalog already works this way, without ever being framed as a rule: a system moves to `Deprecated` or `Being Phased Out` and disappears from the default "Active" view without ever leaving the database.
+- Service Catalog already works this way, without ever being framed as a rule: a system moves to `Deprecated` and disappears from the default working view (`Status is not Deprecated`, which still shows `Legacy` — it's frozen, not gone) without ever leaving the database.
 
 The physical Archive folder is still the right destination for things that *don't* have a Status field of their own to retire into — an Area that stops being relevant, a Resource page that goes stale, anything living as a plain page rather than a database row. For anything structured, the database itself is the archive; a view is just a lens on it.
 
@@ -495,11 +495,16 @@ Usage rule: one row per recurring **series** (never per occurrence) — the page
 |---|---|---|
 | Name | Title | The system or asset's name |
 | Team | Relation → Teams | |
-| Category | Select | e.g. `Database` · `Messaging` · `CI/CD` · `Cloud` · `Internal Tool` |
+| Category | Select | e.g. `Database` · `Messaging` · `CI/CD` · `Cloud` · `Internal Tool` · `External provider` |
 | Criticality | Select | 🔴 Critical · 🟠 Important · 🟢 Low |
-| Status | Select | `Active` · `Deprecated` · `Being Phased Out` |
-| Last Reviewed | Date | Manual — means "a person confirmed this is accurate," not just "something changed" |
-| Last edited time | Built-in | Supplementary — a cheap automatic backstop; if both dates are old, the entry is almost certainly stale |
+| Status | Select | `Active` · `Legacy` · `Deprecated` — see below |
+| Last edited time | Built-in | Free staleness signal — if it's old, the entry probably needs a look |
+
+| Value | Meaning |
+|---|---|
+| `Active` | In use and still being built on — new capabilities can go into it |
+| `Legacy` | Still in use, still depended on — but frozen. Nothing new gets added; it's kept running, not grown |
+| `Deprecated` | No longer used. Nothing live depends on it anymore |
 
 Page body, with four fixed sections: *Known Limitations*, *Common Issues & Fixes*, *Improvement Ideas*, *Useful Links*.
 
@@ -553,7 +558,7 @@ flowchart LR
 
 | Database | Cadence | What happens |
 |---|---|---|
-| **Service Catalog** | Monthly-ish | Check `Last Reviewed` on a few entries, starting with the oldest. Update or flag anything stale. |
+| **Service Catalog** | Monthly-ish | Sort by `Last edited time`, oldest first. Open a few entries, update or flag anything stale. |
 | **Someday/Ideas** | Quarterly | Skim the list, sorted by `Created time`. Drop anything that's clearly not going anywhere; leave the rest. This is the one thing standing between the database and slowly becoming a graveyard of ideas nobody revisits. |
 | **Roadmap** | Quarterly | Recheck anything still sitting on a rough `Horizon` — does it still feel right, has anything become concrete enough to earn a real `Year`? |
 
@@ -568,7 +573,7 @@ Both rituals run off a recurring Todoist task as their trigger — neither depen
 3. **The title identifies the row on its own** — without needing to open the page.
 4. **Rich content lives in the page body**, never in a property — properties are for filtering, not for narrating.
 5. **Two or three views cover almost everything** — one filtered for daily use, one grouped for a bird's-eye view, one unfiltered for the rare full audit.
-6. **Let Notion's built-in Created time and Last edited time do free work.** Both cost nothing to add and nothing to maintain — Notion fills them in automatically, with no discipline required. Add **Created time** wherever "how long has this existed" is useful context — Projects, Roadmap, and Someday/Ideas all benefit from it. Prefer **Last edited time** over a manual "Last updated" field whenever editing the page *is* the update, as with Meetings and 1:1 Meetings — a manual field there only duplicates what Notion already tracks for free. Reserve a manual date field for a signal Notion can't infer on its own, like Service Catalog's Last Reviewed, which means "a person deliberately confirmed this is still accurate," not just "something changed."
+6. **Let Notion's built-in Created time and Last edited time do free work.** Both cost nothing to add and nothing to maintain — Notion fills them in automatically, with no discipline required. Add **Created time** wherever "how long has this existed" is useful context — Projects, Roadmap, and Someday/Ideas all benefit from it. Prefer **Last edited time** over a manual "Last updated" field whenever editing the page *is* the update, as with Meetings and 1:1 Meetings — a manual field there only duplicates what Notion already tracks for free. Reserve a manual date field for a signal Notion genuinely can't infer on its own — "a person deliberately confirmed this is still accurate" is a different fact from "something changed," and only the first one is worth paying for with a field of its own. Most of the time, though, Last edited time is close enough on its own: none of the databases in this system carry a separate manual review date, because the discipline of keeping one up to date usually costs more than the extra precision is worth.
 7. **Before adding anything — a database, a Relation, even a single property — name the concrete question it answers today.** Not a question you might have someday; one you actually have right now. If you can't name it, the thing you're about to add is decoration, not structure, no matter how small it looks. This is the golden rule from Part 3 applied one level down, to individual fields and not just whole databases — it's the same discipline that keeps Todoist's Labels to a single, deliberate exception (Part 1) and keeps Roadmap's `Year` optional (Part 5) instead of forced.
 
 If the rows in a database start needing very different fields from one another, that's a sign it should be two databases — or not a database at all.
