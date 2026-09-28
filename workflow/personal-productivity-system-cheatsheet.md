@@ -35,7 +35,7 @@ flowchart TD
 | Naming rule | **Always start with a verb** — "Schedule X," not "X" (exception: mother tasks, below) |
 | Labels | None, except `@Projects` — the one exception, on mother tasks only (below) |
 
-`@waiting`/`@quick`/`@email` were cut for not earning their tagging cost at capture time. Todoist's "Projects" here just means a plain container (`#Work`/`#Personal`); it's not the same thing as a GTD/PARA Project, which lives in Notion (Part 7). `@Projects` reuses that word for the Label on purpose — the overlap is acknowledged, not an oversight.
+Todoist's "Projects" here just means a plain container (`#Work`/`#Personal`); it's not the same thing as a GTD/PARA Project, which lives in Notion (Part 7). `@Projects` reuses that word for the Label on purpose — worth renaming if that ever causes real confusion.
 
 **Type it all in one line:** `Schedule vendor meeting #work tomorrow at 8 p1` → task name + project tag + due date/time + priority, parsed from a single line, no extra clicks. Skip the date entirely when there isn't a real one — an undated task just sits on the list.
 
@@ -44,6 +44,12 @@ GTD loop this maps to: **Capture** (quick-add) → **Clarify** (verb-first namin
 ### Linking a task to a Notion Project: the exception, not the rule
 
 Most tasks stand alone — a small reminder like "Mention new deployment process to Team B" needs no Project link at all. That's the default. Only a genuine, multi-session Notion Project gets the pattern below, and only while it's `Now`.
+
+```mermaid
+flowchart LR
+    Mother["☐ Mother task<br/>@Projects · no due date"] --> Sub["☐ Subtask"]
+    Mother -->|"name + URL in description"| Row[("🗂️ Projects DB<br/>Status: Now")]
+```
 
 | Rule | Detail |
 |---|---|
