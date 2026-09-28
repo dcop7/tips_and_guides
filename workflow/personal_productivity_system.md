@@ -170,6 +170,7 @@ The solid arrow is the only stored link, and it only runs one way: the mother ta
 - **Linking is one-directional and simple.** The mother task's name matches the Project's name in Notion, and the Notion page's URL goes in the mother task's description. There's no link back from Notion to Todoist — Principle #7 (Part 9) asks what concrete question a piece of structure answers today, and a reverse link doesn't answer one: nobody opens a Notion Project wondering which Todoist task points to it.
 - **Lifecycle follows the Project's Status.** The mother task gets created the moment a Project's Status moves to `Now`, and gets checked off when Status moves to `Done`. While `On Hold`, the mother task stays, but its subtasks lose their due dates until the Project moves again — an `On Hold` Project shouldn't keep nudging you with something that still looks actionable.
 - **The mother task is the one exception to verb-first naming** (above): it's named after the Project, not an action, because it's a container rather than a next step. Its subtasks follow the normal rule and start with a verb, same as every other task.
+- **Priority carries over, by hand.** If the Project's own `Priority` (Part 7) is set, the mother task gets the matching Todoist priority when it's created. It's copied once, not kept in sync automatically — same manual, one-directional spirit as the link itself. Most Projects carry no Priority at all, so most mother tasks stay unflagged too.
 - **The cost is a second place to keep in sync — mitigated by folding it into the existing Friday review** (Part 8): open the `Work-Projects` Todoist Project and confirm every `Now` Project still has at least one live subtask, and every Project that turned `Done` this week has its mother task checked off. A roughly one-minute check, no separate ritual — just one more line in a review that already happens.
 
 > **[Assumption to verify]** Todoist's free tier may limit subtasks, or due dates on subtasks. This hasn't been confirmed in-app and is worth checking before relying on the pattern.
@@ -425,6 +426,7 @@ Projects that don't belong to any one team are simply left with the Team field e
 |---|---|---|
 | Name | Title | The initiative's name |
 | Status | Select | `Now` · `Next` · `Later` · `On Hold` · `Done` — see below |
+| Priority | Select | Optional — `P1` · `P2` · `P3`, blank by default. Mirrors Todoist's own Priority (Part 1): only set when one `Now` Project is genuinely more urgent than the rest, not as a habit |
 | Target | Text | Optional — use for a meaningful target or timeframe (e.g. "2027", "Q2 2027", "Dec 2026") |
 | Risk | Select | 🟢 · 🟠 · 🔴 |
 | Team | Relation → Teams | Multi-relation for cross-team projects; left blank for team-agnostic ones |
