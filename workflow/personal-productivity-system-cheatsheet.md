@@ -146,7 +146,7 @@ graph TD
 | Database | Lives in | ⭐ Favorited | Key fields | One-liner |
 |---|---|---|---|---|
 | **Projects** | Top level, alone | — (it IS a top-level category) | Status, Risk, Team, Target | Anything with an end |
-| **Teams** | Areas, direct | ✓ | Name only | The hub everything else relates to |
+| **Teams** | Areas, direct | ✓ | Name, Full Name, Notes | The hub everything else relates to |
 | **Persons** | Areas → People Management | ✓ | Team, Role, Last 1:1 | Who you work with |
 | **1:1 Meetings** | Areas → People Management | ✓ | Team | One row per person, log grows forever |
 | **Meetings** | Areas, direct | ✓ | Type, Project, Team | Recurring + one-off, together |
