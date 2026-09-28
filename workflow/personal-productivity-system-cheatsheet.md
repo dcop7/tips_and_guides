@@ -32,13 +32,31 @@ flowchart TD
 | Projects (simple containers) | `#Work` · `#Personal` |
 | Priority | `p1`/`p2`/`p3` — only when genuinely elevated; default (no flag) otherwise |
 | Saved filters | `Today` (query: `overdue \| today`) · `Due in 7 days` (query: `due before: in 7 days`) — both catch overdue |
-| Naming rule | **Always start with a verb** — "Schedule X," not "X" |
+| Naming rule | **Always start with a verb** — "Schedule X," not "X" (exception: mother tasks, below) |
+| Labels | None, except `@Projects` — the one exception, on mother tasks only (below) |
 
-No Labels at all — `@waiting`/`@quick`/`@email` were cut for not earning their tagging cost. Todoist's "Projects" here just means a plain container (`#Work`/`#Personal`); it's not the same thing as a GTD/PARA Project, which lives in Notion (Part 7).
+`@waiting`/`@quick`/`@email` were cut for not earning their tagging cost at capture time. Todoist's "Projects" here just means a plain container (`#Work`/`#Personal`); it's not the same thing as a GTD/PARA Project, which lives in Notion (Part 7). `@Projects` reuses that word for the Label on purpose — the overlap is acknowledged, not an oversight.
 
-**Type it all in one line:** `Schedule vendor meeting #work tomorrow at 8 p1` → task name + project + due date/time + priority, parsed from a single line, no extra clicks. Skip the date entirely when there isn't a real one — an undated task just sits on the list.
+**Type it all in one line:** `Schedule vendor meeting #work tomorrow at 8 p1` → task name + project tag + due date/time + priority, parsed from a single line, no extra clicks. Skip the date entirely when there isn't a real one — an undated task just sits on the list.
 
 GTD loop this maps to: **Capture** (quick-add) → **Clarify** (verb-first naming) → **Organize** (Projects as containers) → **Reflect** (rituals) → **Engage** (saved filters).
+
+### Linking a task to a Notion Project: the exception, not the rule
+
+Most tasks stand alone — a small reminder like "Mention new deployment process to Team B" needs no Project link at all. That's the default. Only a genuine, multi-session Notion Project gets the pattern below, and only while it's `Now`.
+
+| Rule | Detail |
+|---|---|
+| Trigger | Only `Now` Projects get a mother task — created when Status moves to `Now`, checked off when it moves to `Done` |
+| Due date | Mother task: never. Subtasks: only when real |
+| Scope | Only the **next** subtask exists at a time — future phases stay as notes in the Notion page, not a pre-loaded subtask stack |
+| Link | One-directional: mother task name = Project name; Notion page URL goes in the mother task's **description** — no link back from Notion |
+| Label | `@Projects` — the one Label in the whole system, applied only to mother tasks, so they're filterable at a glance |
+| On Hold | Mother task stays; subtasks lose their due dates until the Project moves again |
+| Naming | Mother task is the one exception to verb-first naming (it's a container); subtasks still start with a verb |
+| Upkeep | Friday review, `@Projects` filter (~1 min): every `Now` Project has a live subtask, every newly `Done` Project's mother task is checked off |
+
+> **[Assumption to verify]** Free-tier Todoist may limit subtasks or subtask due dates — not yet confirmed in-app.
 
 ---
 
@@ -121,7 +139,7 @@ graph TD
 
 | Database | Lives in | ⭐ Favorited | Key fields | One-liner |
 |---|---|---|---|---|
-| **Projects** | Top level, alone | — (it IS a top-level category) | Status, Risk, Team, Target Date | Anything with an end date |
+| **Projects** | Top level, alone | — (it IS a top-level category) | Status, Risk, Team, Target | Anything with an end |
 | **Teams** | Areas, direct | ✓ | Name only | The hub everything else relates to |
 | **Persons** | Areas → People Management | ✓ | Team, Role, Last 1:1 | Who you work with |
 | **1:1 Meetings** | Areas → People Management | ✓ | Team | One row per person, log grows forever |
@@ -155,10 +173,10 @@ flowchart LR
 
 | When | Do |
 |---|---|
-| Morning | Todoist "Due in 7 days" filter → pick the notebook's Big 3 |
+| Morning | Todoist "Due in 7 days" filter (overdue included) → pick the notebook's Big 3 |
 | During the day | Mark symbols as shortlisted items close |
 | End of day | Close symbols (`✓`/`→`/`✕`) · `✕` items get cleared from Todoist too · optionally draft tomorrow |
-| Friday (15 min) | Open "Due in 7 days" filter, nudge stalled/delegated items → update Project statuses. Nothing else. |
+| Friday (15 min) | Open "Due in 7 days" filter, nudge stalled/delegated items → update Project statuses. Open `@Projects` filter, check `Now` Projects have a live subtask and newly `Done` Projects' mother tasks are checked off (~1 min). Nothing else. |
 | Every 4–6 weeks | Service Catalog (check oldest `Last Reviewed`) · Someday/Ideas (prune) · Roadmap (recheck Horizons) |
 
 ---
