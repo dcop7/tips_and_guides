@@ -150,7 +150,7 @@ graph TD
 | **Persons** | Areas → People Management | ✓ | Team, Role, Last 1:1 | Who you work with |
 | **1:1 Meetings** | Areas → People Management | ✓ | Team | One row per person, log grows forever |
 | **Meetings** | Areas, direct | ✓ | Type, Project, Team | Recurring + one-off, together |
-| **Service Catalog** | Areas, direct | ✓ | Team, Criticality, Status, Last Reviewed | Living memory of systems you own |
+| **Service Catalog** | Areas, direct | ✓ | Team, Criticality, Status | Living memory of systems you own |
 | **Roadmap** | Areas, direct | ✓ | Horizon, Year (optional), Status, Team | One DB, every year, never recreated |
 | **Someday / Ideas** | Resources | ✗ (checked occasionally, on purpose) | Tags | Loose ideas, not yet committed |
 
@@ -161,7 +161,7 @@ graph TD
 | Thing | How it "archives" |
 |---|---|
 | A **Project** | `Status → Done`. Stays in the DB. Split into two views: active / done. |
-| A **Service Catalog** entry | `Status → Deprecated` or `Being Phased Out`. Stays in the DB. |
+| A **Service Catalog** entry | `Status → Deprecated`. Stays in the DB. (`Legacy` stays in the working view — still in use, just frozen.) |
 | A **Someday/Ideas** row | Graduates into a Project, then **gets deleted**. No record kept — the Project is the record now. |
 | Anything living as a **plain page** (no Status field) | Physically moved to the **Archive** folder. |
 
@@ -183,7 +183,7 @@ flowchart LR
 | During the day | Mark symbols as shortlisted items close |
 | End of day | Close symbols (`✓`/`→`/`✕`) · `✕` items get cleared from Todoist too · optionally draft tomorrow |
 | Friday (15 min) | Open "Due in 7 days" filter, nudge stalled/delegated items → update Project statuses. Open `#Work-Projects`, check `Now` Projects have a live subtask and newly `Done` Projects' mother tasks are checked off (~1 min). Nothing else. |
-| Every 4–6 weeks | Service Catalog (check oldest `Last Reviewed`) · Someday/Ideas (prune) · Roadmap (recheck Horizons) |
+| Every 4–6 weeks | Service Catalog (check oldest `Last edited time`) · Someday/Ideas (prune) · Roadmap (recheck Horizons) |
 
 ---
 
