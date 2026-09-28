@@ -118,9 +118,9 @@ Todoist's "Projects" feature just means a simple container here — a folder to 
 
 - `#Work` and `#Personal` — the only two containers, both flat. No sub-projects, no nesting.
 
-No Labels are used for ordinary capture. `@waiting`, `@quick`, and `@email` looked useful on paper, but asked for more tagging discipline at capture time than they paid back in practice; removing them applies the same rule as everywhere else in this system — structure that isn't earning its cost gets cut. The one real thing `@waiting` protected against — a delegated task quietly falling through the cracks — moves to the weekly review instead (Part 8): a single fast scan, done once a week, rather than a tag maintained on every task all week long.
+No Labels are used for ordinary capture — every task is written down free of tagging overhead. A delegated or stalled task is caught during the weekly review instead (Part 8): a single fast scan, done once a week, rather than a tag maintained on every task all week long.
 
-The single exception is `@Projects`, applied only to mother tasks (below) — a handful of tasks touched a few times a month, not a habit at every capture, so it doesn't reopen the cost this section just closed. (It reuses the same word Todoist uses for its own containers — a deliberate, acknowledged overlap rather than an oversight; worth renaming if it ever actually causes confusion.)
+The single exception is `@Projects`, applied only to mother tasks (below) — a handful of tasks touched a few times a month, not a habit at every capture, so it stays cheap. It reuses the same word Todoist uses for its own containers; worth renaming if that ever causes real confusion in practice.
 
 ### Priority: only when it's actually true
 
@@ -140,6 +140,25 @@ A saved filter trades a repeated mental query for a single tap.
 Most tasks in Todoist have nothing to do with any Notion Project at all — and that's the normal case, not a gap in the system. A quick, standalone task like **"Mention the new deployment process to Team B"** doesn't need a Project, a subtask, or any link back to Notion; it's just a task, captured under `#Work` and cleared like any other. Forcing every task into some larger structure before it's earned one would be the same anti-pattern the golden rule already warns against (Part 3) — just applied to Todoist instead of Notion.
 
 A small number of tasks, though, genuinely correspond to a Notion Project — the "Migrate the primary database to a new provider" kind of work, spanning many sessions, that needs a Todoist presence too. For those, and only those, this system uses one lightweight pattern: a single **mother task** per Project, holding **subtasks** for whatever's next.
+
+```mermaid
+flowchart LR
+    subgraph Todoist["📋 Todoist — #Work"]
+        direction TB
+        Standalone["☐ Standalone task<br/>no Project, no link"]
+        Mother["☐ Mother task<br/>@Projects Label · no due date"]
+        Sub["☐ Subtask<br/>next actionable step, due when real"]
+        Mother --> Sub
+    end
+    subgraph NotionDB["🗂️ Notion — Projects DB"]
+        direction TB
+        Row["Project row<br/>Status: Now"]
+    end
+    Mother -->|"name matches · Notion URL in description"| Row
+    Row -.->|"Status Now → Done (you create/check off the mother task by hand)"| Mother
+```
+
+The solid arrow is the only stored link, and it only runs one way: the mother task's name and description point at the Notion row, nothing on the Notion side points back. The dashed arrow isn't a link at all — it's the lifecycle trigger from the bullets below: when a Project's Status changes, you create or check off the mother task yourself. The standalone task sits outside this diagram entirely, which is the point — most tasks never touch it.
 
 - **Only `Now` Projects get a mother task.** A Project still `Next` or `Later` doesn't have one yet — creating it earlier would be exactly the premature structure the golden rule warns against, just with the mother task standing in for the "empty folder."
 - **The mother task never carries a due date.** Dates live on subtasks, and only when a subtask genuinely has one — the mother task is a container, not a deadline.
@@ -191,6 +210,16 @@ The creator of the Bullet Journal method, Ryder Carroll, is explicit about this:
 | `✕` | No longer needed — cleared from Todoist too | Evening |
 
 The arrow and the cross separate two different reasons a shortlisted item doesn't close out. `→` means it's still a live Todoist task, simply not today's — there's nothing to *do*, it stays exactly where it already was and can get picked again tomorrow if it's still relevant. `✕` means the opposite: the task itself is done for, and that needs to be reflected back in Todoist too, or it'll keep resurfacing on a list it no longer belongs on. Either way, Todoist stays the single source of truth for which tasks exist — the notebook only ever tracks how today's chosen three went.
+
+```mermaid
+flowchart LR
+    Filter["📋 Todoist<br/>Due in 7 days filter"] -->|"pick 3, each morning"| Big3["📓 Notebook<br/>Big 3 — □ □ □"]
+    Big3 -->|"✓ done"| A["Checked off in Todoist"]
+    Big3 -->|"→ still open"| B["Stays in Todoist, untouched"]
+    Big3 -->|"✕ no longer needed"| C["Cleared from Todoist"]
+```
+
+The notebook never holds a task Todoist doesn't already have — every arrow out of the Big 3 either closes, leaves alone, or clears the same task back in Todoist. Nothing new gets created on the notebook side.
 
 ### An optional addition: drafting tomorrow
 
@@ -341,6 +370,17 @@ Because a roadmap can span more than one team, it lives directly in Areas, along
 A specific year is also often less certain than it looks. Something aimed at "2028" is frequently really just *"later than next year, not worth pinning down further yet"* — forcing a firm Year onto it borrows the same false precision that Now/Next/Later already exists to avoid for Projects. The fix is the same one: a `Horizon` field (`This year` / `Next year` / `Someday`) carries the honest, low-confidence version by default, and `Year` only gets filled in once a specific year is a real decision, not a guess dressed up as one.
 
 This is the actionability flow from Part 3 made concrete: a roadmap item starts out closer to a Resource — an idea with more weight behind it than Someday/Maybe, but nothing committed yet — and crosses into Projects the moment Status flips to `In Progress` and a Related Project gets linked. The Roadmap row doesn't disappear when that happens; it just sits there as the record of *when the idea became real work*, while the Project itself carries the week-to-week execution.
+
+Someday/Ideas and Roadmap are two separate on-ramps into Projects, not one pipeline you always pass through — a fully-formed idea can jump straight from Someday/Ideas to a Project, while a bigger, longer-horizon initiative usually sits in Roadmap first:
+
+```mermaid
+flowchart LR
+    Idea["💡 Someday / Ideas<br/>(Resources)"] -->|you decide to act| Proj[("🗂️ Projects DB<br/>Status: Later / Next / Now")]
+    Road["🗓️ Roadmap<br/>Horizon: Someday / Next year / This year"] -->|"Status → In Progress<br/>Related Project linked"| Proj
+    Proj -->|Status → Done| Fin["Stays in Projects DB<br/>Status = Done"]
+```
+
+Both arrows into Projects are one-directional and manual, same as the Todoist mother-task link (Part 1) — nothing here auto-promotes anything; a person decides each time.
 
 ### Fast access without breaking the classification: Favorites
 
@@ -522,6 +562,6 @@ Both rituals run off a recurring Todoist task as their trigger — neither depen
 4. **Rich content lives in the page body**, never in a property — properties are for filtering, not for narrating.
 5. **Two or three views cover almost everything** — one filtered for daily use, one grouped for a bird's-eye view, one unfiltered for the rare full audit.
 6. **Let Notion's built-in Created time and Last edited time do free work.** Both cost nothing to add and nothing to maintain — Notion fills them in automatically, with no discipline required. Add **Created time** wherever "how long has this existed" is useful context — Projects, Roadmap, and Someday/Ideas all benefit from it. Prefer **Last edited time** over a manual "Last updated" field whenever editing the page *is* the update, as with Meetings and 1:1 Meetings — a manual field there only duplicates what Notion already tracks for free. Reserve a manual date field for a signal Notion can't infer on its own, like Service Catalog's Last Reviewed, which means "a person deliberately confirmed this is still accurate," not just "something changed."
-7. **Before adding anything — a database, a Relation, even a single property — name the concrete question it answers today.** Not a question you might have someday; one you actually have right now. If you can't name it, the thing you're about to add is decoration, not structure, no matter how small it looks. This is the golden rule from Part 3 applied one level down, to individual fields and not just whole databases — it's the same discipline that removed Todoist's `@waiting` label (Part 1) and keeps Roadmap's `Year` optional (Part 5) instead of forced.
+7. **Before adding anything — a database, a Relation, even a single property — name the concrete question it answers today.** Not a question you might have someday; one you actually have right now. If you can't name it, the thing you're about to add is decoration, not structure, no matter how small it looks. This is the golden rule from Part 3 applied one level down, to individual fields and not just whole databases — it's the same discipline that keeps Todoist's Labels to a single, deliberate exception (Part 1) and keeps Roadmap's `Year` optional (Part 5) instead of forced.
 
 If the rows in a database start needing very different fields from one another, that's a sign it should be two databases — or not a database at all.
