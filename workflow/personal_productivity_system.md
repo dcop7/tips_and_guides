@@ -448,7 +448,11 @@ Projects that don't belong to any one team are simply left with the Team field e
 
 | Field | Type | Notes |
 |---|---|---|
-| Name | Title | e.g. Team A, Team B, Team C |
+| Name | Title | Short form — this is what shows up everywhere the team appears via Relation, so it stays compact (e.g. "Data Mgmt") |
+| Full Name | Text | The spelled-out version (e.g. "Data Management") — for the moments the abbreviation alone isn't enough |
+| Notes | Text | One line, visible in table/board view without opening the page — an alias, a former name, anything worth recognizing at a glance (e.g. "Old DBAs") |
+
+`Notes` here is deliberately a one-liner, not a place for real content — that still belongs in the page body (Part 6), which every row already has for free. A property earns its keep only when it answers something a glance at the table should show without opening the page; anything longer goes back to Principle #4 (Part 9).
 
 ### Persons
 *Inside Areas → People Management. Favorited.*
