@@ -29,15 +29,15 @@ flowchart TD
 
 | Element | Values |
 |---|---|
-| Projects (simple containers) | `#Work` · `#Personal` |
+| Projects (simple containers) | `#Personal` · `#Work-Tasks` · `#Work-Projects` |
 | Priority | `p1`/`p2`/`p3` — only when genuinely elevated; default (no flag) otherwise |
 | Saved filters | `Today` (query: `overdue \| today`) · `Due in 7 days` (query: `due before: in 7 days`) — both catch overdue |
 | Naming rule | **Always start with a verb** — "Schedule X," not "X" (exception: mother tasks, below) |
-| Labels | None, except `@Projects` — the one exception, on mother tasks only (below) |
+| Labels | None |
 
-Todoist's "Projects" here just means a plain container (`#Work`/`#Personal`); it's not the same thing as a GTD/PARA Project, which lives in Notion (Part 7). `@Projects` reuses that word for the Label on purpose — worth renaming if that ever causes real confusion.
+Todoist's "Projects" here just means a plain container; it's not the same thing as a GTD/PARA Project, which lives in Notion (Part 7). `Work-Tasks` is ordinary work tasks; `Work-Projects` is only mother tasks and their subtasks (below) — the split does the job a Label would otherwise do. Hyphenated, no spaces — Todoist's quick-add reads `#ProjectName` up to the next space.
 
-**Type it all in one line:** `Schedule vendor meeting #work tomorrow at 8 p1` → task name + project tag + due date/time + priority, parsed from a single line, no extra clicks. Skip the date entirely when there isn't a real one — an undated task just sits on the list.
+**Type it all in one line:** `Schedule vendor meeting #Work-Tasks tomorrow at 8 p1` → task name + project tag + due date/time + priority, parsed from a single line, no extra clicks. Skip the date entirely when there isn't a real one — an undated task just sits on the list.
 
 GTD loop this maps to: **Capture** (quick-add) → **Clarify** (verb-first naming) → **Organize** (Projects as containers) → **Reflect** (rituals) → **Engage** (saved filters).
 
@@ -47,7 +47,7 @@ Most tasks stand alone — a small reminder like "Mention new deployment process
 
 ```mermaid
 flowchart LR
-    Mother["☐ Mother task<br/>@Projects · no due date"] --> Sub["☐ Subtask"]
+    Mother["☐ Mother task<br/>#Work-Projects · no due date"] --> Sub["☐ Subtask"]
     Mother -->|"name + URL in description"| Row[("🗂️ Projects DB<br/>Status: Now")]
 ```
 
@@ -57,10 +57,10 @@ flowchart LR
 | Due date | Mother task: never. Subtasks: only when real |
 | Scope | Only the **next** subtask exists at a time — future phases stay as notes in the Notion page, not a pre-loaded subtask stack |
 | Link | One-directional: mother task name = Project name; Notion page URL goes in the mother task's **description** — no link back from Notion |
-| Label | `@Projects` — the one Label in the whole system, applied only to mother tasks, so they're filterable at a glance |
+| Container | Filed under `#Work-Projects`, never `#Work-Tasks` — the container itself marks it, no Label needed |
 | On Hold | Mother task stays; subtasks lose their due dates until the Project moves again |
 | Naming | Mother task is the one exception to verb-first naming (it's a container); subtasks still start with a verb |
-| Upkeep | Friday review, `@Projects` filter (~1 min): every `Now` Project has a live subtask, every newly `Done` Project's mother task is checked off |
+| Upkeep | Friday review, open `#Work-Projects` (~1 min): every `Now` Project has a live subtask, every newly `Done` Project's mother task is checked off |
 
 > **[Assumption to verify]** Free-tier Todoist may limit subtasks or subtask due dates — not yet confirmed in-app.
 
@@ -182,7 +182,7 @@ flowchart LR
 | Morning | Todoist "Due in 7 days" filter (overdue included) → pick the notebook's Big 3 |
 | During the day | Mark symbols as shortlisted items close |
 | End of day | Close symbols (`✓`/`→`/`✕`) · `✕` items get cleared from Todoist too · optionally draft tomorrow |
-| Friday (15 min) | Open "Due in 7 days" filter, nudge stalled/delegated items → update Project statuses. Open `@Projects` filter, check `Now` Projects have a live subtask and newly `Done` Projects' mother tasks are checked off (~1 min). Nothing else. |
+| Friday (15 min) | Open "Due in 7 days" filter, nudge stalled/delegated items → update Project statuses. Open `#Work-Projects`, check `Now` Projects have a live subtask and newly `Done` Projects' mother tasks are checked off (~1 min). Nothing else. |
 | Every 4–6 weeks | Service Catalog (check oldest `Last Reviewed`) · Someday/Ideas (prune) · Roadmap (recheck Horizons) |
 
 ---
