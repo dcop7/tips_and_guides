@@ -29,15 +29,21 @@ flowchart TD
 
 | Element | Values |
 |---|---|
-| Projects (simple containers) | `#Personal` · `#Work-Tasks` · `#Work-Projects` |
+| Projects (simple containers) | `#Personal` · `#Work-General` · `#Work-Projects` |
 | Priority | `p1`/`p2`/`p3` — only when genuinely elevated; default (no flag) otherwise |
 | Saved filters | `Today` (query: `overdue \| today`) · `Due in 7 days` (query: `due before: in 7 days`) — both catch overdue |
 | Naming rule | **Always start with a verb** — "Schedule X," not "X" (exception: mother tasks, below) |
 | Labels | None |
 
-Todoist's "Projects" here just means a plain container; it's not the same thing as a GTD/PARA Project, which lives in Notion (Part 7). `Work-Tasks` is ordinary work tasks; `Work-Projects` is only mother tasks and their subtasks (below) — the split does the job a Label would otherwise do. Hyphenated, no spaces — Todoist's quick-add reads `#ProjectName` up to the next space.
+Todoist's "Projects" here just means a plain container; it's not the same thing as a GTD/PARA Project, which lives in Notion (Part 7). `Work-General` is ordinary work tasks; `Work-Projects` is only mother tasks and their subtasks (below) — the split does the job a Label would otherwise do. Hyphenated, no spaces — Todoist's quick-add reads `#ProjectName` up to the next space.
 
-**Type it all in one line:** `Schedule vendor meeting #Work-Tasks tomorrow at 8 p1` → task name + project tag + due date/time + priority, parsed from a single line, no extra clicks. Skip the date entirely when there isn't a real one — an undated task just sits on the list.
+| Container | Description |
+|---|---|
+| `#Personal` | Anything outside work |
+| `#Work-General` | Ordinary work tasks, no Project link |
+| `#Work-Projects` | Mother tasks linked to Notion Projects only |
+
+**Type it all in one line:** `Schedule vendor meeting #Work-General tomorrow at 8 p1` → task name + project tag + due date/time + priority, parsed from a single line, no extra clicks. Skip the date entirely when there isn't a real one — an undated task just sits on the list.
 
 GTD loop this maps to: **Capture** (quick-add) → **Clarify** (verb-first naming) → **Organize** (Projects as containers) → **Reflect** (rituals) → **Engage** (saved filters).
 
@@ -57,7 +63,7 @@ flowchart LR
 | Due date | Mother task: never. Subtasks: only when real |
 | Scope | Only the **next** subtask exists at a time — future phases stay as notes in the Notion page, not a pre-loaded subtask stack |
 | Link | One-directional: mother task name = Project name; Notion page URL goes in the mother task's **description** — no link back from Notion |
-| Container | Filed under `#Work-Projects`, never `#Work-Tasks` — the container itself marks it, no Label needed |
+| Container | Filed under `#Work-Projects`, never `#Work-General` — the container itself marks it, no Label needed |
 | On Hold | Mother task stays; subtasks lose their due dates until the Project moves again |
 | Naming | Mother task is the one exception to verb-first naming (it's a container); subtasks still start with a verb |
 | Priority | Copied once from the Project's own Priority field (Part 7) when the mother task is created — not kept in sync after that |
