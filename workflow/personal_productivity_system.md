@@ -495,7 +495,7 @@ Usage rule: one row per recurring **series** (never per occurrence) — the page
 |---|---|---|
 | Name | Title | The system or asset's name |
 | Team | Relation → Teams | |
-| Category | Select | e.g. `Database` · `Messaging` · `CI/CD` · `Cloud` · `Internal Tool` · `External provider` |
+| Category | Select | e.g. `Database` · `Messaging` · `CI/CD` · `Cloud` · `Infra/Platform` (Kubernetes, Terraform, Ansible, Vault…) · `Provider` |
 | Criticality | Select | 🔴 Critical · 🟠 Important · 🟢 Low |
 | Status | Select | `Active` · `Legacy` · `Deprecated` — see below |
 | Last edited time | Built-in | Free staleness signal — if it's old, the entry probably needs a look |
