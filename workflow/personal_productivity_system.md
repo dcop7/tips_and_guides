@@ -11,9 +11,10 @@ It is not a diagnosis or a changelog — it's a snapshot of a working system, de
   - [What GTD actually says](#what-gtd-actually-says)
   - [Capture: the step Todoist is built for](#capture-the-step-todoist-is-built-for)
   - [Clarify: verb-first naming forces the decision at capture time](#clarify-verb-first-naming-forces-the-decision-at-capture-time)
-  - [Organize: Projects as containers, no Labels](#organize-projects-as-containers-no-labels)
+  - [Organize: Projects as containers, (almost) no Labels](#organize-projects-as-containers-almost-no-labels)
   - [Priority: only when it's actually true](#priority-only-when-its-actually-true)
   - [Engage: two saved filters, pinned to the top](#engage-two-saved-filters-pinned-to-the-top)
+  - [When a task belongs to a Notion Project: the mother-task pattern](#when-a-task-belongs-to-a-notion-project-the-mother-task-pattern)
   - [Example](#example)
 - [Part 2 — The Notebook: today's focus, made disposable](#part-2--the-notebook-todays-focus-made-disposable)
   - [Philosophy](#philosophy)
@@ -111,13 +112,15 @@ GTD defines a "next action" as a physical, visible activity — not a topic, not
 
 This single habit — always start with a verb — does most of the "Clarify" work for you, right at the moment of capture, so nothing sits half-formed on the list.
 
-### Organize: Projects as containers, no Labels
+### Organize: Projects as containers, (almost) no Labels
 
 Todoist's "Projects" feature just means a simple container here — a folder to file a task into, nothing more. That's different from "a Project" in the GTD or PARA sense (a multi-step initiative with a defined outcome and an end date), which lives in Notion instead (Part 7). The word never carries that heavier meaning inside Todoist — it's used exactly as Todoist itself uses it, a place to file things, not a methodology term:
 
 - `#Work` and `#Personal` — the only two containers, both flat. No sub-projects, no nesting.
 
-No Labels are used at all. `@waiting`, `@quick`, and `@email` looked useful on paper, but asked for more tagging discipline at capture time than they paid back in practice; removing them applies the same rule as everywhere else in this system — structure that isn't earning its cost gets cut. The one real thing `@waiting` protected against — a delegated task quietly falling through the cracks — moves to the weekly review instead (Part 8): a single fast scan, done once a week, rather than a tag maintained on every task all week long.
+No Labels are used for ordinary capture. `@waiting`, `@quick`, and `@email` looked useful on paper, but asked for more tagging discipline at capture time than they paid back in practice; removing them applies the same rule as everywhere else in this system — structure that isn't earning its cost gets cut. The one real thing `@waiting` protected against — a delegated task quietly falling through the cracks — moves to the weekly review instead (Part 8): a single fast scan, done once a week, rather than a tag maintained on every task all week long.
+
+The single exception is `@Projects`, applied only to mother tasks (below) — a handful of tasks touched a few times a month, not a habit at every capture, so it doesn't reopen the cost this section just closed. (It reuses the same word Todoist uses for its own containers — a deliberate, acknowledged overlap rather than an oversight; worth renaming if it ever actually causes confusion.)
 
 ### Priority: only when it's actually true
 
@@ -132,15 +135,37 @@ This doesn't compete with the Big 3 (Part 2). Big 3 is which three things get to
 
 A saved filter trades a repeated mental query for a single tap.
 
+### When a task belongs to a Notion Project: the mother-task pattern
+
+Most tasks in Todoist have nothing to do with any Notion Project at all — and that's the normal case, not a gap in the system. A quick, standalone task like **"Mention the new deployment process to Team B"** doesn't need a Project, a subtask, or any link back to Notion; it's just a task, captured under `#Work` and cleared like any other. Forcing every task into some larger structure before it's earned one would be the same anti-pattern the golden rule already warns against (Part 3) — just applied to Todoist instead of Notion.
+
+A small number of tasks, though, genuinely correspond to a Notion Project — the "Migrate the primary database to a new provider" kind of work, spanning many sessions, that needs a Todoist presence too. For those, and only those, this system uses one lightweight pattern: a single **mother task** per Project, holding **subtasks** for whatever's next.
+
+- **Only `Now` Projects get a mother task.** A Project still `Next` or `Later` doesn't have one yet — creating it earlier would be exactly the premature structure the golden rule warns against, just with the mother task standing in for the "empty folder."
+- **The mother task never carries a due date.** Dates live on subtasks, and only when a subtask genuinely has one — the mother task is a container, not a deadline.
+- **Only the next actionable subtask exists at a time.** The whole plan for a Project isn't pre-loaded into Todoist as a stack of subtasks; future phases stay as notes in the Notion page body until they're actually next, and a new subtask gets added once the previous one closes. A subtask list that tries to mirror the full plan upfront just becomes a second copy of the Notion page — and the two drift out of sync the first time the plan changes.
+- **Linking is one-directional and simple.** The mother task's name matches the Project's name in Notion, and the Notion page's URL goes in the mother task's description. There's no link back from Notion to Todoist — Principle #7 (Part 9) asks what concrete question a piece of structure answers today, and a reverse link doesn't answer one: nobody opens a Notion Project wondering which Todoist task points to it.
+- **Lifecycle follows the Project's Status.** The mother task gets created the moment a Project's Status moves to `Now`, and gets checked off when Status moves to `Done`. While `On Hold`, the mother task stays, but its subtasks lose their due dates until the Project moves again — an `On Hold` Project shouldn't keep nudging you with something that still looks actionable.
+- **The mother task is the one exception to verb-first naming** (above): it's named after the Project, not an action, because it's a container rather than a next step. Its subtasks follow the normal rule and start with a verb, same as every other task.
+- **Marked with the `@Projects` Label** — the one Label used anywhere in this system (Organize, above) — so every mother task is filterable and recognizable at a glance, without opening it to check for a description or a subtask.
+- **The cost is a second place to keep in sync — mitigated by folding it into the existing Friday review** (Part 8): open a saved filter for `@Projects` and confirm every `Now` Project still has at least one live subtask, and every Project that turned `Done` this week has its mother task checked off (and its Label no longer relevant). A roughly one-minute check, no separate ritual — just one more line in a review that already happens.
+
+> **[Assumption to verify]** Todoist's free tier may limit subtasks, or due dates on subtasks. This hasn't been confirmed in-app and is worth checking before relying on the pattern.
+
 ### Example
 
 ```
-☐ Schedule vendor meeting  (p1)           #Work
-☐ Update roadmap slides                   #Work
-☐ Send calendar invite for kickoff        #Work
-☐ Book car service appointment            #Personal
-☐ Confirm attendance for offsite          #Work
+☐ Schedule vendor meeting  (p1)                    #Work
+☐ Update roadmap slides                             #Work
+☐ Send calendar invite for kickoff                  #Work
+☐ Book car service appointment                      #Personal
+☐ Confirm attendance for offsite                    #Work
+☐ Mention new deployment process to Team B          #Work
+☐ Migrate the primary database to a new provider    #Work  @Projects   ← mother task (no due date; Notion Project URL in description)
+    ☐ Draft the migration plan                                         ← subtask, due Friday
 ```
+
+The first six lines are ordinary tasks — including "Mention new deployment process to Team B," a small standalone reminder with no Project behind it, which is the default shape almost everything takes. The last two lines show the exception: a mother task for a `Now` Project, undated, labeled `@Projects`, with a single next-step subtask underneath it.
 
 ---
 
@@ -471,7 +496,7 @@ flowchart LR
 | **Morning** | 2 min | Open Todoist's "Due in 7 days" filter (overdue included). Pick the notebook's Big 3 — use yesterday's draft line if there is one. |
 | **During the day** | — | Notebook stays open. Symbols get marked as shortlisted items close. |
 | **End of day** | 2 min | Close out pending symbols (`✓`, `→`, or `✕`). Anything marked `✕` gets cleared from Todoist too. Optionally, draft tomorrow's first item. |
-| **Friday** | 15 min | Open the "Due in 7 days" filter — anything overdue jumps out immediately. Nudge whatever's stalled or delegated, then update the Status of every active Project. Nothing else — that's the whole point. |
+| **Friday** | 15 min | Open the "Due in 7 days" filter — anything overdue jumps out immediately. Nudge whatever's stalled or delegated, then update the Status of every active Project. Open the `@Projects` filter and check that every `Now` Project still has a live subtask and every newly `Done` Project's mother task is checked off (~1 min). Nothing else — that's the whole point. |
 
 ```mermaid
 flowchart LR
