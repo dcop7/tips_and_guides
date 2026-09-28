@@ -88,7 +88,7 @@ flowchart LR
 |---|---|---|
 | **Capture** | Collect everything that has your attention, immediately, without judging it | Todoist quick-add |
 | **Clarify** | Decide what each captured item actually means and what the next physical action is | Verb-first task naming (below) |
-| **Organize** | File the clarified item where it belongs | Projects as simple containers (`#Personal` / `#Work-Tasks` / `#Work-Projects`) |
+| **Organize** | File the clarified item where it belongs | Projects as simple containers (`#Personal` / `#Work-General` / `#Work-Projects`) |
 | **Reflect** | Review the system regularly so you keep trusting it | Daily notebook ritual + weekly Todoist/Projects review |
 | **Engage** | Choose what to do right now with confidence | Saved filters (Today / Due in 7 days) |
 
@@ -98,7 +98,7 @@ The entire value of GTD's capture step depends on friction being close to zero. 
 
 Todoist is used here purely as a capture-and-action engine: quick-add from any device, reliable notifications. It deliberately does **not** try to hold knowledge, context, or history — that discipline is what keeps capture fast.
 
-**Smart Date Recognition** is what makes this concrete. Typing `Schedule vendor meeting #Work-Tasks tomorrow at 8` into the quick-add box in one go creates a task named "Schedule vendor meeting," filed under `#Work-Tasks`, due tomorrow at 8am — three fields filled from a single continuous line of typing, no extra clicks, no switching to a date picker mid-thought. That single-token, hyphenated project name isn't cosmetic: Todoist's quick-add reads `#ProjectName` up to the next space, so a name with a space in it breaks this one-line capture — the same reason `Work-Tasks` and `Work-Projects` (below) are hyphenated rather than "Work Tasks." The project and the date are both optional, not habitual: type `tomorrow at 8` only when there's a real time constraint, and leave it off otherwise — an undated task simply sits on whichever Todoist Project it's filed under until it's picked up during a normal pass through it. Forcing a due date onto something that doesn't have one yet would be the same false precision already avoided for Projects' Target and Roadmap's Year (Part 5) — just one level further down, on the individual task.
+**Smart Date Recognition** is what makes this concrete. Typing `Schedule vendor meeting #Work-General tomorrow at 8` into the quick-add box in one go creates a task named "Schedule vendor meeting," filed under `#Work-General`, due tomorrow at 8am — three fields filled from a single continuous line of typing, no extra clicks, no switching to a date picker mid-thought. That single-token, hyphenated project name isn't cosmetic: Todoist's quick-add reads `#ProjectName` up to the next space, so a name with a space in it breaks this one-line capture — the same reason `Work-General` and `Work-Projects` (below) are hyphenated rather than "Work General." The project and the date are both optional, not habitual: type `tomorrow at 8` only when there's a real time constraint, and leave it off otherwise — an undated task simply sits on whichever Todoist Project it's filed under until it's picked up during a normal pass through it. Forcing a due date onto something that doesn't have one yet would be the same false precision already avoided for Projects' Target and Roadmap's Year (Part 5) — just one level further down, on the individual task.
 
 ### Clarify: verb-first naming forces the decision at capture time
 
@@ -117,10 +117,18 @@ This single habit — always start with a verb — does most of the "Clarify" wo
 Todoist's "Projects" feature just means a simple container here — a folder to file a task into, nothing more. That's different from "a Project" in the GTD or PARA sense (a multi-step initiative with a defined outcome and an end date), which lives in Notion instead (Part 7). The word never carries that heavier meaning inside Todoist — it's used exactly as Todoist itself uses it, a place to file things, not a methodology term:
 
 - `#Personal` — anything outside work.
-- `#Work-Tasks` — ordinary work tasks, not tied to any Notion Project. The default for almost everything captured at work.
+- `#Work-General` — ordinary work tasks, not tied to any Notion Project. The default for almost everything captured at work.
 - `#Work-Projects` — exclusively mother tasks and their subtasks, each one linked to a `Now` Project in Notion (below). Nothing else goes here.
 
-Three containers, all flat. No sub-projects, no nesting. The split between `Work-Tasks` and `Work-Projects` does the job a Label would otherwise have to do: opening `Work-Projects` shows exactly the tasks tied to a Notion Project and nothing else, with no tag to remember to apply or remove.
+Short enough to use as each Todoist Project's own description field:
+
+| Container | Description |
+|---|---|
+| `#Personal` | Anything outside work |
+| `#Work-General` | Ordinary work tasks, no Project link |
+| `#Work-Projects` | Mother tasks linked to Notion Projects only |
+
+Three containers, all flat. No sub-projects, no nesting. The split between `Work-General` and `Work-Projects` does the job a Label would otherwise have to do: opening `Work-Projects` shows exactly the tasks tied to a Notion Project and nothing else, with no tag to remember to apply or remove.
 
 No Labels are used at all. A delegated or stalled task is caught during the weekly review instead (Part 8): a single fast scan, done once a week, rather than a tag maintained on every task all week long.
 
@@ -139,13 +147,13 @@ A saved filter trades a repeated mental query for a single tap.
 
 ### When a task belongs to a Notion Project: the mother-task pattern
 
-Most tasks in Todoist have nothing to do with any Notion Project at all — and that's the normal case, not a gap in the system. A quick, standalone task like **"Mention the new deployment process to Team B"** doesn't need a Project, a subtask, or any link back to Notion; it's just a task, captured under `#Work-Tasks` and cleared like any other. Forcing every task into some larger structure before it's earned one would be the same anti-pattern the golden rule already warns against (Part 3) — just applied to Todoist instead of Notion.
+Most tasks in Todoist have nothing to do with any Notion Project at all — and that's the normal case, not a gap in the system. A quick, standalone task like **"Mention the new deployment process to Team B"** doesn't need a Project, a subtask, or any link back to Notion; it's just a task, captured under `#Work-General` and cleared like any other. Forcing every task into some larger structure before it's earned one would be the same anti-pattern the golden rule already warns against (Part 3) — just applied to Todoist instead of Notion.
 
 A small number of tasks, though, genuinely correspond to a Notion Project — the "Migrate the primary database to a new provider" kind of work, spanning many sessions, that needs a Todoist presence too. For those, and only those, this system uses one lightweight pattern: a single **mother task** per Project, filed under `#Work-Projects`, holding **subtasks** for whatever's next.
 
 ```mermaid
 flowchart LR
-    subgraph WorkTasks["📋 Todoist — #Work-Tasks"]
+    subgraph WorkGeneral["📋 Todoist — #Work-General"]
         Standalone["☐ Standalone task<br/>no Project, no link"]
     end
     subgraph WorkProjects["📋 Todoist — #Work-Projects"]
@@ -162,7 +170,7 @@ flowchart LR
     Row -.->|"Status Now → Done (you create/check off the mother task by hand)"| Mother
 ```
 
-The solid arrow is the only stored link, and it only runs one way: the mother task's name and description point at the Notion row, nothing on the Notion side points back. The dashed arrow isn't a link at all — it's the lifecycle trigger from the bullets below: when a Project's Status changes, you create or check off the mother task yourself. The Todoist Project itself does the sorting: `#Work-Tasks` never contains a mother task, `#Work-Projects` never contains anything else.
+The solid arrow is the only stored link, and it only runs one way: the mother task's name and description point at the Notion row, nothing on the Notion side points back. The dashed arrow isn't a link at all — it's the lifecycle trigger from the bullets below: when a Project's Status changes, you create or check off the mother task yourself. The Todoist Project itself does the sorting: `#Work-General` never contains a mother task, `#Work-Projects` never contains anything else.
 
 - **Only `Now` Projects get a mother task.** A Project still `Next` or `Later` doesn't have one yet — creating it earlier would be exactly the premature structure the golden rule warns against, just with the mother task standing in for the "empty folder."
 - **The mother task never carries a due date.** Dates live on subtasks, and only when a subtask genuinely has one — the mother task is a container, not a deadline.
@@ -178,17 +186,17 @@ The solid arrow is the only stored link, and it only runs one way: the mother ta
 ### Example
 
 ```
-☐ Schedule vendor meeting  (p1)                    #Work-Tasks
-☐ Update roadmap slides                             #Work-Tasks
-☐ Send calendar invite for kickoff                  #Work-Tasks
+☐ Schedule vendor meeting  (p1)                    #Work-General
+☐ Update roadmap slides                             #Work-General
+☐ Send calendar invite for kickoff                  #Work-General
 ☐ Book car service appointment                      #Personal
-☐ Confirm attendance for offsite                    #Work-Tasks
-☐ Mention new deployment process to Team B          #Work-Tasks
+☐ Confirm attendance for offsite                    #Work-General
+☐ Mention new deployment process to Team B          #Work-General
 ☐ Migrate the primary database to a new provider    #Work-Projects   ← mother task (no due date; Notion Project URL in description)
     ☐ Draft the migration plan                                       ← subtask, due Friday
 ```
 
-The first six lines are ordinary tasks under `#Work-Tasks` or `#Personal` — including "Mention new deployment process to Team B," a small standalone reminder with no Project behind it, which is the default shape almost everything takes. The last two lines show the exception: a mother task for a `Now` Project, filed under `#Work-Projects`, undated, with a single next-step subtask underneath it.
+The first six lines are ordinary tasks under `#Work-General` or `#Personal` — including "Mention new deployment process to Team B," a small standalone reminder with no Project behind it, which is the default shape almost everything takes. The last two lines show the exception: a mother task for a `Now` Project, filed under `#Work-Projects`, undated, with a single next-step subtask underneath it.
 
 ---
 
