@@ -60,6 +60,7 @@ flowchart LR
 | Container | Filed under `#Work-Projects`, never `#Work-Tasks` — the container itself marks it, no Label needed |
 | On Hold | Mother task stays; subtasks lose their due dates until the Project moves again |
 | Naming | Mother task is the one exception to verb-first naming (it's a container); subtasks still start with a verb |
+| Priority | Copied once from the Project's own Priority field (Part 7) when the mother task is created — not kept in sync after that |
 | Upkeep | Friday review, open `#Work-Projects` (~1 min): every `Now` Project has a live subtask, every newly `Done` Project's mother task is checked off |
 
 > **[Assumption to verify]** Free-tier Todoist may limit subtasks or subtask due dates — not yet confirmed in-app.
@@ -145,7 +146,7 @@ graph TD
 
 | Database | Lives in | ⭐ Favorited | Key fields | One-liner |
 |---|---|---|---|---|
-| **Projects** | Top level, alone | — (it IS a top-level category) | Status, Risk, Team, Target | Anything with an end |
+| **Projects** | Top level, alone | — (it IS a top-level category) | Status, Priority, Risk, Team, Target | Anything with an end |
 | **Teams** | Areas, direct | ✓ | Name, Full Name, Notes | The hub everything else relates to |
 | **Persons** | Areas → People Management | ✓ | Team, Role, Last 1:1 | Who you work with |
 | **1:1 Meetings** | Areas → People Management | ✓ | Team | One row per person, log grows forever |
