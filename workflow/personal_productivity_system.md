@@ -30,6 +30,7 @@ It is not a diagnosis or a changelog — it's a snapshot of a working system, de
 - [Part 4 — Database or Page? A decision framework](#part-4--database-or-page-a-decision-framework)
 - [Part 5 — The Notion structure](#part-5--the-notion-structure)
   - [Top level](#top-level)
+  - [Inside Projects: the database, and loose pages](#inside-projects-the-database-and-loose-pages)
   - [Inside Areas](#inside-areas)
   - [Resources and Archive](#resources-and-archive)
   - [A home for loose ideas: Someday/Maybe](#a-home-for-loose-ideas-somedaymaybe)
@@ -293,7 +294,7 @@ The better move for anything backed by a database: **let a Status value do the a
 - Projects already has a `Done` status. One view filters it out (`Status is not Done`) for the day-to-day list; a second view filters for it (`Status is Done`) as a running record of everything shipped — still filterable by Team, still sortable by date, still fully structured.
 - Service Catalog already works this way, without ever being framed as a rule: a system moves to `Deprecated` and disappears from the default working view (`Status is not Deprecated`, which still shows `Legacy` — it's frozen, not gone) without ever leaving the database.
 
-The physical Archive folder is still the right destination for things that *don't* have a Status field of their own to retire into — an Area that stops being relevant, a Resource page that goes stale, anything living as a plain page rather than a database row. For anything structured, the database itself is the archive; a view is just a lens on it.
+The physical Archive folder is still the right destination for things that *don't* have a Status field of their own to retire into — an Area that stops being relevant, a Resource page that goes stale, a loose page in the Projects folder once it's done, anything living as a plain page rather than a database row. For anything structured, the database itself is the archive; a view is just a lens on it.
 
 **Someday/Maybe** (the lightweight database for still-uncommitted ideas, detailed in Part 5) **follows a different rule, because it isn't meant to keep a record.** When an idea there gets acted on, it graduates into a Project — and the Project is now the permanent home for that work (a glance at its Created time tells you how long it sat as "just an idea" first, if that's ever worth knowing). The Someday/Ideas row can simply be deleted at that point. Keeping resolved ideas around, tagged or not, would slowly turn a quick-glance list back into something that needs its own review ritual — exactly what it was built to avoid.
 
@@ -322,15 +323,34 @@ Rule of thumb: two or more answers on the same side decide it. On a tie, default
 
 ### Top level
 
-Only the four PARA categories sit at the top of the sidebar. The **Projects** database counts as the category itself — it is not a fifth thing bolted on, and it does not live inside a "Projects" folder.
+Only the four PARA categories sit at the top of the sidebar, each one a folder. **Projects** holds the Projects database plus any loose pages that don't earn a row (next section).
 
 ```mermaid
 graph TD
-    Sidebar --> Projects[("🗂️ Projects (DB)")]
+    Sidebar --> Projects["🗂️ Projects"]
     Sidebar --> Areas["🟩 Areas"]
     Sidebar --> Resources["🟨 Resources"]
     Sidebar --> Archive["📦 Archive"]
 ```
+
+### Inside Projects: the database, and loose pages
+
+The Projects folder holds the **Projects** database — favorited (below), so it stays one click away — and any page that is project-shaped but too small for a database row.
+
+```mermaid
+graph TD
+    Projects["🗂️ Projects"] --> PDB[("⭐ Projects (DB)")]
+    Projects --> Loose["📄 Loose pages"]
+```
+
+| It is... | It goes in |
+|---|---|
+| Has an end, spans several work sessions, worth a Status | A row in the Projects database |
+| Short-lived and one-off, nothing to track — e.g. notes for something happening today | A loose page in the Projects folder |
+
+Two checks come first. An action to remember belongs in Todoist, and a meeting belongs in the Meetings database; a loose page is for what's left over.
+
+A loose page has no Status field, so it retires like any plain page: moved to Archive once it's done (Part 3). It's meant to be short-lived — one that keeps growing or lingering is a sign it should be a row in the database instead.
 
 ### Inside Areas
 
@@ -396,7 +416,7 @@ Both arrows into Projects are one-directional and manual, same as the Todoist pa
 
 ### Fast access without breaking the classification: Favorites
 
-Persons, 1:1 Meetings, Teams, Meetings, Service Catalog, and Roadmap all live correctly inside Areas — but each is also marked as a **Favorite** in Notion, which pins it to the top of the sidebar for one-click access without physically moving it out of its folder. Classification and access speed are two independent problems; you don't have to trade one for the other.
+The Projects database lives in the Projects folder; Persons, 1:1 Meetings, Teams, Meetings, Service Catalog, and Roadmap live inside Areas. All of them sit correctly in their folders — but each is also marked as a **Favorite** in Notion, which pins it to the top of the sidebar for one-click access without physically moving it out of its folder. Classification and access speed are two independent problems; you don't have to trade one for the other.
 
 ---
 
@@ -428,7 +448,7 @@ Projects that don't belong to any one team are simply left with the Team field e
 ## Part 7 — Full database schemas
 
 ### Projects
-*Alone at the top level — this database **is** the "Projects" category.*
+*Inside the Projects folder, next to any loose pages. Favorited — every row here is a "Project" in the PARA sense.*
 
 | Field | Type | Notes |
 |---|---|---|
