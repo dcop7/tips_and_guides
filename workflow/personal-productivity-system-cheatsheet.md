@@ -135,7 +135,7 @@ Two or more answers on one side decide it. Tie → keep what you already have.
 graph TD
     Sidebar --> Projects["🗂️ Projects"]
     Sidebar --> Areas["🟩 Areas"]
-    Projects --> PDB[("⭐ Projects (DB)")]
+    Projects --> PDB[("⭐ Projects DB")]
     Projects --> Loose["📄 Loose pages"]
     Sidebar --> Resources["🟨 Resources"]
     Sidebar --> Archive["📦 Archive"]
@@ -155,7 +155,7 @@ graph TD
 
 | Database | Lives in | ⭐ Favorited | Key fields | One-liner |
 |---|---|---|---|---|
-| **Projects** | Projects folder, next to loose pages | ✓ | Status, Priority, Risk, Team, Target | Anything with an end |
+| **Projects DB** | Projects folder, next to loose pages | ✓ | Status, Priority, Risk, Team, Target | Anything with an end |
 | **Teams** | Areas, direct | ✓ | Name, Full Name, Notes | The hub everything else relates to |
 | **Persons** | Areas → People Management | ✓ | Team, Role, Last 1:1 | Who you work with |
 | **1:1 Meetings** | Areas → People Management | ✓ | Team | One row per person, log grows forever |
