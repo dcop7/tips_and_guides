@@ -38,7 +38,7 @@ It is not a diagnosis or a changelog — it's a snapshot of a working system, de
   - [Fast access without breaking the classification: Favorites](#fast-access-without-breaking-the-classification-favorites)
 - [Part 6 — The Teams database: a relational hub](#part-6--the-teams-database-a-relational-hub)
 - [Part 7 — Full database schemas](#part-7--full-database-schemas)
-  - [Projects](#projects)
+  - [Projects DB](#projects-db)
   - [Teams](#teams)
   - [Persons](#persons)
   - [1:1 Meetings](#11-meetings)
@@ -323,7 +323,7 @@ Rule of thumb: two or more answers on the same side decide it. On a tie, default
 
 ### Top level
 
-Only the four PARA categories sit at the top of the sidebar, each one a folder. **Projects** holds the Projects database plus any loose pages that don't earn a row (next section).
+Only the four PARA categories sit at the top of the sidebar, each one a folder. **Projects** holds the **Projects DB** plus any loose pages that don't earn a row (next section).
 
 ```mermaid
 graph TD
@@ -335,17 +335,17 @@ graph TD
 
 ### Inside Projects: the database, and loose pages
 
-The Projects folder holds the **Projects** database — favorited (below), so it stays one click away — and any page that is project-shaped but too small for a database row.
+The Projects folder holds the **Projects DB** — favorited (below), so it stays one click away — and any page that is project-shaped but too small for a database row. The database carries the "DB" suffix so it never gets confused with the folder it lives in, least of all in the Favorites list, where both would otherwise read "Projects."
 
 ```mermaid
 graph TD
-    Projects["🗂️ Projects"] --> PDB[("⭐ Projects (DB)")]
+    Projects["🗂️ Projects"] --> PDB[("⭐ Projects DB")]
     Projects --> Loose["📄 Loose pages"]
 ```
 
 | It is... | It goes in |
 |---|---|
-| Has an end, spans several work sessions, worth a Status | A row in the Projects database |
+| Has an end, spans several work sessions, worth a Status | A row in the Projects DB |
 | Short-lived and one-off, nothing to track — e.g. notes for something happening today | A loose page in the Projects folder |
 
 Two checks come first. An action to remember belongs in Todoist, and a meeting belongs in the Meetings database; a loose page is for what's left over.
@@ -416,7 +416,7 @@ Both arrows into Projects are one-directional and manual, same as the Todoist pa
 
 ### Fast access without breaking the classification: Favorites
 
-The Projects database lives in the Projects folder; Persons, 1:1 Meetings, Teams, Meetings, Service Catalog, and Roadmap live inside Areas. All of them sit correctly in their folders — but each is also marked as a **Favorite** in Notion, which pins it to the top of the sidebar for one-click access without physically moving it out of its folder. Classification and access speed are two independent problems; you don't have to trade one for the other.
+The Projects DB lives in the Projects folder; Persons, 1:1 Meetings, Teams, Meetings, Service Catalog, and Roadmap live inside Areas. All of them sit correctly in their folders — but each is also marked as a **Favorite** in Notion, which pins it to the top of the sidebar for one-click access without physically moving it out of its folder. Classification and access speed are two independent problems; you don't have to trade one for the other.
 
 ---
 
@@ -433,7 +433,7 @@ graph LR
     OneOnOne["1:1 Meetings"] -->|Team| Teams
     SC["Service Catalog"] -->|Team| Teams
     Meetings["Meetings"] -->|"Team (blank = cross-team)"| Teams
-    Projects["Projects"] -->|"Team (multi, optional)"| Teams
+    Projects["Projects DB"] -->|"Team (multi, optional)"| Teams
     Roadmap["Roadmap"] -->|"Team (optional)"| Teams
     Meetings -.->|"Project (optional)"| Projects
     Roadmap -.->|"Related Project (optional)"| Projects
@@ -447,7 +447,7 @@ Projects that don't belong to any one team are simply left with the Team field e
 
 ## Part 7 — Full database schemas
 
-### Projects
+### Projects DB
 *Inside the Projects folder, next to any loose pages. Favorited — every row here is a "Project" in the PARA sense.*
 
 | Field | Type | Notes |
