@@ -20,6 +20,7 @@ flowchart TD
 | Today's top 3 focus | Notebook (shortlist from Todoist) |
 | Reference, history, or something to compare against others | Notion |
 | Not committed to yet, just an idea | Notion → Someday / Ideas |
+| Project-shaped but too small for a database row (a one-off, short-lived) | Notion → Projects folder, as a loose page (an action → Todoist, a meeting → Meetings DB first) |
 | Didn't happen today, still open | Notebook `→` — stays in Todoist, no action |
 | No longer needed | Notebook `✕` — clear it from Todoist too |
 
@@ -132,8 +133,10 @@ Two or more answers on one side decide it. Tie → keep what you already have.
 
 ```mermaid
 graph TD
-    Sidebar --> Projects[("🗂️ Projects (DB)")]
+    Sidebar --> Projects["🗂️ Projects"]
     Sidebar --> Areas["🟩 Areas"]
+    Projects --> PDB[("⭐ Projects (DB)")]
+    Projects --> Loose["📄 Loose pages"]
     Sidebar --> Resources["🟨 Resources"]
     Sidebar --> Archive["📦 Archive"]
     Areas --> PM["People Management"]
@@ -152,7 +155,7 @@ graph TD
 
 | Database | Lives in | ⭐ Favorited | Key fields | One-liner |
 |---|---|---|---|---|
-| **Projects** | Top level, alone | — (it IS a top-level category) | Status, Priority, Risk, Team, Target | Anything with an end |
+| **Projects** | Projects folder, next to loose pages | ✓ | Status, Priority, Risk, Team, Target | Anything with an end |
 | **Teams** | Areas, direct | ✓ | Name, Full Name, Notes | The hub everything else relates to |
 | **Persons** | Areas → People Management | ✓ | Team, Role, Last 1:1 | Who you work with |
 | **1:1 Meetings** | Areas → People Management | ✓ | Team | One row per person, log grows forever |
@@ -170,7 +173,7 @@ graph TD
 | A **Project** | `Status → Done`. Stays in the DB. Split into two views: active / done. |
 | A **Service Catalog** entry | `Status → Deprecated`. Stays in the DB. (`Legacy` stays in the working view — still in use, just frozen.) |
 | A **Someday/Ideas** row | Graduates into a Project, then **gets deleted**. No record kept — the Project is the record now. |
-| Anything living as a **plain page** (no Status field) | Physically moved to the **Archive** folder. |
+| Anything living as a **plain page** (no Status field), loose Projects pages included | Physically moved to the **Archive** folder. |
 
 Rule: if it's in a database with a Status field, change the status — don't move the row. Archive-the-folder is only for things that don't have a status of their own to retire into.
 
