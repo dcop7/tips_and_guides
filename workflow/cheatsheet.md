@@ -91,7 +91,7 @@ Big 3 = a shortlist from Todoist, not a second task system. The page dies at mid
 |---|---|
 | One line per row | Don't file at capture |
 | Title | `Team: the thing (slug)` — team prefix and slug are optional |
-| Capture paths | Phone shortcut/widget → New row; desktop pinned; keep it to two taps |
+| Capture paths | Android: Notion Page widget on the Notes DB → New (iPhone: same widget, or Shortcuts); desktop pinned; keep it to two taps |
 | Don't put here | Actions (→ Todoist), meetings (→ the meeting page), 1:1 content (→ 1:1 page) |
 
 | View | Filter | Use |
