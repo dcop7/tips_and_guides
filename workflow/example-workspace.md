@@ -745,7 +745,7 @@ Order matters: each step uses the one before.
 |---|---|---|
 | 1 | 5 min | **Teams** database: Name, Full name. Add every team plus **Org-wide** |
 | 2 | 5 min | **Notes** database: Title, Team (relation), Tags. Views: *Recent*, *No team*, *By team*, *Ideas* |
-| 3 | 5 min | **Capture paths**: phone shortcut/widget → New Notes row; desktop: pin Notes; browser bookmark |
+| 3 | 5 min | **Capture paths**: Android: Notion Page widget pointed at Notes → New row (iPhone: same widget, or a Shortcuts automation); desktop: pin Notes; browser bookmark |
 | 4 | 5 min | **Todoist**: three containers, three saved filters (`overdue \| today`, `due before: in 7 days`, `search: Chase`) |
 | 5 | 5 min | **Projects** database + default template (Objective / Context / Assumptions / Plan / Decisions / Links) |
 | 6 | 5 min | **Persons**, **1:1 Meetings**, **Meetings** |
