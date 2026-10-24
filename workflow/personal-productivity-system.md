@@ -483,16 +483,17 @@ The target is **under ten seconds from unlocking the phone to typing**. If a pat
 
 | Where | Path | Taps |
 |---|---|---|
-| iPhone | A Shortcuts automation using Notion's "add page to database" action, pointed at Notes; widget on the lock or home screen; type or dictate [34] | Widget → type → done |
-| Any phone | A Notion home-screen widget that opens the Notes database [31] → **New** → type | Widget → New → type |
+| **Android** (primary) | Notion **Page widget** pointed at the Notes database: long-press the Notion icon → *Widgets* → drag to the home screen → tap it and choose the Notes database [31]. Then widget → **New** → type. Put it on the first home screen | Widget → New → type |
+| Android (backup) | The **Favorites** widget (Notes is the first Favorite), or the app's own Notes entry | App → Notes → New |
+| iPhone | Same widget (added from the "+" on the home screen, then *Edit Widget*) [31]; or a Shortcuts automation using Notion's "add page to database" action, pointed at Notes [34] | Widget → New → type |
 | Desktop | Notes is the first Favorite; or a browser bookmark to the database | 1–2 clicks |
 | Offline | Mark the Notes database "Available offline" | — |
 | Optional | A page with a button whose action is "Add page to Notes" [30] | Widget → button → type |
 
 > **[Assumptions to verify]**
 > - Notion's help says database buttons exist on all plans, but that some *actions* are paid-only [30]. The text retrieved doesn't make clear whether "Add page to" is one of them — test it on the free plan. If it isn't available, the widget → **New** path above needs nothing paid.
-> - The Shortcuts action and its setup come from tutorials that are a couple of years old [34] — confirm it still exists in your Notion version.
-> - No equivalent Android quick-capture path was found beyond the widget [31].
+> - The Shortcuts action (iPhone only) and its setup come from tutorials that are a couple of years old [34] — confirm it still exists in your Notion version.
+> - On Android, Notion's help confirms the Page widget (a page or a database) and the Favorites widget [31], but doesn't describe a quick-note or "add to database" widget action, and I found no share-sheet capture path. So the Android path is widget → open Notes → **New**: two taps instead of one. Whether the widget lands directly on the database (so **New** is one tap away) is unverified — test it. Android automation apps (such as Tasker) are an untested alternative.
 > - Third-party capture apps for Notion exist, but they require access to your workspace. If these notes concern work, check your company's rules first.
 
 ### Views
@@ -1721,8 +1722,8 @@ None of these blocks the system; each has a fallback.
 | 1 | A hyphenated slug matches in Todoist's search bar and in `search:` | Use a single-token slug (`dbmigration`) |
 | 2 | Subtasks accept their own due date on the free plan | Put the date on the parent task |
 | 3 | The Notion button action "Add page to" works on the free plan | Widget to the Notes database → **New** |
-| 4 | The Notion "add page to database" Shortcuts action still exists | Notion widget → **New** |
-| 5 | A fast Android capture path | Widget to the Notes database → **New** |
+| 4 | The Notion "add page to database" Shortcuts action still exists (iPhone only) | Notion widget → **New** |
+| 5 | The Android Page widget opens the Notes database directly (no quick-note widget action is documented) | Favorites widget → Notes → **New** |
 | 6 | "Move to" a different database keeps property values | Copy the title and paste it as a new row |
 | 7 | Whether free Todoist notifies at a task's due time (newer sources say yes, older say no) | Check in the app; rely on the *Due in 7 days* filter |
 
