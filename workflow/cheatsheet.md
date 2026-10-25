@@ -1,6 +1,34 @@
 # Cheatsheet — Quick Reference
 
-A condensed companion to `personal-productivity-system.md`. Use this when you already know the system; go back to the full document for the reasoning and to `example-workspace.md` to see everything filled with data.
+A one-page companion to `personal-productivity-system.md` (the full guide) and `example-workspace.md` (everything filled in with dummy data). Read the full guide for the reasoning; use this when you already know the system.
+
+---
+
+## The idea in one screen (works with any tools)
+
+**Four kinds of things, four places**
+
+| Kind | Place (this guide) | Any tool that can… |
+|---|---|---|
+| **Actions** (do, chase, verify) | Todoist | add a task by phone in seconds, with date and time typed in words, and remind you |
+| **Information** (heard, decided, learned) | Notion **Notes** database | take one line in two taps, search whole words, filter by team and tag |
+| **Today** (focus) | Paper notebook | be used without notifications; disposable |
+| **Structure** (projects, teams, people, systems) | Notion databases | hold records with fields, filters and links |
+
+**The loop:** capture instantly and unsorted → **one weekly review** gives every note a fate → nothing ages in the middle.
+
+**Eight ideas**
+
+1. Capture without classifying.
+2. Two inboxes: actions and information. Never mixed.
+3. One home per thing; link by name, don't copy.
+4. Name things in whole words; refer to a project by its own name everywhere.
+5. The weekly review is the engine (20 min, one agenda; 5-min minimum for bad weeks).
+6. Every note ends somewhere: Act · Keep · File · Graduate · Archive/Toss.
+7. Structure is earned: rule of three; start with six databases.
+8. Limit commitments by looking: capacity check + one protected focus block per week.
+
+**Start small:** week 1 = task list + Notes + weekly review. Week 3 = Projects + Teams. Later = Persons, 1:1, Meetings. Optional databases only on need.
 
 ---
 
@@ -33,7 +61,7 @@ flowchart TD
 | Element | Value |
 |---|---|
 | Containers | `#Personal` · `#Work-General` · `#Work-Projects` |
-| Routing rule | **Does the title end with a slug?** Yes → `#Work-Projects`. No → `#Work-General` |
+| Routing rule | **Part of a project I track, or a commitment I must not drop?** Yes → `#Work-Projects` (project name at the end of the title). No → `#Work-General` |
 | Naming | Start with a verb |
 | Follow-ups | Start with **Chase** and give a date |
 | Priority | `p1`–`p3` only when true |
@@ -41,11 +69,11 @@ flowchart TD
 
 | Container | For | Example |
 |---|---|---|
-| `#Work-Projects` | Commitments and checks that need attention | `Verify rollback test passed in staging (db-migration)` |
+| `#Work-Projects` | Commitments and checks that need attention | `Verify rollback test passed in staging (DB migration)` |
 | `#Work-General` | Light reminders | `Email Ana about the offsite agenda` |
 | `#Personal` | Outside work | `Renew gym membership` |
 
-**Slug:** one short lowercase hyphenated name per project (`db-migration`). It goes in the Notion project name, at the end of Todoist titles and in Notes titles. Search the slug and everything about the project appears.
+**Project name:** no code to memorise. Put the project's own name, as you'd say it, in brackets at the end of the title: `(DB migration)`. Forgot it? Capture without it and add it on Friday, or search any word you remember. Search is whole-word, so use real words.
 
 **Three saved filters**
 
@@ -58,19 +86,21 @@ flowchart TD
 **Subtasks** decompose one concrete task (a document with three steps). They never mirror the project plan.
 
 ```
-☐ Prepare cutover runbook (db-migration)        Fri
+☐ Prepare cutover runbook (DB migration)        Fri
     ☐ Collect failover steps from Ana
     ☐ Draft the runbook
     ☐ Review with the Atlas on-call
 ```
 
-**Quick-add:** `Chase Ana for replication lag numbers (db-migration) #Work-Projects tue`
+**Quick-add:** `Chase Ana for replication lag numbers (DB migration) #Work-Projects tue`
 
-> **Verify in-app:** free-plan subtask due dates; hyphenated slug search. See "Things to verify" in the full document.
+> **Verify in-app:** free-plan subtask due dates; project-name search in Todoist. See "Things to verify" in the full document.
 
 ---
 
 ## Notebook
+
+Stays because it is a place to think away from the computer (no email, no notifications) and to draw — a personal choice, not a research claim.
 
 | Symbol | Meaning | Evening action |
 |---|---|---|
@@ -85,12 +115,12 @@ Big 3 = a shortlist from Todoist, not a second task system. The page dies at mid
 
 ## Notes (Notion)
 
-**Properties:** Title · Team · Tags · Created. Nothing else.
+**Properties:** Title · Team · Tags · Archived (checkbox) · Created. Nothing else.
 
 | Rule | Detail |
 |---|---|
 | One line per row | Don't file at capture |
-| Title | `Team: the thing (slug)` — team prefix and slug are optional |
+| Title | `Team: the thing (Project name)` — team prefix and project name are optional |
 | Capture paths | Android: Notion Page widget on the Notes DB → New (iPhone: same widget, or Shortcuts); desktop pinned; keep it to two taps |
 | Searching | Notion search is whole-word only ("tes" doesn't find "test"): type full words, and write titles with full words, not abbreviations |
 | Don't put here | Actions (→ Todoist), meetings (→ the meeting page), 1:1 content (→ 1:1 page) |
@@ -101,6 +131,7 @@ Big 3 = a shortlist from Todoist, not a second task system. The page dies at mid
 | **No team** | Team is empty | Friday triage queue |
 | By team | grouped by Team | Everything about one team |
 | Ideas | Tags contains `idea` | Quarterly review |
+| **Review** | Team set · **Archived** unchecked · created 30–37 days ago | Weekly review, item 5 |
 | All | none | Search |
 
 **Friday triage: four fates**
@@ -112,6 +143,14 @@ flowchart LR
     R --> T["Toss → delete"]
     R --> G["Graduate → database row"]
 ```
+
+**Weekly notes review (item 5, Review view):** each kept note gets one fate, about five weeks after it was written.
+
+| Fate | When | Do |
+|---|---|---|
+| **File** | Lasting info that belongs somewhere | Paste the line into the team / project / 1:1 / meeting / Resources page (or a database row if you have one), then archive the note |
+| **Leave** | Useful, nowhere better yet | Nothing |
+| **Archive** | Done, outdated, replaced | Tick **Archived** (checkbox field): hidden from views, still found by search |
 
 Hesitating more than five seconds? **Keep** and set the team. The **Org-wide** team row exists so every note can leave the queue.
 
@@ -180,18 +219,18 @@ graph TD
     Teams[("⭐ Teams")] --- Notes[("⭐ Notes")]
     Teams --- Projects[("⭐ Projects")]
     Teams --- Persons[("Persons")]
-    Teams --- SC[("Service Catalog")]
-    Teams --- RM[("Roadmap")]
+    Teams -.- SC[("Service Catalog (optional)")]
+    Teams -.- RM[("Roadmap (optional)")]
     Persons --- OO[("⭐ 1:1 Meetings")]
     Projects --- RM
-    SC --- RD[("Risks and Debt")]
+    SC -.- RD[("Risks and Debt (optional)")]
 ```
 
 ---
 
 ## All databases at a glance
 
-**Core (eight)**
+**Core (six) — the base, always**
 
 | Database | Key fields | One-liner |
 |---|---|---|
@@ -201,13 +240,13 @@ graph TD
 | **Persons** | Team, Role, Last 1:1 | Who you work with |
 | **1:1 Meetings** | Person | One page per person, grows forever |
 | **Meetings** | Type, Project, Team | One row per series |
-| **Service Catalog** | Team, Category, Criticality, Status, SLO | Systems you own; SLO section in the page |
-| **Roadmap** | Horizon, Year, Status, Theme, Team, Related Project | One DB for every year |
 
-**Optional — only when the rule of three is met**
+**Optional — only when needed (rule of three). Structures are in Part 9 of the full document; filled-in samples in `example-workspace.md`**
 
 | Database | Verdict | Key fields |
 |---|---|---|
+| **Service Catalog** | Yes, if you own systems | Team, Category, Criticality, Status, SLO; SLO section in the page |
+| **Roadmap** | Yes, if you set direction across teams | Horizon, Year, Status, Theme, Team, Related Project |
 | **Decisions** | Yes | Status, Team, Confidence, Superseded by, Date |
 | **Risks and Debt** | Yes (one DB, Type = Risk / Issue / Debt) | Type, Impact, Likelihood, Effort, Status, System |
 | **Technology Radar** | Conditional | Quadrant, Ring (Adopt / Trial / Assess / Hold), Team |
@@ -243,7 +282,7 @@ Rows with a Status: change the status. Don't move the row.
 
 ```mermaid
 flowchart LR
-    M["🌅 Morning<br/>2 min"] --> D["☀️ During day<br/>capture"] --> E["🌙 Evening<br/>2 min"] --> F["📅 Friday<br/>15 min"]
+    M["🌅 Morning<br/>2 min"] --> D["☀️ During day<br/>capture"] --> E["🌙 Evening<br/>2 min"] --> F["📅 Weekly review<br/>20 min"]
     F -.-> M
 ```
 
@@ -252,11 +291,26 @@ flowchart LR
 | Morning | *Due in 7 days* → pick the Big 3 |
 | During the day | Capture to Notes or Todoist, nothing else |
 | Evening | `✓` `→` `✕`; delete `✕` in Todoist |
-| **Friday (15 min)** | 1. *Due in 7 days* (3) · 2. *Follow-ups* (2) · 3. Projects: search each `Now` slug (3) · 4. Notes: triage *No team* (4) |
-| Monthly | Risks and Debt (Open · High) · Metrics page · Service Catalog by oldest edit |
-| Every 3 months | Decisions and Radar · Roadmap and Ideas |
+| **Weekly review** | One recurring task; its description is the agenda below |
 
-All periodic reviews are **recurring Todoist tasks**, not memory.
+**The weekly review (one meeting with yourself, ~20 min)**
+
+| # | Item | Do | Min |
+|---|---|---|---|
+| 1 | **Tasks** | *Due in 7 days*: do / reschedule / delete overdue. **Capacity check:** over ~15? push the least important out | 3 |
+| 2 | **Follow-ups** | Send due nudges, set next date, close what arrived | 2 |
+| 3 | **Projects** | Each `Now`: update Status, search its name, ≥1 open task? If not add one or set `On Hold` / `Done` | 3 |
+| 4 | **New notes** | *No team*: Keep / Act / Toss / Graduate | 4 |
+| 5 | **Old notes** | *Review* (30–37 days old): File / Leave / Archive | 3 |
+| 6 | **Next week** | Pick ONE thing for a 30+ min focus block; book it | 3 |
+| 7 | **Close** | Anything loose → Todoist or Notes | 1 |
+
+| Situation | Do |
+|---|---|
+| **Bad week** | Items 1 and 2 only (5 min) |
+| **Skipped a week** | Don't catch up |
+| **Takes too long** | Cut, don't extend |
+| **Later add-ons** (only after the databases exist) | First review of the month: Risks and Debt · Metrics page · Service Catalog by oldest edit. First of the quarter: Decisions · Radar · Roadmap · Ideas view |
 
 ---
 
@@ -279,9 +333,9 @@ All periodic reviews are **recurring Todoist tasks**, not memory.
 
 | Where | What |
 |---|---|
-| Notes (Tue) | `Decision: all new services publish to the Event Bus (bus-upgrade)` |
+| Notes (Tue) | `Decision: all new services publish to the Event Bus (Event Bus upgrade)` |
 | Friday triage | Graduate → Decisions row `Accepted` |
-| Projects | `bus-upgrade` moves `Next` → `Now` |
-| Todoist | `Draft the event contract template (bus-upgrade)` in `#Work-Projects` |
-| Todoist | `Chase Vendor X for the audit report (access-review)` in `#Work-Projects`, shown by the Follow-ups filter |
-| Notebook | `→ Draft the event contract template (bus-upgrade)` |
+| Projects | `Event Bus upgrade` moves `Next` → `Now` |
+| Todoist | `Draft the event contract template (Event Bus upgrade)` in `#Work-Projects` |
+| Todoist | `Chase Vendor X for the audit report (Access review)` in `#Work-Projects`, shown by the Follow-ups filter |
+| Notebook | `→ Draft the event contract template (Event Bus upgrade)` |
