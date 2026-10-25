@@ -158,6 +158,8 @@ Reviewed quarterly. Each idea ends in one of two ways: dropped, or it becomes a 
 | "Everything on that project" | `db-migration` | Notes, project page, Todoist tasks (Todoist search separately) |
 | "Which vendor renews in January?" | `renewal` | The Oct 21 note |
 
+**Search matches whole words only** (tested: "tes" did not find "test"). Type the full word — `renewal`, not `renew` or `ren`. This is why titles are written with complete words (`warehouse`, `replication`), not abbreviations.
+
 ---
 
 ## 4. Friday triage, step by step
