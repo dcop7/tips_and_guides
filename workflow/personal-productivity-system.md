@@ -4,14 +4,6 @@ This document describes a personal productivity system built on three tools, eac
 
 It is not a diagnosis or a changelog — it's a snapshot of a working system, detailed enough to be copied as-is. Every name, team, system and number in the examples is fictional.
 
-> **What's new in this version**
-> - A **Notes** database as the single capture point for information (Part 3) — the missing half of the system: Todoist captured actions, but nothing captured *what you heard*.
-> - One **slug** per project that links Todoist, Notes and Notion (Part 1) — replaces the Todoist parent-task pattern as the default.
-> - `#Work-Projects` is now split by **attention level**, not by parent tasks (Part 1).
-> - A rule for **when a kind of note earns its own database** (Part 5), and **optional databases analysed one by one** — Decisions, Risks and Debt, Technology Radar, and the ones that deliberately do *not* get a database (Part 9).
-> - A complete **worked example with dummy data** (Part 12) and a **sources appendix** with the evidence behind each choice.
-> - Retired: the separate *Someday / Ideas* database (now a tag on Notes) and *loose pages* in the Projects folder (now a Notes row).
-
 Numbers in square brackets, like [9], point to the sources in the [Appendix](#appendix--evidence-and-sources).
 
 ## Table of contents
@@ -539,6 +531,8 @@ Three routes, none of which requires you to have filed anything carefully:
 | Anything about a topic | Notion search for the slug, the system or a name — titles are written to be found |
 | What's new for a team | The **By team** view, or open the team's page in Teams: related notes appear there automatically (Part 7) |
 | All notes of one kind | Filter by tag (`decision`, `risk`, `idea`) — or, once it exists, the dedicated database (Part 9) |
+
+> **Observed limitation (tested in-app):** Notion search did **not** find a note titled "test" when searching "tes". Notion's help doesn't document partial-word matching either way. Treat search as **whole-word only**: type complete words, and write titles with the full word (`warehouse`, not `wh`), so that the word you will remember later is literally in the title. One capital letter or abbreviation you never type again is a note you won't find. Other tests worth doing once: whether searching one half of a hyphenated slug (`migration`) finds `db-migration`; and whether a view filter "Title contains" matches part of a word — if it does, that is the fallback for partial searches.
 
 Why not file carefully at capture? In a field study of 345 email users and 85,000 re-finding actions, people who invested in folder structures were no more successful at finding things than people who searched; search and threading worked at least as well [9]. The oft-quoted "search is 3.4× faster" compares single operations; end to end the gap was small (roughly 66 vs 73 seconds) — but the filing itself costs extra time on top [10]. Email isn't notes, so treat it as supporting evidence, not proof; the practical rule that follows is the same one other practitioners reach: organize what search cannot find [7][11].
 
@@ -1725,5 +1719,6 @@ None of these blocks the system; each has a fallback.
 | 4 | The Notion "add page to database" Shortcuts action still exists (iPhone only) | Notion widget → **New** |
 | 5 | The Android Page widget opens the Notes database directly (no quick-note widget action is documented) | Favorites widget → Notes → **New** |
 | 6 | "Move to" a different database keeps property values | Copy the title and paste it as a new row |
+| 8 | Notion search matches only whole words ("tes" did not find "test") — whether the hyphen-separated halves of a slug are searchable, and whether a "Title contains" view filter matches part of a word | Use whole-word titles; one-word slugs; filter the view by tag or team |
 | 7 | Whether free Todoist notifies at a task's due time (newer sources say yes, older say no) | Check in the app; rely on the *Due in 7 days* filter |
 
