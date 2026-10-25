@@ -228,6 +228,17 @@ graph TD
 
 ---
 
+## Seeing everything about one team
+
+| Want | Do |
+|---|---|
+| What is linked to the team | Open its page: two-way Relations list Notes, Projects, Persons automatically |
+| Filters per database on that page | `/table` → pick the database → filter *Team contains this team* (one view per database; no view mixes databases) |
+| New teams get it automatically | Build the views once in the Teams template |
+| Pages outside the databases | `@`-mention the team → backlinks (optional) |
+
+---
+
 ## All databases at a glance
 
 **Core (six) — the base, always**
