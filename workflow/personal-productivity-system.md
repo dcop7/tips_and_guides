@@ -67,6 +67,7 @@ Numbers in square brackets, like [9], point to the sources in the [Appendix](#ap
   - [Resources and Archive](#resources-and-archive)
   - [Roadmaps: continuous, not a Project](#roadmaps-continuous-not-a-project)
 - [Part 7 — The Teams database: a relational hub](#part-7--the-teams-database-a-relational-hub)
+  - [Optional: a team page with a view per database](#optional-a-team-page-with-a-view-per-database)
 - [Part 8 — The six core databases](#part-8--the-six-core-databases)
   - [Notes](#notes)
   - [Projects DB](#projects-db)
@@ -881,11 +882,36 @@ graph LR
     RD -.->|"Owner (optional)"| Persons
 ```
 
-Each row in Teams (say, "Atlas") is a complete page in its own right, and can hold freeform notes about that team — but the real value comes from **automatic rollups**: opening the "Atlas" page shows every Meeting, every Service Catalog entry, every Project, every Roadmap item and every Note linked to it, with no manually configured filtered view required (switch on "show on Teams" when you create each Relation).
+Each row in Teams (say, "Atlas") is a complete page in its own right, and can hold freeform notes about that team. When a Relation is created **two-way** (switch on "show on Teams" when you create it), the Atlas page automatically gains a property for each related database — **Notes**, **Projects**, **Persons** and so on — listing the linked items as clickable titles. That costs nothing and answers "what is linked to this team?". It is only a list: no filtering, no sorting, no hiding of archived notes.
 
 That also makes the Teams page the **second front door** to the workspace: the databases that aren't Favorites are one click from it.
 
 Projects that don't belong to any one team are simply left with the Team field empty — the project's own name usually makes that obvious without needing a category to say so too.
+
+### Optional: a team page with a view per database
+
+If the automatic lists are not enough, you can make the team page show a **filtered table for each database**. This is optional; start without it.
+
+A Notion view shows rows from **one** database only, so there is no single list that mixes meetings, notes and projects [47]. What you can build is a page with several small views side by side, one per database, each filtered to the team:
+
+1. Open the team's page (say, Atlas).
+2. Type `/table` and choose **Meetings** as the source, so that you create a *linked view* and not a new database.
+3. Filter: **Team** *contains* **Atlas**.
+4. Repeat for **Notes** (extra filter: **Archived** is unchecked), **Projects** (extra filter: Status is not `Done`) and **Persons**.
+5. Hide each view's title and the columns you do not need.
+
+About two minutes per view. For teams you create later, do it once in the Teams database's **template** — the filter is set to the template page's own name, so each new team arrives with its views already filtered [48]. Teams that already exist do not pick the template up on their own; copy the views across and change the filter.
+
+| If you want… | Do |
+|---|---|
+| Just to see what is linked | Nothing — the automatic lists |
+| Filters and sorting on one team's data | The views above |
+| Projects grouped by team | In the Projects database, a view filtered to `Status is not Done` and grouped by Team |
+| One selector that filters every view at once | A Dashboard view with a global filter — paid plans only, according to a third-party guide [49] |
+| Pages outside the databases to show up on the team page | `@`-mention the team in them; the team page then lists them as *backlinks* [50] (optional) |
+
+Notion has no native union of rows across databases [47][51]. Merge two databases into one only when they have the same shape (Part 11, principle 8).
+
 
 ---
 
@@ -1412,6 +1438,11 @@ Treat the optional databases there as samples of the structures in Part 9 — no
 | [43] | Notion: team sidebar guide — https://www.notion.com/de/help/guides/the-best-way-to-set-up-your-teams-sidebar-for-clear-organization | Rotate favorites |
 | [45] | Todoist: how to make GTD stick (weekly review, overcommitting, saying no) — https://www.todoist.com/inspiration/gtd-tips | Review skipped; capacity check |
 | [46] | GTD Forum: Time Blocking and GTD — https://forum.gettingthingsdone.com/threads/time-blocking-and-gtd.18942/post-149343 | Light time blocking vs every-hour blocking |
+| [47] | Notion databases can now have multiple data sources (a view shows a single source) — https://thomasjfrank.com/notion-databases-can-now-have-multiple-data-sources/ | No cross-database view |
+| [48] | Jeff Su: master 80% of Notion (linked views in templates) — https://www.jeffsu.org/master-80-of-notion-with-this-one-feature/ | Filtered views in a template |
+| [49] | Notion dashboards (global filters; Business plan and above) — https://matthiasfrank.de/en/notion-dashboards-database-view/ | Dashboard filters |
+| [50] | Notion: links and backlinks — https://www.notion.com/en-gb/help/create-links-and-backlinks | Backlinks from @-mentions |
+| [51] | How to combine databases in Notion — https://www.bardeen.ai/answers/how-to-combine-databases-in-notion | No native union |
 | [44] | Free task managers compared — https://super-productivity.com/blog/best-free-online-task-managers-2026/ | Free Todoist includes recurring tasks |
 
 **Background reading** (videos, read as summaries): Notion quick-capture workflow, KB Creative — https://m.youtube.com/watch?v=HzvWHZvIwPSY [37]; Thomas Frank, *The Ultimate Second Brain Setup in Notion* — https://www.recall.it/summary/thomas-frank-explains/the-ultimate-second-brain-setup-in-notion [38]; Tiago Forte's official Notion setup — https://podwise.ai/episodes/7271854 [39].
@@ -1429,5 +1460,6 @@ None of these blocks the system; each has a fallback.
 | 5 | The Android Page widget opens the Notes database directly (no quick-note widget action is documented) | Favorites widget → Notes → **New** |
 | 6 | "Move to" a different database keeps property values | Copy the title and paste it as a new row |
 | 8 | Notion search matches only whole words ("tes" did not find "test") — whether a "Title contains" view filter matches part of a word | Use whole-word titles; project names as ordinary words; filter the view by tag or team |
+| 9 | The linked-view filter on a template (Team contains the template page) works in your Notion version, and whether a "this page" filter option exists; whether existing team pages need the views copied by hand | Add the views to each team page and edit the filter once per team |
 | 7 | Whether free Todoist notifies at a task's due time (newer sources say yes, older say no) | Check in the app; rely on the *Due in 7 days* filter |
 
