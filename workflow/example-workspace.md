@@ -4,6 +4,14 @@ A companion to `personal-productivity-system.md`. Read it like a folder of scree
 
 **"Today" is Monday, October 26, 2026.** Notes cover Oct 12–23; Todoist shows the state on Monday morning; the last section walks through the full week.
 
+**What is core and what is only a sample**
+
+| | Databases | In this file |
+|---|---|---|
+| **Core: always** | Notes · Projects · Teams · Persons · 1:1 Meetings · Meetings | Sections 3–6 |
+| **Optional: only when needed** | Service Catalog · Roadmap · Decisions · Risks and Debt · Technology Radar | Sections 7–9 are samples of the structures in Part 9 of the full document. Skip them until a real need appears |
+| **Pages, not databases** | Metrics I watch · runbooks · house rules | Section 10 |
+
 ## Contents
 
 1. [Cast and vocabulary](#1-cast-and-vocabulary)
@@ -12,15 +20,15 @@ A companion to `personal-productivity-system.md`. Read it like a folder of scree
 4. [Friday triage, step by step](#4-friday-triage-step-by-step)
 5. [Teams, Persons, Meetings](#5-teams-persons-meetings)
 6. [Projects and project pages](#6-projects-and-project-pages)
-7. [Service Catalog](#7-service-catalog)
-8. [Roadmap](#8-roadmap)
-9. [Optional databases: Decisions, Risks and Debt, Technology Radar](#9-optional-databases)
+7. [Service Catalog (optional)](#7-service-catalog-optional)
+8. [Roadmap (optional)](#8-roadmap-optional)
+9. [Optional databases: Decisions, Risks and Debt, Technology Radar](#9-optional-databases-decisions-risks-and-debt-technology-radar)
 10. [Resources: pages, not databases](#10-resources-pages-not-databases)
 11. [Todoist](#11-todoist)
 12. [Notebook](#12-notebook)
 13. [A full week, day by day](#13-a-full-week-day-by-day)
 14. [Where one fact lives](#14-where-one-fact-lives)
-15. [Build it in 45 minutes](#15-build-it-in-45-minutes)
+15. [Build the core in about 40 minutes](#15-build-the-core-in-about-40-minutes)
 16. [Health checks](#16-health-checks)
 
 ---
@@ -34,22 +42,22 @@ A companion to `personal-productivity-system.md`. Read it like a folder of scree
 | **Cobalt** | Developer Experience | Elena Rossi | CI, build tooling |
 | **Org-wide** | Cross-team | — | Notes that belong to nobody in particular |
 
-| Slug | Project | Status |
+| Project name (as used in titles) | What it is | Status |
 |---|---|---|
-| `db-migration` | Core DB migration | Now |
-| `ci-revamp` | CI pipeline revamp | Now |
-| `bus-upgrade` | Event Bus upgrade | Next |
-| `slo-rollout` | SLO rollout | Next |
-| `cost-review` | Cloud cost review | Later |
-| `access-review` | Access review | On Hold |
-| `dr-test` | DR failover test | Done |
+| `DB migration` | Core DB migration | Now |
+| `CI revamp` | CI pipeline revamp | Now |
+| `Event Bus upgrade` | Event Bus upgrade | Next |
+| `SLO rollout` | SLO rollout | Next |
+| `Cost review` | Cloud cost review | Later |
+| `Access review` | Access review | On Hold |
+| `DR test` | DR failover test | Done |
 
-**Three words used everywhere**
+**Three terms used everywhere**
 
 | Word | Meaning | Example |
 |---|---|---|
-| **Slug** | Short lowercase name ending a title | `(db-migration)` |
-| **Chase** | Verb for "I'm waiting on someone" | `Chase Ana for replication lag numbers (db-migration)` |
+| **Project name** | The project's own name, as you'd say it, in brackets at the end of a title. No code to memorise | `(DB migration)` |
+| **Chase** | Verb for "I'm waiting on someone" | `Chase Ana for replication lag numbers (DB migration)` |
 | **Graduate** | Move a note into its own database row | Note → Decisions |
 
 ---
@@ -92,26 +100,26 @@ Five favorites (limit: six). Everything else is one click from Teams, or one sea
 
 ## 3. Notes database
 
-**Properties:** Title · Team (relation) · Tags (multi-select) · Created (built-in). Nothing else.
+**Properties:** Title · Team (relation) · Tags (multi-select) · Archived (checkbox) · Created (built-in). Nothing else.
 
 ### View: Recent (sorted by Created, newest first)
 
 | Created | Title | Team | Tags |
 |---|---|---|---|
-| Fri Oct 23 | Quarterly planning: Cobalt wants CI templates in H1 (ci-revamp) | — | `planning` |
-| Fri Oct 23 | Atlas: Core DB error budget 60% burned this month (db-migration) | — | `metric` |
+| Fri Oct 23 | Quarterly planning: Cobalt wants CI templates in H1 (CI revamp) | — | `planning` |
+| Fri Oct 23 | Atlas: Core DB error budget 60% burned this month (DB migration) | — | `metric` |
 | Thu Oct 22 | Maybe move the Thursday sync to 9:45? | — | |
 | Thu Oct 22 | Beacon: Dev asked to pair with Atlas on warehouse snapshots | — | |
 | Thu Oct 22 | Atlas: on-call handoff doc is outdated, missing DB failover steps | — | `process` |
-| Wed Oct 21 | Vendor X renewal due Jan 15, pricing +20% (access-review) | — | `vendor` |
-| Wed Oct 21 | Cobalt: build cache hit rate dropped to 55% (ci-revamp) | — | `metric` |
+| Wed Oct 21 | Vendor X renewal due Jan 15, pricing +20% (Access review) | — | `vendor` |
+| Wed Oct 21 | Cobalt: build cache hit rate dropped to 55% (CI revamp) | — | `metric` |
 | Wed Oct 21 | Risk: only one person knows the legacy scheduler setup | — | `risk` |
 | Tue Oct 20 | Idea: weekly 15-min "ask the platform" office hours | — | `idea` |
 | Tue Oct 20 | Atlas: Kubernetes is two minor versions behind | — | `debt` |
-| Tue Oct 20 | Decision: all new services publish to the Event Bus (bus-upgrade) | — | `decision` |
-| Mon Oct 19 | Cobalt: new runner images land Nov 3, expect a flaky week (ci-revamp) | — | `process` |
-| Mon Oct 19 | Beacon: warehouse nightly load now takes 3h, was 1h (data-warehouse) | — | `system` |
-| Mon Oct 19 | Atlas: cutover rehearsal needs a 4h freeze window — ask Cobalt (db-migration) | — | |
+| Tue Oct 20 | Decision: all new services publish to the Event Bus (Event Bus upgrade) | — | `decision` |
+| Mon Oct 19 | Cobalt: new runner images land Nov 3, expect a flaky week (CI revamp) | — | `process` |
+| Mon Oct 19 | Beacon: warehouse nightly load now takes 3h, was 1h (warehouse) | — | `system` |
+| Mon Oct 19 | Atlas: cutover rehearsal needs a 4h freeze window — ask Cobalt (DB migration) | — | |
 
 Team is empty on every row: nothing was filed at capture. That is the point.
 
@@ -123,20 +131,51 @@ Same rows as above on Friday morning. After triage, this view is empty.
 
 | Team | Title | Tags | Created |
 |---|---|---|---|
-| **Atlas** | Core DB error budget 60% burned this month (db-migration) | `metric` | Oct 23 |
-| **Atlas** | Vendor X renewal due Jan 15, pricing +20% (access-review) | `vendor` | Oct 21 |
+| **Atlas** | Core DB error budget 60% burned this month (DB migration) | `metric` | Oct 23 |
+| **Atlas** | Vendor X renewal due Jan 15, pricing +20% (Access review) | `vendor` | Oct 21 |
 | **Atlas** | Core DB failover takes 3–5 min, not the 90 s quoted in the old doc | `system` | Oct 13 |
 | **Atlas** | Pager rotation: swap rule — trade by Wednesday noon | `process` | Oct 12 |
-| **Beacon** | Warehouse nightly load now takes 3h, was 1h (data-warehouse) | `system` | Oct 19 |
+| **Beacon** | Warehouse nightly load now takes 3h, was 1h (warehouse) | `system` | Oct 19 |
 | **Beacon** | Analytics wants a read replica with 5-minute lag, not 1 hour | `system` | Oct 14 |
 | **Beacon** | Dev's contract with the BI vendor ends in March | `vendor` | Oct 13 |
-| **Cobalt** | Runner images land Nov 3, expect a flaky week (ci-revamp) | `process` | Oct 19 |
-| **Cobalt** | Build cache hit rate dropped to 55% (ci-revamp) | `metric` | Oct 21 |
-| **Cobalt** | Wants CI templates in H1 (ci-revamp) | `planning` | Oct 23 |
+| **Cobalt** | Runner images land Nov 3, expect a flaky week (CI revamp) | `process` | Oct 19 |
+| **Cobalt** | Build cache hit rate dropped to 55% (CI revamp) | `metric` | Oct 21 |
+| **Cobalt** | Wants CI templates in H1 (CI revamp) | `planning` | Oct 23 |
 | **Cobalt** | Flaky test list: 14 quarantined, oldest from March | `debt` | Oct 15 |
 | **Org-wide** | Weekly 15-min "ask the platform" office hours | `idea` | Oct 20 |
 | **Org-wide** | Offsite: facilities needs headcount by Oct 23 | `planning` | Oct 12 |
 | **Org-wide** | Finance closes budget requests on Nov 20 | `planning` | Oct 14 |
+
+### View: Review (weekly, item 5 of the weekly review)
+
+Filter: Team is set · **Archived** unchecked · created **30–37 days ago** · oldest first. Each note appears in exactly one weekly slice. One fate each.
+
+**Friday Nov 13** — the slice is Oct 7–14 (only the early notes exist, so it is short)
+
+| Created | Note | Fate | What happens |
+|---|---|---|---|
+| Oct 12 | Atlas: pager rotation — swap rule, trade by Wednesday noon | **File** | Pasted into the **Atlas team page** under *How we work*; **Archived** ticked |
+| Oct 12 | Org-wide: offsite — facilities needs headcount by Oct 23 | **Archive** | Done; **Archived** ticked |
+| Oct 13 | Atlas: Core DB failover takes 3–5 min, not the 90 s in the old doc | **File** | Added, dated, to the **Failover runbook** page (Resources); **Archived** ticked |
+
+**Friday Nov 20** — the slice is Oct 14–21
+
+| Created | Note | Fate | What happens |
+|---|---|---|---|
+| Oct 14 | Beacon: analytics wants a read replica with 5-minute lag, not 1 hour | **File** | Added to the **DB migration project page**, *Context*; **Archived** ticked |
+| Oct 14 | Org-wide: finance closes budget requests Nov 20 | **Archive** | The date passed |
+| Oct 15 | Cobalt: flaky test list, 14 quarantined, oldest from March | **Archive** | Already tracked as a Risks and Debt row (optional database) |
+| Oct 19 | Beacon: warehouse nightly load now takes 3h, was 1h | **Leave** | Still unresolved; stays under Beacon |
+| Oct 20 | Org-wide: weekly 15-min "ask the platform" office hours | **Leave** | Idea; the quarterly Ideas check decides |
+
+Result: about three minutes each week. The Review view is empty again, and none of those notes had to be kept "just in case".
+
+```
+ATLAS — team page (excerpt after filing)
+
+HOW WE WORK
+  · Pager rotation: swap rule — trade by Wednesday noon  (Oct 12)
+```
 
 ### View: Ideas (filter: Tags contains `idea`)
 
@@ -155,7 +194,7 @@ Reviewed quarterly. Each idea ends in one of two ways: dropped, or it becomes a 
 |---|---|---|
 | "Something about failover time" | `failover` | The Oct 13 note, the Failover runbook, Core DB service page |
 | "What did Cobalt say about templates?" | `Cobalt templates` | The Oct 23 note |
-| "Everything on that project" | `db-migration` | Notes, project page, Todoist tasks (Todoist search separately) |
+| "Everything on that project" | `migration` | Notes, project page, Todoist tasks (Todoist search separately) |
 | "Which vendor renews in January?" | `renewal` | The Oct 21 note |
 
 **Search matches whole words only** (tested: "tes" did not find "test"). Type the full word — `renewal`, not `renew` or `ren`. This is why titles are written with complete words (`warehouse`, `replication`), not abbreviations.
@@ -177,7 +216,7 @@ flowchart TD
 
 | # | Note | Fate | Action taken |
 |---|---|---|---|
-| 1 | Cutover rehearsal needs a 4h freeze | **Act** | Todoist: `Ask Cobalt for a 4h deploy freeze before rehearsal (db-migration)`; note deleted |
+| 1 | Cutover rehearsal needs a 4h freeze | **Act** | Todoist: `Ask Cobalt for a 4h deploy freeze before rehearsal (DB migration)`; note deleted |
 | 2 | Warehouse load 3h | **Keep** | Team → Beacon |
 | 3 | Runner images Nov 3 | **Keep** | Team → Cobalt |
 | 4 | Event Bus decision | **Graduate** | Decisions row, `Accepted` |
@@ -185,7 +224,7 @@ flowchart TD
 | 6 | Office hours idea | **Keep** | Team → Org-wide, tag `idea` stays |
 | 7 | Single point of knowledge | **Graduate** | Risks and Debt row, `Risk`, impact High |
 | 8 | Cache hit rate 55% | **Keep** | Team → Cobalt |
-| 9 | Vendor X renewal | **Act** | Todoist: `Chase procurement for the Vendor X renewal terms (access-review)`; note kept (holds the date), Team → Atlas |
+| 9 | Vendor X renewal | **Act** | Todoist: `Chase procurement for the Vendor X renewal terms (Access review)`; note kept (holds the date), Team → Atlas |
 | 10 | On-call doc outdated | **Act** | Todoist: `Update the on-call handoff doc with DB failover steps` |
 | 11 | Dev wants to pair | **Act** | Todoist: `Ask Ana about pairing on warehouse snapshots` |
 | 12 | Move sync to 9:45? | **Toss** | Deleted |
@@ -210,9 +249,9 @@ Result: queue empty; 7 notes, 3 records, 4 tasks. Rule of thumb: if you hesitate
 
 | Name | Full name | Persons | Projects (rollup) | Notes (rollup) |
 |---|---|---|---|---|
-| Atlas | Platform Infrastructure | 2 | db-migration, bus-upgrade, access-review, dr-test | 6 |
-| Beacon | Data Platform | 2 | bus-upgrade | 3 |
-| Cobalt | Developer Experience | 2 | ci-revamp, slo-rollout | 4 |
+| Atlas | Platform Infrastructure | 2 | DB migration, Event Bus upgrade, Access review, DR test | 6 |
+| Beacon | Data Platform | 2 | Event Bus upgrade | 3 |
+| Cobalt | Developer Experience | 2 | CI revamp, SLO rollout | 4 |
 | Org-wide | Cross-team | 0 | — | 3 |
 
 Opening a Team page shows its people, projects, services, risks and notes — the hub everything relates to.
@@ -257,7 +296,7 @@ Items under NEXT are written whenever they occur to you. At the 1:1, read from t
 | Architecture review | Recurring | — | Atlas |
 | Monthly reliability review | Recurring | — | Atlas |
 | Quarterly planning | Recurring | — | — |
-| Vendor X check-in | On Demand | access-review | Atlas |
+| Vendor X check-in | On Demand | Access review | Atlas |
 
 **One meeting page — Monthly reliability review**
 
@@ -273,7 +312,7 @@ Oct 1
   · SLO for Container Platform still missing → Ana owns the draft
   · Decision: tighten the deploy freeze policy (see Decisions)
   Actions
-    → Todoist: Chase Ana for the Container Platform SLO draft (slo-rollout)
+    → Todoist: Chase Ana for the Container Platform SLO draft (SLO rollout)
 
 Sep 3
   · No incidents; flaky failover test noted
@@ -287,20 +326,20 @@ Sep 3
 
 | Name | Status | Priority | Target | Risk | Team | Tracker |
 |---|---|---|---|---|---|---|
-| Core DB migration (db-migration) | **Now** | P1 | Q1 2027 | 🟠 | Atlas | PLAT-120 |
-| CI pipeline revamp (ci-revamp) | **Now** | — | Dec 2026 | 🟢 | Cobalt | PLAT-98 |
-| Event Bus upgrade (bus-upgrade) | Next | — | Q1 2027 | 🟢 | Atlas, Beacon | PLAT-131 |
-| SLO rollout (slo-rollout) | Next | — | Q2 2027 | 🟢 | Atlas, Cobalt | PLAT-140 |
-| Cloud cost review (cost-review) | Later | — | — | 🟢 | — | — |
-| Access review (access-review) | On Hold | — | Nov 2026 | 🟠 | Atlas | PLAT-105 |
-| DR failover test (dr-test) | Done | — | Sep 2026 | 🟢 | Atlas | PLAT-77 |
+| DB migration | **Now** | P1 | Q1 2027 | 🟠 | Atlas | PLAT-120 |
+| CI revamp | **Now** | — | Dec 2026 | 🟢 | Cobalt | PLAT-98 |
+| Event Bus upgrade | Next | — | Q1 2027 | 🟢 | Atlas, Beacon | PLAT-131 |
+| SLO rollout | Next | — | Q2 2027 | 🟢 | Atlas, Cobalt | PLAT-140 |
+| Cost review | Later | — | — | 🟢 | — | — |
+| Access review | On Hold | — | Nov 2026 | 🟠 | Atlas | PLAT-105 |
+| DR test | Done | — | Sep 2026 | 🟢 | Atlas | PLAT-77 |
 
 Views: **Active** (`Status is not Done`, grouped by Status) · **Done** (a running record) · **By team**.
 
 ### Project page: Core DB migration (Now · P1)
 
 ```
-CORE DB MIGRATION (db-migration)      Now · P1 · Atlas · Risk 🟠 · PLAT-120
+DB MIGRATION      Now · P1 · Atlas · Risk 🟠 · PLAT-120
 
 Objective     Core DB on managed PostgreSQL 16, ≤ 10 min downtime at cutover.
 Context       Self-hosted cluster goes out of support Q2 2027. Beacon reads
@@ -320,7 +359,7 @@ Document      → Cutover runbook (sub-page)
 ### Project page: CI pipeline revamp (Now)
 
 ```
-CI PIPELINE REVAMP (ci-revamp)        Now · Cobalt · Risk 🟢 · PLAT-98
+CI REVAMP        Now · Cobalt · Risk 🟢 · PLAT-98
 
 Objective     Median pipeline time under 10 min; cache hit rate above 80%.
 Context       Runner images are two years old; flaky tests erode trust.
@@ -336,7 +375,7 @@ Links         PLAT-98 · CI dashboard
 ### Project page: Access review (On Hold)
 
 ```
-ACCESS REVIEW (access-review)         On Hold · Atlas · Risk 🟠 · PLAT-105
+ACCESS REVIEW         On Hold · Atlas · Risk 🟠 · PLAT-105
 
 Objective     Quarterly review of who has access to what, evidence for audit.
 Why on hold   Waiting for Vendor X's audit report and renewal terms.
@@ -350,19 +389,19 @@ Note how an `On Hold` project has **only** `Chase` tasks in Todoist, and nothing
 ### Project page: Event Bus upgrade (Next)
 
 ```
-EVENT BUS UPGRADE (bus-upgrade)       Next · Atlas, Beacon · PLAT-131
+EVENT BUS UPGRADE       Next · Atlas, Beacon · PLAT-131
 
 Objective     Upgrade the Event Bus two minor versions; adopt event contracts.
 Context       Decision of Oct 20: new services publish through the bus only.
 Plan          1. Event contract template
               2. Compatibility test in staging
               3. Rolling upgrade, one broker at a time
-Starts        When db-migration cutover rehearsal #1 is done
+Starts        When DB migration cutover rehearsal #1 is done
 ```
 
 ---
 
-## 7. Service Catalog
+## 7. Service Catalog (optional)
 
 | Name | Team | Category | Criticality | Status | SLO | Last edited |
 |---|---|---|---|---|---|---|
@@ -416,20 +455,20 @@ Common issues and fixes
   · Pods Pending after node upgrade → check PodDisruptionBudgets first
 
 SLO
-  (to be drafted — owner Ana, tracked in slo-rollout)
+  (to be drafted — owner Ana, tracked in SLO rollout)
 ```
 
 ---
 
-## 8. Roadmap
+## 8. Roadmap (optional)
 
 | Name | Horizon | Year | Status | Theme | Team | Related Project |
 |---|---|---|---|---|---|---|
-| Core DB migration | This year | 2026 | In Progress | Reliability | Atlas | db-migration |
-| CI pipeline revamp | This year | 2026 | In Progress | Developer Experience | Cobalt | ci-revamp |
+| Core DB migration | This year | 2026 | In Progress | Reliability | Atlas | DB migration |
+| CI pipeline revamp | This year | 2026 | In Progress | Developer Experience | Cobalt | CI revamp |
 | Self-service CI templates | Next year | 2027 | Planned | Developer Experience | Cobalt | — |
-| SLOs for critical services | Next year | 2027 | Planned | Reliability | — | slo-rollout |
-| Cost visibility per team | Next year | — | Planned | Cost | — | cost-review |
+| SLOs for critical services | Next year | 2027 | Planned | Reliability | — | SLO rollout |
+| Cost visibility per team | Next year | — | Planned | Cost | — | Cost review |
 | Multi-region data layer | Someday | — | Planned | Reliability | — | — |
 | Retire the legacy job scheduler | This year | 2026 | Cut | Cost | Atlas | — |
 
@@ -437,7 +476,7 @@ The roadmap is never recreated per year; `Year` is filled only when it is honest
 
 ---
 
-## 9. Optional databases
+## 9. Optional databases: Decisions, Risks and Debt, Technology Radar
 
 Each of these earned its place by passing one test: **three or more records of the same shape that I want to filter.**
 
@@ -475,13 +514,13 @@ Revisit when   The Event Bus misses its SLO two months running
 | Deprecated mail relay still referenced by two scripts | Risk | Medium | Low | — | Accepted | Atlas | Old Mail Relay |
 | No automated failover tests for the core database | Debt | High | — | L | Open | Atlas | Core DB |
 
-**Monthly review view: Open and High impact** → 3 rows. Each must end in one of three states: has a next action in Todoist, `Accepted`, or `Closed`.
+**Monthly add-on view: Open and High impact** → 3 rows. Each must end in one of three states: has a next action in Todoist, `Accepted`, or `Closed`.
 
 | Row in view | Next action (in Todoist) |
 |---|---|
 | Single point of knowledge | `Schedule a knowledge-transfer session on the legacy scheduler` |
 | Warehouse load 3h | `Ask Ana about pairing on warehouse snapshots` |
-| No failover tests | `Draft the failover test plan (dr-test follow-up)` — or Accept it |
+| No failover tests | `Draft the failover test plan (DR test follow-up)` — or Accept it |
 
 ### Technology Radar
 
@@ -560,17 +599,17 @@ The point of the radar is the last row: `Hold` means "don't start new uses", eve
 
 ```
 #Work-Projects
-☐ Ask Cobalt for a 4h deploy freeze before rehearsal (db-migration)        Tue Oct 27
-☐ Chase Ana for replication lag numbers (db-migration)                     Tue Oct 27
-☐ Verify rollback test passed in staging (db-migration)                    Wed Oct 28   p1
-☐ Prepare cutover runbook (db-migration)                                   Fri Oct 30
+☐ Ask Cobalt for a 4h deploy freeze before rehearsal (DB migration)        Tue Oct 27
+☐ Chase Ana for replication lag numbers (DB migration)                     Tue Oct 27
+☐ Verify rollback test passed in staging (DB migration)                    Wed Oct 28   p1
+☐ Prepare cutover runbook (DB migration)                                   Fri Oct 30
     ☐ Collect failover steps from Ana
     ☐ Draft the runbook
     ☐ Review with the Atlas on-call
-☐ Chase Elena for the template spec draft (ci-revamp)                      Fri Oct 30
-☐ Verify new runner images pass smoke tests (ci-revamp)                    Tue Nov 3
-☐ Chase Vendor X for the audit report (access-review)                      Mon Nov 2
-☐ Chase procurement for the Vendor X renewal terms (access-review)         Tue Nov 3
+☐ Chase Elena for the template spec draft (CI revamp)                      Fri Oct 30
+☐ Verify new runner images pass smoke tests (CI revamp)                    Tue Nov 3
+☐ Chase Vendor X for the audit report (Access review)                      Mon Nov 2
+☐ Chase procurement for the Vendor X renewal terms (Access review)         Tue Nov 3
 
 #Work-General
 ☐ Send the offsite headcount to facilities                                 Fri Oct 23   ⚠ overdue
@@ -579,16 +618,14 @@ The point of the radar is the last row: `Hold` means "don't start new uses", eve
 ☐ Book a room for quarterly planning                                       Wed Oct 28
 ☐ Mention the freeze window to Team Beacon at the Thursday sync            Thu Oct 29
 ☐ Update the on-call handoff doc with DB failover steps                    Fri Oct 30
-☐ Review risks and debt                                  ↻ every month     Fri Oct 30
-☐ Review radar and decisions                             ↻ every 3 months  Mon Nov 2
-☐ Review roadmap and ideas                               ↻ every 3 months  Mon Nov 16
+☐ Weekly review                                          ↻ every Friday 15:00   Fri Oct 30
 
 #Personal
 ☐ Book car service appointment                                             Sat Oct 31
 ☐ Renew gym membership                                                     Fri Nov 6
 ```
 
-Rule that decides the container: **does the title end with a slug?** Yes → `#Work-Projects`. No → `#Work-General`.
+Rule that decides the container: **is it part of a project I track, or a commitment I must not drop?** Yes → `#Work-Projects`, with the project name at the end of the title. No → `#Work-General`.
 
 ### The three saved filters
 
@@ -598,23 +635,23 @@ Rule that decides the container: **does the title end with a slug?** Yes → `#W
 | **Due in 7 days** | `due before: in 7 days` | The overdue task plus everything through Sat Oct 31 — **13 tasks**, `p1` first |
 | **Follow-ups** | `search: Chase` | Ana (Tue 27) · Elena (Fri 30) · Vendor X (Mon Nov 2) · Procurement (Tue Nov 3) — **4 tasks** |
 
-**Search for a slug**, typing `db-migration` in the search bar, returns the four open tasks for that project across both containers.
+**Search for the project name**, typing `migration` in the search bar, returns the four open tasks for that project across both containers.
 
 ### Quick-add lines (what you type → what you get)
 
 | You type | Result |
 |---|---|
-| `Chase Ana for replication lag numbers (db-migration) #Work-Projects tue` | Follow-up in Projects, due Tuesday |
+| `Chase Ana for replication lag numbers (DB migration) #Work-Projects tue` | Follow-up in Projects, due Tuesday |
 | `Email Ana about the offsite agenda #Work-General today` | Light reminder, due today |
-| `Verify rollback test passed in staging (db-migration) #Work-Projects wed p1` | Commitment with priority |
+| `Verify rollback test passed in staging (DB migration) #Work-Projects wed p1` | Commitment with priority |
 | `Renew gym membership #Personal fri` | Personal, due Friday |
-| `Review risks and debt #Work-General every month` | Recurring review |
+| `Weekly review #Work-General every friday at 15:00` | The recurring review; its description is the agenda |
 
 ### When a task gets subtasks
 
 ```mermaid
 flowchart TD
-    P["☐ Prepare cutover runbook (db-migration)<br/>Fri Oct 30"] --> S1["☐ Collect failover steps from Ana"]
+    P["☐ Prepare cutover runbook (DB migration)<br/>Fri Oct 30"] --> S1["☐ Collect failover steps from Ana"]
     P --> S2["☐ Draft the runbook"]
     P --> S3["☐ Review with the Atlas on-call"]
 ```
@@ -626,8 +663,8 @@ Subtasks decompose **one concrete task** with distinct steps. They are not a mir
 | Wrong | Right | Why |
 |---|---|---|
 | `☐ Core DB migration` (parent) with 20 subtasks | Plan in Notion; only the *next* steps in Todoist | The plan changes weekly; a mirrored copy goes stale |
-| `Waiting for Ana` in a label | `Chase Ana for X (slug)` with a due date | A follow-up needs a date or it never happens |
-| `Check the thing` | `Verify rollback test passed in staging (db-migration)` | Verb-first and a slug make it self-explanatory in a filter |
+| `Waiting for Ana` in a label | `Chase Ana for X (DB migration)` with a due date | A follow-up needs a date or it never happens |
+| `Check the thing` | `Verify rollback test passed in staging (DB migration)` | Verb-first and a project name make it self-explanatory in a filter |
 
 ---
 
@@ -639,9 +676,9 @@ Subtasks decompose **one concrete task** with distinct steps. They are not a mir
 Tuesday, October 27
 ─────────────────────────────────────
 BIG 3
-✓  Ask Cobalt for a 4h deploy freeze before rehearsal (db-migration)
-✓  Chase Ana for replication lag numbers (db-migration)
-→  Prepare cutover runbook (db-migration)  — outline started, stays in Todoist
+✓  Ask Cobalt for a 4h deploy freeze before rehearsal (DB migration)
+✓  Chase Ana for replication lag numbers (DB migration)
+→  Prepare cutover runbook (DB migration)  — outline started, stays in Todoist
 - - - - - - - - - - - - - - - - - - -
 Tomorrow, maybe: verify the rollback test
 ```
@@ -663,7 +700,7 @@ The page dies at midnight. Nothing is migrated.
 | Time | What happens | Where it goes |
 |---|---|---|
 | 08:45 | Morning, 2 min: *Due in 7 days* (13 tasks). Pick the Big 3 | Notebook |
-| 10:30 | Corridor: Chloe says a new monthly batch job starts in March, doubles load | **Notes**: `Beacon: new monthly batch job starts in March, doubles warehouse load (data-warehouse)` |
+| 10:30 | Corridor: Chloe says a new monthly batch job starts in March, doubles load | **Notes**: `Beacon: new monthly batch job starts in March, doubles warehouse load (warehouse)` |
 | 11:00 | Platform weekly sync | The meeting's page, one dated entry |
 | 14:15 | Asked to warn Beacon about the freeze | Todoist: `Mention the freeze window to Team Beacon at the Thursday sync #Work-General Thu` |
 | 17:30 | Close the day: `✓` `→` `✕` | Notebook |
@@ -684,25 +721,43 @@ The page dies at midnight. Nothing is migrated.
 | 08:45 | Big 3: verify rollback, book room, 1:1 with Ben | Notebook |
 | 10:00 | 1:1 with Ben | His page: NEXT items read, LOG entry added |
 | 10:45 | In the 1:1, Ben mentions pager fatigue | Notes: `Ben: pages per on-call week trending up, 11 in Sep` (tag `metric`) |
-| 13:00 | Verify rollback test: it failed | Todoist: task checked; new `Fix rollback test in staging (db-migration)`; project Risk 🟠 stays |
+| 13:00 | Verify rollback test: it failed | Todoist: task checked; new `Fix rollback test in staging (DB migration)`; project Risk 🟠 stays |
 
 ### Thursday, Oct 29
 
 | Time | What happens | Where it goes |
 |---|---|---|
 | 09:30 | Thursday sync: mention freeze to Beacon | Task checked |
-| 09:45 | Beacon asks for the freeze dates in writing | Todoist: `Send Beacon the freeze dates in writing (db-migration)` |
+| 09:45 | Beacon asks for the freeze dates in writing | Todoist: `Send Beacon the freeze dates in writing (DB migration)` |
 | 14:00 | Monthly reliability review | Meeting page: new dated entry; actions → Todoist |
 
-### Friday, Oct 30 — the 15-minute review
+### Friday, Oct 30 — the weekly review (16 min)
 
-| Pass | What you find | What you do | Time |
+Run from the recurring task `Weekly review`, whose description is the agenda.
+
+| # | Item | What you find | What you do | Min |
+|---|---|---|---|---|
+| 1 | **Tasks** | Two tasks slipped; about 12 in *Due in 7 days*, under the ~15 rule of thumb | Moved both to Monday | 3 |
+| 2 | **Follow-ups** | Elena still hasn't sent the template spec | Message her; task → Tue Nov 3 | 2 |
+| 3 | **Projects** | `DB migration`, `CI revamp`: search the name → tasks exist ✓. `Access review` (On Hold): two `Chase` ✓. `Event Bus upgrade`: Decision accepted → `Next` → `Now`; first task created | Statuses updated | 3 |
+| 4 | **New notes** | 9 new rows in *No team* | 5 Keep · 2 Act · 1 Graduate · 1 Toss | 4 |
+| 5 | **Old notes** | *Review* is empty: the system is only five weeks old, so no note is 30 days old yet | Nothing to do (first slice arrives Nov 13) | 0 |
+| 6 | **Next week** | Calendar is full Wednesday and Thursday | Book Tuesday 14:00–14:45 as the focus block for the cutover runbook | 3 |
+| 7 | **Close** | A sticky note with a vendor name | Into Notes | 1 |
+| | | | **Total** | **16** |
+
+**A bad week** (Friday Nov 6; a customer escalation took Wednesday and Thursday)
+
+| # | Item | What you do | Min |
 |---|---|---|---|
-| 1. **Due in 7 days** | Two tasks slipped | Moved to Monday | 3 min |
-| 2. **Follow-ups** | Elena still hasn't sent the template spec | Message her; task → Tue Nov 3 | 2 min |
-| 3. **Projects** | `db-migration`, `ci-revamp`: search the slug → tasks exist ✓. `access-review` (On Hold): two `Chase` ✓. `bus-upgrade`: Decision accepted → `Next` → `Now`; first task created | Statuses updated | 3 min |
-| 4. **Notes** | 9 new rows in *No team* | 5 Keep · 2 Act · 1 Graduate · 1 Toss | 4 min |
-| | | **Total** | **12 min** |
+| 1 | **Tasks** | 19 tasks, over the ~15 rule of thumb → push four low-value ones to the next week | 3 |
+| 2 | **Follow-ups** | Send the one nudge that is due | 2 |
+| 3–7 | Everything else | **Skipped on purpose.** The Notes queue is 11 rows, below the ~30 threshold | 0 |
+| | **Minimum review** | | **5** |
+
+Next Friday: the normal seven items, with no catch-up.
+
+**Focus block.** Each Tuesday 14:00–14:45 is blocked in the calendar for the week's most important item (this week: the cutover runbook). On the bad week it moved to Monday, and nothing else changed.
 
 ```mermaid
 gantt
@@ -713,11 +768,12 @@ gantt
     Morning pick (2 min)      :08:45, 2m
     Capture (seconds each)    :10:30, 1m
     Close the day (2 min)     :17:30, 2m
-    section Friday
-    Due in 7 days             :15:00, 3m
+    section Weekly review
+    Tasks                     :15:00, 3m
     Follow-ups                :15:03, 2m
     Projects                  :15:05, 3m
-    Notes triage              :15:08, 4m
+    New notes                 :15:08, 4m
+    Next week + close         :15:12, 4m
 ```
 
 ---
@@ -739,7 +795,7 @@ The same real-world event, in the one place it belongs.
 
 ---
 
-## 15. Build it in 45 minutes
+## 15. Build the core in about 40 minutes
 
 Order matters: each step uses the one before.
 
@@ -751,23 +807,22 @@ Order matters: each step uses the one before.
 | 4 | 5 min | **Todoist**: three containers, three saved filters (`overdue \| today`, `due before: in 7 days`, `search: Chase`) |
 | 5 | 5 min | **Projects** database + default template (Objective / Context / Assumptions / Plan / Decisions / Links) |
 | 6 | 5 min | **Persons**, **1:1 Meetings**, **Meetings** |
-| 7 | 5 min | **Service Catalog** (add the `SLO` property + template with SLO section) and **Roadmap** |
-| 8 | 5 min | **Sidebar**: five favorites, four PARA entries, Projects entry = the database itself |
-| 9 | 5 min | Add **recurring Todoist reviews** (monthly risks/debt; quarterly radar/decisions; quarterly roadmap/ideas) |
-| — | later | Optional databases (Decisions, Risks and Debt, Radar) **only** when you have three real rows |
+| 7 | 5 min | **Sidebar**: five favorites, four PARA entries, Projects entry = the database itself |
+| 8 | 5 min | Add the recurring Todoist task **`Weekly review`** at a fixed time, with the agenda from Part 10 of the full guide pasted into its description, and a calendar block of 30+ min for your most important thing |
+| — | later | **Optional databases** (Service Catalog, Roadmap, Decisions, Risks and Debt, Radar…) **only** when the test in Part 9 of the full document says so. Sections 7–9 show what they look like; none is required |
 
 ---
 
 ## 16. Health checks
 
-Run these in the Friday review or monthly. Each takes under a minute.
+Run these inside the weekly review (items 1–5) or whenever something feels off. Each takes under a minute.
 
 | Check | How | Healthy | Fix when not |
 |---|---|---|---|
 | Notes queue | View *No team* | 0 rows after Friday | Triage (Keep when in doubt) |
 | Stale follow-ups | Filter `search: Chase` and `overdue` | None overdue | Message, reschedule, or drop |
-| Orphan tasks | Open `#Work-Projects`; any title without a slug? | None | Add the slug, or move to `#Work-General` |
-| Dead projects | Each `Now` project: search the slug | At least one open task | Create the next task, or move to `On Hold` |
+| Orphan tasks | Open `#Work-Projects`; any title without a project name? | None | Add the project name, or move to `#Work-General` |
+| Dead projects | Each `Now` project: search the project name | At least one open task | Create the next task, or move to `On Hold` |
 | Stale services | Service Catalog sorted by `Last edited time` asc | Oldest under ~6 months | Review or set `Deprecated` |
 | Open high risks | Risks and Debt: Open and High impact | Each has an action, `Accepted`, or `Closed` | Decide |
 | SLO gaps | Service Catalog: Critical and SLO = Missing | 0 rows | Draft the SLO |
