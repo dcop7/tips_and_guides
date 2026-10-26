@@ -40,7 +40,7 @@ A companion to `personal-productivity-system.md`. Read it like a folder of scree
 | **Atlas** | Platform Infrastructure | Ana Reyes | Databases, messaging, Kubernetes |
 | **Beacon** | Data Platform | Chloe Martin | Warehouse, pipelines |
 | **Cobalt** | Developer Experience | Elena Rossi | CI, build tooling |
-| **Org-wide** | Cross-team | — | Notes that belong to nobody in particular |
+| **Org-wide** | Cross-team | — | Anything that belongs to no single team (in every database) |
 
 | Project name (as used in titles) | What it is | Status |
 |---|---|---|
@@ -252,7 +252,7 @@ Result: queue empty; 7 notes, 3 records, 4 tasks. Rule of thumb: if you hesitate
 | Atlas | Platform Infrastructure | 2 | DB migration, Event Bus upgrade, Access review, DR test | 6 |
 | Beacon | Data Platform | 2 | Event Bus upgrade | 3 |
 | Cobalt | Developer Experience | 2 | CI revamp, SLO rollout | 4 |
-| Org-wide | Cross-team | 0 | — | 3 |
+| Org-wide | Cross-team | 0 | Cost review | 3 |
 
 Opening a Team page shows its people, projects, services, risks and notes — the hub everything relates to.
 
@@ -292,11 +292,13 @@ Items under NEXT are written whenever they occur to you. At the 1:1, read from t
 
 | Name | Type | Project | Team |
 |---|---|---|---|
-| Platform weekly sync | Recurring | — | — |
+| Platform weekly sync | Recurring | — | Org-wide |
 | Architecture review | Recurring | — | Atlas |
 | Monthly reliability review | Recurring | — | Atlas |
-| Quarterly planning | Recurring | — | — |
+| Quarterly planning | Recurring | — | Org-wide |
 | Vendor X check-in | On Demand | Access review | Atlas |
+
+Every meeting has a team (`Org-wide` for the two that involve everyone), and some also link to a project. The two links are independent: *Vendor X check-in* is about the `Access review` project and belongs to Atlas.
 
 **One meeting page — Monthly reliability review**
 
@@ -330,7 +332,7 @@ Sep 3
 | CI revamp | **Now** | — | Dec 2026 | 🟢 | Cobalt | PLAT-98 |
 | Event Bus upgrade | Next | — | Q1 2027 | 🟢 | Atlas, Beacon | PLAT-131 |
 | SLO rollout | Next | — | Q2 2027 | 🟢 | Atlas, Cobalt | PLAT-140 |
-| Cost review | Later | — | — | 🟢 | — | — |
+| Cost review | Later | — | — | 🟢 | Org-wide | — |
 | Access review | On Hold | — | Nov 2026 | 🟠 | Atlas | PLAT-105 |
 | DR test | Done | — | Sep 2026 | 🟢 | Atlas | PLAT-77 |
 
@@ -467,8 +469,8 @@ SLO
 | Core DB migration | This year | 2026 | In Progress | Reliability | Atlas | DB migration |
 | CI pipeline revamp | This year | 2026 | In Progress | Developer Experience | Cobalt | CI revamp |
 | Self-service CI templates | Next year | 2027 | Planned | Developer Experience | Cobalt | — |
-| SLOs for critical services | Next year | 2027 | Planned | Reliability | — | SLO rollout |
-| Cost visibility per team | Next year | — | Planned | Cost | — | Cost review |
+| SLOs for critical services | Next year | 2027 | Planned | Reliability | Org-wide | SLO rollout |
+| Cost visibility per team | Next year | — | Planned | Cost | Org-wide | Cost review |
 | Multi-region data layer | Someday | — | Planned | Reliability | — | — |
 | Retire the legacy job scheduler | This year | 2026 | Cut | Cost | Atlas | — |
 
