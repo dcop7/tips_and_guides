@@ -869,7 +869,7 @@ graph LR
     Persons["Persons"] -->|Team| Teams
     OneOnOne["1:1 Meetings"] -->|Team| Teams
     SC["Service Catalog"] -.->|"Team (optional DB)"| Teams
-    Meetings["Meetings"] -->|"Team (blank = cross-team)"| Teams
+    Meetings["Meetings"] -->|"Team (Org-wide if for all)"| Teams
     Projects["Projects DB"] -->|"Team (multi, optional)"| Teams
     Roadmap["Roadmap"] -.->|"Team (optional DB)"| Teams
     Dec["Decisions"] -.->|"Team (optional DB)"| Teams
@@ -886,7 +886,7 @@ Each row in Teams (say, "Atlas") is a complete page in its own right, and can ho
 
 That also makes the Teams page the **second front door** to the workspace: the databases that aren't Favorites are one click from it.
 
-Projects that don't belong to any one team are simply left with the Team field empty — the project's own name usually makes that obvious without needing a category to say so too.
+**Every row has a team.** In every database, a project or meeting or note that belongs to no single team gets the `Org-wide` row, and one that spans several teams gets all of them. That gives one rule everywhere: *Team is empty* always means *someone forgot*, never *it's for everyone*. It also makes a cheap health check: a view in each database filtered to *Team is empty* should be empty.
 
 ### Optional: a team page with a view per database
 
@@ -944,7 +944,7 @@ There is deliberately **no Status field**. "Which notes haven't I processed?" is
 | Priority | Select | Optional — `P1` · `P2` · `P3`, blank by default. Mirrors Todoist's own Priority: only set when one `Now` Project is genuinely more urgent than the rest, not as a habit |
 | Target | Text | Optional — use for a meaningful target or timeframe (e.g. "2027", "Q2 2027", "Dec 2026") |
 | Risk | Select | 🟢 · 🟠 · 🔴 |
-| Team | Relation → Teams | Multi-relation for cross-team projects; left blank for team-agnostic ones |
+| Team | Relation → Teams | Multi-relation for projects spanning several teams; `Org-wide` for team-agnostic ones |
 | Tracker | URL | Link to the ticketing system, if applicable |
 | Created time | Built-in | Free reference point — how long an idea sat before becoming a committed Project |
 
@@ -986,7 +986,7 @@ An `On Hold` project keeps no actionable tasks in Todoist except `Chase` tasks: 
 
 `Notes` here is deliberately a one-liner, not a place for real content — that still belongs in the page body (Part 7), which every row already has for free. A property earns its keep only when it answers something a glance at the table should show without opening the page; anything longer goes back to Principle #4 (Part 11).
 
-Keep one extra row, **Org-wide** (full name *Cross-team*), for notes that belong to no single team. It exists for Notes only: it lets cross-team notes leave the *No team* queue at triage. Other databases keep leaving Team blank when something is cross-team.
+Keep one extra row, **Org-wide** (full name *Cross-team*), for anything that belongs to no single team. It is used in **every** database, not only Notes: it lets cross-team notes leave the *No team* queue at triage, and it means *Team is empty* never doubles as *cross-team* anywhere else.
 
 ### Persons
 *Inside Areas → People Management. Not favorited — reached from 1:1 Meetings or the Teams page.*
@@ -1017,7 +1017,7 @@ Page body: a "Next" block at the top, followed by dated log entries — one per 
 | Name | Title | The series name (recurring) or the meeting's name (one-off) |
 | Type | Select | `Recurring` · `On Demand` |
 | Project | Relation → Projects | Optional — links a one-off meeting to the relevant Project |
-| Team | Relation → Teams | Blank = cross-team |
+| Team | Relation → Teams | `Org-wide` = cross-team. Link to a Project as well when the meeting is about one (the two links are independent) |
 | Last edited time | Built-in | Notion tracks this automatically — no manual field needed |
 
 Usage rule: one row per recurring **series** (never per occurrence) — the page body grows with one dated entry per session, exactly like 1:1 Meetings. Notes taken *during* a scheduled meeting live here; notes from anywhere else go to Notes.
@@ -1107,7 +1107,7 @@ Page body, with five fixed sections: *Known Limitations*, *Common Issues and Fix
 | Year | Select | `2026` · `2027` · `2028` … — optional, filled in only once genuinely committed |
 | Status | Select | `Planned` · `In Progress` · `Done` · `Cut` |
 | Theme | Select | Optional grouping, e.g. `Reliability`, `Developer Experience`, `Cost` |
-| Team | Relation → Teams | Optional — blank for cross-team initiatives |
+| Team | Relation → Teams | `Org-wide` for cross-team initiatives |
 | Related Project | Relation → Projects | Filled in once the item is committed and work begins |
 | Created time | Built-in | How long an initiative has been on the radar before being planned |
 
@@ -1124,7 +1124,7 @@ The format comes from Architecture Decision Records: one record per significant 
 |---|---|---|
 | Name | Title | The decision as a short statement: `All new services publish to the Event Bus` |
 | Status | Select | `Proposed` · `Accepted` · `Superseded` · `Rejected` |
-| Team | Relation → Teams | Multiple allowed; blank = cross-team |
+| Team | Relation → Teams | Multiple allowed; `Org-wide` = cross-team |
 | Confidence | Select | `High` · `Medium` · `Low` — low-confidence decisions get revisited first |
 | Superseded by | Relation → Decisions | Optional — filled in when a later decision replaces this one |
 | Created time | Built-in | The date of the decision |
@@ -1199,7 +1199,7 @@ A radar is a **stance**; the Service Catalog is an **inventory**. They are diffe
 | Name | Title | The technology or technique |
 | Quadrant | Select | `Techniques` · `Tools` · `Platforms` · `Languages and Frameworks` |
 | Ring | Select | `Adopt` · `Trial` · `Assess` · `Hold` |
-| Team | Relation → Teams | Optional — blank when it applies to everyone |
+| Team | Relation → Teams | `Org-wide` when it applies to everyone |
 | Last edited time | Built-in | Free staleness signal |
 
 Page body: one line on why it sits in that ring, and a link to the decision that put it there [13]. Views: **By ring** (board) · **By quadrant**. Review quarterly: what moved, what's stale. Radar items usually number 30–80, share the same fields and are filtered by ring — which is why this one *is* a database, unlike the next three.
